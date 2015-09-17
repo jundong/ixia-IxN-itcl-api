@@ -332,7 +332,7 @@ body DeviceGroup::config_ethernet { args } {
     global errorInfo
     global errNumber
     set tag "body DeviceGroup::config_ethernet [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
 	if { $handle == "" } {
 		config -count $count

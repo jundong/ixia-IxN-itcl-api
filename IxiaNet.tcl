@@ -277,6 +277,7 @@ proc GetEnvTcl { product } {
 
 }
 
+set configfile null
 set portlist [list]
 set trafficlist [list]
 set portnamelist [list]
@@ -304,11 +305,10 @@ proc loadconfig { filename } {
             lappend tportlist [ixNet getA $trafficobj -txPortName]
         }
     }
-
 }
 
 proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
-
+    global configfile
 	global ixN_tcl_v
 	global loginInfo
     
@@ -322,7 +322,7 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
 	global remote_serverPort
 	
 	set loginInfo $location
-puts "Login...$location"	
+    puts "Login...$location"	
 	if { $location == "" } {
 		set port "localhost/8009"
 	} else {
@@ -364,21 +364,20 @@ puts "Login...$location"
         
         if { $flag == 1 } {
             if { $filename != "null" } {
+                set configfile $filename
                 loadconfig $filename
-				after 15000
-                
-                foreach pname $portnamelist pobj $portlist {
-                    Port $pname NULL NULL $pobj
-                }
-                
-                foreach tname $trafficnamelist tobj $trafficlist tport $portnamelist {
-                    Traffic $tname $tport $tobj
-                }
-				
-				return
-                
             } else {
-                return
+                if { $configfile != "null"} {
+                    loadconfig $filename
+                }
+            }
+            after 15000
+            foreach pname $portnamelist pobj $portlist {
+                Port $pname NULL NULL $pobj
+            }
+            
+            foreach tname $trafficnamelist tobj $trafficlist tport $portnamelist {
+                Traffic $tname $tport $tobj
             }
         }
 	}

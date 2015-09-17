@@ -1,4 +1,4 @@
- package req IxiaNet
+package req IxiaNet
 Login 190.2.152.81/8012
 IxDebugOff
 Port @tester_to_dta1 190.2.152.82/5/1

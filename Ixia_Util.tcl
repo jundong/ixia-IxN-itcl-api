@@ -718,8 +718,8 @@ proc GetStepPrefixlen { ip } {
 }
 
 proc GetObject { name } {
-Deputs "GetObject search..."
-Deputs "objs:[find objects]"
+    Deputs "GetObject search..."
+    Deputs "objs:[find objects]"
     foreach obj [ find objects ] {
     	if { $name == $obj || $name == "::$obj"} {
     	    return $obj

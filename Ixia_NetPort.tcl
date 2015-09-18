@@ -1245,9 +1245,18 @@ Deputs "----- TAG: $tag -----"
     return [ GetStandardReturnHeader ]
 }
 
-body Port::traffic {} {
+body Port::traffic { name } {
+    global trafficnamelist
     
+    set tag "body Port::start_traffic [info script]"
+    Deputs "----- TAG: $tag -----"
+    if { [lsearch $trafficnamelist $name] >= 0 } {
+        return [ GetObject $name ]
+    } else {
+        error "No Traffic name: $name"
+    }
 }
+
 body Port::start_traffic {} {
     set tag "body Port::start_traffic [info script]"
     Deputs "----- TAG: $tag -----"

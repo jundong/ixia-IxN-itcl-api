@@ -23,16 +23,18 @@
 
 class NetObject {
     public variable handle
+    public variable handleName
+    
     method unconfig {} {
-    set tag "body NetObject::unconfig [info script]"
-Deputs "----- TAG: $tag -----"
-		catch {
-			ixNet remove $handle
-			ixNet commit
-		}
-		set handle ""
-		return [ GetStandardReturnHeader ]
+	set tag "body NetObject::unconfig [info script]"
+	Deputs "----- TAG: $tag -----"
+	catch {
+	    ixNet remove $handle
+	    ixNet commit
 	}
+	set handle ""
+	return [ GetStandardReturnHeader ]
+    }
 }
 
 class EmulationObject {

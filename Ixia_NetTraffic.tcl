@@ -146,8 +146,8 @@ class Traffic {
     method traffic_disable {} {}
     method get_status {} {}
     method get_stats { args } {}
-	method get_stats_per_port { args } {}
-	method get_stats_per_port2 { args } {}
+    method get_stats_per_port { args } {}
+    method get_stats_per_port2 { args } {}
     method get_hex_data {} {}
     #--private method
     method GetProtocolTemp { pro } {}
@@ -156,98 +156,96 @@ class Traffic {
     method CreateQuickStream {} {}
     method GetQuickItem {} {}
     method CreatePerPortView { rxPort } {}
-	method CreatePerPrecedenceView {} {}
+    method CreatePerPrecedenceView {} {}
     method CreatePortView {} {}
-	method start {} {
-		set tag "body Traffic::start [info script]"
-Deputs "----- TAG: $tag -----"
-		if { [ catch {
-			if { [ ixNet getA $handle -state ] == "unapplied" } {
-				Tester::apply_traffic
-			}
-		} err ] } {
-Deputs "traffic start error:$err"		
-		}
-		if { [ catch {
-			ixNet exec startStatelessTraffic $handle
-		} ] } {
-			after 2000
-			ixNet exec startStatelessTraffic $handle
-		}
-		return [ GetStandardReturnHeader ]
-	}
-	method stop {} {
-		set tag "body Traffic::stop [info script]"
-Deputs "----- TAG: $tag -----"
-		ixNet exec stopStatelessTraffic $handle
-		return [ GetStandardReturnHeader ]
-	}
-	method completed {} {
-		set tag "body Traffic::completed [info script]"
-Deputs "----- TAG: $tag -----"
+    method start {} {
+        set tag "body Traffic::start [info script]"
+        Deputs "----- TAG: $tag -----"
+        if { [ catch {
+            if { [ ixNet getA $handle -state ] == "unapplied" } {
+                Tester::apply_traffic
+            }
+        } err ] } {
+            Deputs "traffic start error:$err"		
+        }
+        if { [ catch {
+            ixNet exec startStatelessTraffic $handle
+        } ] } {
+            after 2000
+            ixNet exec startStatelessTraffic $handle
+        }
+        return [ GetStandardReturnHeader ]
+    }
+    method stop {} {
+        set tag "body Traffic::stop [info script]"
+        Deputs "----- TAG: $tag -----"
+        ixNet exec stopStatelessTraffic $handle
+        return [ GetStandardReturnHeader ]
+    }
+    method completed {} {
+        set tag "body Traffic::completed [info script]"
+        Deputs "----- TAG: $tag -----"
+
+        set rate [ GetStatsFromReturn [ get_stats ] tx_frame_rate ]
+        set tx [ GetStatsFromReturn [ get_stats ] tx_frame_count ]
+        if { $rate == 0 && $tx > 0 } {
+            return 1
+        } else {
+            return 0
+        }
+    }
 	
-		set rate [ GetStatsFromReturn [ get_stats ] tx_frame_rate ]
-		set tx [ GetStatsFromReturn [ get_stats ] tx_frame_count ]
-		if { $rate == 0 && $tx > 0 } {
-			return 1
-		} else {
-			return 0
-		}
-	}
-	
-	method wait_started {} {
-		set tag "body Traffic::wait_started [info script]"
-Deputs "----- TAG: $tag -----"
-		set timeout 30
-		set start_click [ clock seconds ]
-		while { 1 } {
-			set timeout_click \
-				[ expr [ clock seconds ] - $start_click ]
-			if { $timeout_click >= 30 } {
-				return 0
-			}
-			set rate [ GetStatsFromReturn [ get_stats ] tx_frame_rate ]
-			if { $rate == 0 } {
-				after 1000
-			} else {
-				return 1
-			}
-		}
-	}
-	
-	method wait_stopped {} {
-		set tag "body Traffic::wait_stopped [info script]"
-Deputs "----- TAG: $tag -----"
-		set timeout 30
-		set start_click [ clock seconds ]
-		while { 1 } {
-			set timeout_click \
-				[ expr [ clock seconds ] - $start_click ]
-			if { $timeout_click >= 30 } {
-				return 0
-			}
-			set rate [ GetStatsFromReturn [ get_stats ] tx_frame_rate ]
-			if { $rate != 0 } {
-				after 1000
-			} else {
-				return 1
-			}
-		}
-	}
-	
-	method suspend {} {
-		set tag "body Traffic::suspend [info script]"
-Deputs "----- TAG: $tag -----"
-		ixNet setA $handle -suspend True
-		ixNet commit
-	}
-	
-	method unsuspend {} {
-		set tag "body Traffic::unsuspend [info script]"
-Deputs "----- TAG: $tag -----"
-		ixNet setA $handle -suspend False
-		ixNet commit
-	}
+    method wait_started {} {
+        set tag "body Traffic::wait_started [info script]"
+        Deputs "----- TAG: $tag -----"
+        set timeout 30
+        set start_click [ clock seconds ]
+        while { 1 } {
+            set timeout_click  expr [ clock seconds ] - $start_click ]
+            if { $timeout_click >= 30 } {
+                return 0
+            }
+            set rate [ GetStatsFromReturn [ get_stats ] tx_frame_rate ]
+            if { $rate == 0 } {
+                after 1000
+            } else {
+                return 1
+            }
+        }
+    }
+    
+    method wait_stopped {} {
+        set tag "body Traffic::wait_stopped [info script]"
+        Deputs "----- TAG: $tag -----"
+        set timeout 30
+        set start_click [ clock seconds ]
+        while { 1 } {
+            set timeout_click [ expr [ clock seconds ] - $start_click ]
+            if { $timeout_click >= 30 } {
+                return 0
+            }
+            set rate [ GetStatsFromReturn [ get_stats ] tx_frame_rate ]
+            if { $rate != 0 } {
+                after 1000
+            } else {
+                return 1
+            }
+        }
+    }
+    
+    method suspend {} {
+        set tag "body Traffic::suspend [info script]"
+        Deputs "----- TAG: $tag -----"
+        ixNet setA $handle -suspend True
+        ixNet commit
+    }
+    
+    method unsuspend {} {
+        set tag "body Traffic::unsuspend [info script]"
+        Deputs "----- TAG: $tag -----"
+        ixNet setA $handle -suspend False
+        ixNet commit
+    }
     public variable id
     
     #stream stats
@@ -507,37 +505,36 @@ class GreHdr {
 	method config { args } {}
 }
 
-
-
 # -- Traffic implmentation
 body Traffic::constructor { port { hTraffic NULL } } {
     set tag "body Traffic::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-	if { $hTraffic != "NULL" } {
-		set handle $hTraffic
-		set highLevelStream [ ixNet getL $handle configElement ]
-		set endpointSet [ ixNet getL $handle endpointSet ]
-	} else {
-
-		set root    [ixNet getRoot]
-		set handle  [ixNet add $root/traffic trafficItem]
-	}
-	regexp {\d+} $handle id
-	ixNet setM $handle \
-		-name $this
-Deputs "traffic item handle:$handle"
-	
-	set portObj $port
-Deputs "portObj:$portObj"
-	if { [ catch {
-		set hPort [ $port cget -handle ]
-	} ] } {
-Deputs "port:$port"
-		set port [ GetObject $port ]
-Deputs "port:$port"		
-		set hPort [ $port cget -handle ]
-	}
+    if { $hTraffic != "NULL" } {
+        set handle $hTraffic
+        set highLevelStream [ ixNet getL $handle configElement ]
+        set endpointSet     [ ixNet getL $handle endpointSet ]
+        set handleName     [ ixNet getA $handle -name ]
+    } else {
+        set root        [ixNet getRoot]
+        set handle      [ixNet add $root/traffic trafficItem]
+        set handleName $this
+    }
+    regexp {\d+} $handle id
+    ixNet setM $handle \
+            -name $handleName
+    Deputs "traffic item handle:$handle"
+    
+    set portObj $port
+    Deputs "portObj:$portObj"
+    if { [ catch {
+        set hPort [ $port cget -handle ]
+    } ] } {
+        Deputs "port:$port"
+        set port [ GetObject $port ]
+        Deputs "port:$port"		
+        set hPort [ $port cget -handle ]
+    }
 }
 
 body Traffic::config { args  } {
@@ -549,7 +546,7 @@ Deputs "reborn traffic...."
 		set handle  [ixNet add $root/traffic trafficItem]
 	
 		regexp {\d+} $handle id
-		ixNet setA $handle -name $this
+		ixNet setA $handle -name $handleName
 		set port $portObj
 Deputs "port:$port"
 		if { [ catch {
@@ -1644,10 +1641,9 @@ Deputs "tx_num config:$tx_num"
     
 Deputs Step190
     if { [ info exists min_frame_len ] } {
-		foreach configElement $highLevelStream {
-
-			ixNet setA $configElement/frameSize -incrementFrom $min_frame_len
-		}
+        foreach configElement $highLevelStream {
+                ixNet setA $configElement/frameSize -incrementFrom $min_frame_len
+        }
 #		ixNet commit
     }
     
@@ -1943,7 +1939,7 @@ Deputs "handle:$handle"
 		set oldHandle $handle
 		set handle [ lindex [ ixNet getL $root/traffic trafficItem ] end ]
 		ixNet remove $oldHandle
-		ixNet setA $handle -name $this
+		ixNet setA $handle -name $handleName
 		ixNet commit
 		
 		set endpointSetList [ ixNet getL $handle endpointSet ]
@@ -1955,169 +1951,171 @@ Deputs "stream:$highLevelStream"
     return [GetStandardReturnHeader]
 
 }
+
 body Traffic::enable {} {
     set tag "body Traffic::enable [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-	if { [ string tolower [ ixNet getA $handle -enabled ] ] == "true" && [ string tolower [ ixNet getA $handle -suspend ] ] == "false" } {
-Deputs "no change."	
-		return [ GetStandardReturnHeader ]
-	}
-Deputs "enable:[ ixNet getA $handle -enabled ] suspend:[ ixNet getA $handle -suspend ]"
-	#ixNet setA $handle -enabled True 
-	ixNet setA $handle -suspend False
+    Deputs "enable:[ ixNet getA $handle -enabled ] suspend:[ ixNet getA $handle -suspend ]"
+    ixNet setA $handle -enabled true 
+    ixNet setA $handle -suspend false
     ixNet commit
-	ixNet setA $handle -suspend False
-    ixNet commit
+    
+    foreach flow [ixNet getL $handle highLevelStream] {
+        set flowName [ ixNet getA $flow -name ]
+        if { $flowName == $this || "::$flowName" == $this } {
+            ixNet setA $flow -suspend false
+            ixNet commit
+        }
+    }
 		
     return [ GetStandardReturnHeader ]
 }
+
 body Traffic::disable {} {
     set tag "body Traffic::disable [info script]"
-Deputs "----- TAG: $tag -----"
-	#ixNet setA $handle -enabled false
-	ixNet setA $handle -suspend True
+    Deputs "----- TAG: $tag -----"
+    ixNet setA $handle -enabled false
+    ixNet setA $handle -suspend true
     ixNet commit
-	ixNet setA $handle -suspend True
-    ixNet commit
-	
+    
+    Deputs "enable:[ ixNet getA $handle -enabled ] suspend:[ ixNet getA $handle -suspend ]"
+    foreach flow [ixNet getL $handle highLevelStream] {
+        set flowName [ ixNet getA $flow -name ]
+        if { $flowName == $this || "::$flowName" == $this } {
+            ixNet setA $flow -suspend true
+            ixNet commit
+        } else {
+            ixNet setA $handle -enabled true
+            ixNet setA $handle -suspend false
+            ixNet commit
+        }
+    }
+    
     return [ GetStandardReturnHeader ]
-
 }
 
 body Traffic::traffic_enable {} {
     set tag "body Traffic::traffic_enable [info script]"
-Deputs "----- TAG: $tag -----"
-
-	if { [ string tolower [ ixNet getA $handle -enabled ] ] == "true" && [ string tolower [ ixNet getA $handle -suspend ] ] == "false" } {
-Deputs "no change."	
-		return [ GetStandardReturnHeader ]
-	}
-Deputs "enable:[ ixNet getA $handle -enabled ] suspend:[ ixNet getA $handle -suspend ]"
-	ixNet setA $handle -enabled True 
-	ixNet setA $handle -suspend False
-    ixNet commit
-	ixNet setA $handle -suspend False
-    ixNet commit
-		
+    Deputs "----- TAG: $tag -----"
+    
+    enable
     return [ GetStandardReturnHeader ]
 }
+
 body Traffic::traffic_disable {} {
     set tag "body Traffic::traffic_disable [info script]"
-Deputs "----- TAG: $tag -----"
-	ixNet setA $handle -enabled false
-	
-    ixNet commit
-	
+    Deputs "----- TAG: $tag -----"
+    
+    disable
     return [ GetStandardReturnHeader ]
-
 }
 
 body Traffic::get_status {} {
     set tag "body Traffic::get_status [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-	set ret [ixNet getA $handle -enabled ]	
+    set ret [ixNet getA $handle -enabled ]	
     return $ret
-
 }
 
 body Traffic::GetProtocolTemp { pro } {
     set tag "body Traffic::GetProtocolTemp [info script]"
-Deputs "----- TAG: $tag -----"
-Deputs "Get protocol..."
-Deputs "protocol to match:$pro"
+    Deputs "----- TAG: $tag -----"
+    Deputs "Get protocol..."
+    Deputs "protocol to match:$pro"
     set root [ixNet getRoot]
     set protocolTemplateList [ ixNet getList $root/traffic protocolTemplate ]
     set index 0
     foreach protocol $protocolTemplateList {
-	   if { [ regexp -nocase $pro $protocol ] } {
-		  if { [ regexp -nocase "${pro}\[a-z\]+" $protocol ] == 0 } {
-			 break
-		  }
-	   }
-	   incr index
+        if { [ regexp -nocase $pro $protocol ] } {
+            if { [ regexp -nocase "${pro}\[a-z\]+" $protocol ] == 0 } {
+                   break
+            }
+        }
+        incr index
     }
     if { $index < [llength $protocolTemplateList] } {
-	   return [ lindex $protocolTemplateList $index ]
+	return [ lindex $protocolTemplateList $index ]
     } else {
-	   return ""
+	return ""
     }
 }
 
 body Traffic::CreateQuickStream {} {
     set tag "body Traffic::CreateQuickStream [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     #-- create trafficItem
-Deputs Step10
+    Deputs Step10
     set quickItem   [ GetQuickItem ]
     if { $quickItem == "" } {
-	   ixNet setMultiA $handle -trafficItemType quick -trafficType raw
+	ixNet setMultiA $handle -trafficItemType quick -trafficType raw
     } else {
-	   set handle $quickItem 
+	set handle $quickItem 
     }
     #-- add endpointSet
-Deputs "handle $handle"
+    Deputs "handle $handle"
     set endpointSet [ixNet add $handle endpointSet]
-Deputs "port:$hPort"
+    Deputs "port:$hPort"
     ixNet setMultiA $endpointSet -sources "$hPort/protocols"
-Deputs Step40
+    Deputs Step40
     ixNet commit
-Deputs Step50
+    Deputs Step50
     set handle      [ ixNet remapIds $handle ]
-Deputs Step60
+    Deputs Step60
     set endpointSet [ ixNet remapIds $endpointSet ]
-Deputs Step70
+    Deputs Step70
     #-- for every stream is not bi-direction, thus only one highlevelstream will be created when creating endpointSet
     set highLevelStream [ lindex [ ixNet getList $handle highLevelStream ] end ]
-Deputs StepDone
+    Deputs StepDone
 }
+
 body Traffic::CreateRawStream { { enable_sig 1 } } {
     set tag "body Traffic::CreateRawStream [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     #-- create trafficItem
-Deputs Step10
+    Deputs Step10
     ixNet setMultiA $handle -trafficItemType l2L3 -trafficType raw
     #-- add endpointSet
-# IxDebugOn	
-Deputs "handle $handle"
+    # IxDebugOn	
+    Deputs "handle $handle"
     set endpointSet [ixNet add $handle endpointSet]
-Deputs "port:$hPort"
+    Deputs "port:$hPort"
     set dests [list]
     set root [ixNet getRoot]
     foreach port [ ixNet getList $root vport ] {
-Deputs "dest port:$port"
-		if { $port == $hPort } {
-			continue
-		}
-Deputs "lappend dests..."
-	   lappend dests "$port/protocols"
+        Deputs "dest port:$port"
+        if { $port == $hPort } {
+                continue
+        }
+        Deputs "lappend dests..."
+	lappend dests "$port/protocols"
     }
-Deputs "dests: $dests"
-# IxDebugOff
-	if { [ llength $dests ] == 0 } {
-		ixNet setMultiA $endpointSet -sources "$hPort/protocols" -destinations "$hPort/protocols"
-	} else {
-		ixNet setMultiA $endpointSet -sources "$hPort/protocols" -destinations $dests
-	}
-Deputs Step40
+    Deputs "dests: $dests"
+    # IxDebugOff
+    if { [ llength $dests ] == 0 } {
+            ixNet setMultiA $endpointSet -sources "$hPort/protocols" -destinations "$hPort/protocols"
+    } else {
+            ixNet setMultiA $endpointSet -sources "$hPort/protocols" -destinations $dests
+    }
+    Deputs Step40
     ixNet commit
-Deputs Step50
+    Deputs Step50
     set handle      [ ixNet remapIds $handle ]
-Deputs Step60
+    Deputs Step60
     set endpointSet [ ixNet remapIds $endpointSet ]
-Deputs Step70
+    Deputs Step70
     #-- for every stream is not bi-direction, thus only one highlevelstream will be created when creating endpointSet
     set highLevelStream [ ixNet getList $handle configElement ]
-Deputs "stream handle:$highLevelStream"
-Deputs StepDone
+    Deputs "stream handle:$highLevelStream"
+    Deputs StepDone
 
-	if { $enable_sig } {
-		ixNet setA $handle/tracking -trackBy sourceDestPortPair0
-		ixNet commit
-	}
-
+    if { $enable_sig } {
+            ixNet setA $handle/tracking -trackBy sourceDestPortPair0
+            ixNet commit
+    }
 }
+
 body Traffic::GetField { stack value } {
     set tag "body Traffic::GetField [info script]"
 Deputs "----- TAG: $tag -----"
@@ -2183,7 +2181,7 @@ body Traffic::get_stats { args } {
 			   error "$errNumber(1) key:port object value:$rx_port"
 			}
 
-			set view  [ ixNet getF $root/statistics view -caption "trafficPerPortView($this:$rx_port)" ]
+			set view  [ ixNet getF $root/statistics view -caption "trafficPerPortView($handleName:$rx_port)" ]
 			if { $view == "" } {
 				if { [ catch {
 	Deputs "recreate view..."
@@ -2231,7 +2229,7 @@ Deputs "stats:$stats"
 Deputs "row:$row"
 
 		if { [ info exists rx_port ] == 0 } {
-			if { [ lindex $row $traNameIndex ] != $this } {
+			if { [ lindex $row $traNameIndex ] != $handleName } {
 				continue
 			}
 		}
@@ -2410,7 +2408,7 @@ Deputs "----- TAG: $tag -----"
     }
 
     set root [ixNet getRoot]
-    set view  [ ixNet getF $root/statistics view -caption "trafficPerPortView($this:$rx_port)" ]
+    set view  [ ixNet getF $root/statistics view -caption "trafficPerPortView($handleName:$rx_port)" ]
     if { $view == "" } {
 		if { [ catch {
 #IxDebugOn
@@ -2616,7 +2614,7 @@ Deputs "----- TAG: $tag -----"
     }
 
     set root [ixNet getRoot]
-    set view  [ ixNet getF $root/statistics view -caption "trafficPerPortView($this)" ]
+    set view  [ ixNet getF $root/statistics view -caption "trafficPerPortView($handleName)" ]
     if { $view == "" } {
 		if { [ catch {
 #IxDebugOn
@@ -2809,7 +2807,7 @@ Deputs "----- TAG: $tag -----"
 
     set root [ixNet getRoot]
     set customView          [ ixNet add $root/statistics view ]
-    ixNet setM  $customView -caption "trafficPerPortView($this:$rxPort)" -type layer23TrafficFlow  -visible true
+    ixNet setM  $customView -caption "trafficPerPortView($handleName:$rxPort)" -type layer23TrafficFlow  -visible true
     ixNet commit
     set customView          [ ixNet remapIds $customView ]
 Deputs "view:$customView"
@@ -2817,8 +2815,8 @@ Deputs "view:$customView"
 Deputs "available item: [ixNet getL $customView availableTrafficItemFilter]"
 Deputs "available port: [ixNet getL $customView availablePortFilter]"
  
-Deputs "handle:$handle obj:$this" 
-	set itemFId	[ixNet getF $customView availableTrafficItemFilter -name $this]
+Deputs "handle:$handle obj:$handleName" 
+	set itemFId	[ixNet getF $customView availableTrafficItemFilter -name $handleName]
 Deputs "item filtered Id:$itemFId"
     ixNet setA $customView/layer23TrafficItemFilter -trafficItemFilterIds $itemFId
     
@@ -2849,18 +2847,18 @@ Deputs "----- TAG: $tag -----"
 
     set root [ixNet getRoot]
     set customView          [ ixNet add $root/statistics view ]
-    ixNet setM  $customView -caption "trafficPerPrecedenceView($this)" -type layer23TrafficFlow  -visible true
+    ixNet setM  $customView -caption "trafficPerPrecedenceView($handleName)" -type layer23TrafficFlow  -visible true
     ixNet commit
     set customView          [ ixNet remapIds $customView ]
 Deputs "view:$customView"
     
 Deputs "available filter: [ixNet getL $customView availableTrackingFilter]"
  
-Deputs "handle:$handle obj:$this" 
-	set itemFId	[ixNet getF $customView availableTrafficItemFilter -name $this]
+Deputs "handle:$handle obj:$handleName" 
+	set itemFId	[ixNet getF $customView availableTrafficItemFilter -name $handleName]
 Deputs "item filtered Id:$itemFId"
     ixNet setA $customView/layer23TrafficItemFilter -trafficItemFilterIds $itemFId
-Deputs "handle:$handle obj:$this" 
+Deputs "handle:$handle obj:$handleName" 
 	set itemFId	[ixNet getF $customView availableTrackingFilter -name "IPv4 :Precedence"]
 Deputs "item filtered Id:$itemFId"
 	set filter0 [ ixNet add $customView/layer23TrafficFlowFilter trackingFilter ]
@@ -2886,7 +2884,7 @@ Deputs "----- TAG: $tag -----"
 
     set root [ixNet getRoot]
     set customView          [ ixNet add $root/statistics view ]
-    ixNet setM  $customView -caption "trafficPerPortView($this)" -type layer23TrafficFlow  -visible true
+    ixNet setM  $customView -caption "trafficPerPortView($handleName)" -type layer23TrafficFlow  -visible true
     ixNet commit
     set customView          [ ixNet remapIds $customView ]
 Deputs "view:$customView"
@@ -2894,8 +2892,8 @@ Deputs "view:$customView"
 Deputs "available item: [ixNet getL $customView availableTrafficItemFilter]"
 Deputs "available port: [ixNet getL $customView availablePortFilter]"
  
-Deputs "handle:$handle obj:$this" 
-	set itemFId	[ixNet getF $customView availableTrafficItemFilter -name $this]
+Deputs "handle:$handle obj:$handleName" 
+	set itemFId	[ixNet getF $customView availableTrafficItemFilter -name $handleName]
 Deputs "item filtered Id:$itemFId"
     ixNet setA $customView/layer23TrafficItemFilter -trafficItemFilterIds $itemFId    
     ixNet setA $customView/layer23TrafficPortFilter -portFilterIds [ixNet getL $customView availablePortFilter]

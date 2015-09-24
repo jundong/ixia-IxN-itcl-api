@@ -96,7 +96,7 @@ class Port {
     method get_stats {} {}
     method ping { args } {}
     method reset {} {}
-    method traffic {} {}
+    method traffic { name } {}
     method start_traffic {} {}
     method stop_traffic {} {} 
     method break_link {} {}
@@ -188,24 +188,24 @@ class Port {
 
 body Port::constructor { { hw_id NULL } { medium NULL } { hPort NULL } } {
     set tag "body Port::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-# -- Check for Multiuser Login
+    #-- Check for Multiuser Login
     set portObjList [ GetAllPortObj ]
     if { [ llength $portObjList ] == 0 } {
-Deputs "All port obj:[GetAllPortObj]"
+        Deputs "All port obj:[GetAllPortObj]"
         set strangePort [ CheckStrangePort ]
-Deputs "Strange port:$strangePort"        
+        Deputs "Strange port:$strangePort"        
         if { $strangePort == 0 } {
             global loginInfo
             Login $loginInfo
         }
     }
 
-Deputs Step10
+    Deputs Step10
     if { $hw_id != "NULL" } {
-Deputs "hw_id:$hw_id"    
-# -- check hardware
+        Deputs "hw_id:$hw_id"    
+        # -- check hardware
         set locationInfo [ split $hw_id "/" ]
         set chassis     [ lindex $locationInfo 0 ]
         set ModuleNo    [ lindex $locationInfo 1 ]
@@ -213,7 +213,7 @@ Deputs "hw_id:$hw_id"
         if { [ GetRealPort $chassis $ModuleNo $PortNo ] == [ ixNet getNull ] } {
             error "Port hardware not found: $hw_id"
         }
-Deputs Step20    
+        Deputs Step20    
         catch {
             if { $medium != "NULL" } {
                 set handle [ Connect $hw_id $medium 1 ]
@@ -222,7 +222,7 @@ Deputs Step20
             }
         }
         set location $hw_id
-Deputs "location:$location" 
+        Deputs "location:$location" 
     } else {
         if { $hPort != "NULL" } {
             set chassis ""
@@ -230,12 +230,13 @@ Deputs "location:$location"
             set port ""
 
             set handle $hPort
+            set handleName [ ixNet getA $handle -name ]
             set connectionInfo [ ixNet getA $handle -connectionInfo ]
-        Deputs "connectionInfo :$connectionInfo"
+            Deputs "connectionInfo :$connectionInfo"
             regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-        Deputs "chas:$chassis card:$card port$port"
+            Deputs "chas:$chassis card:$card port$port"
             set location ${chassis}/${card}/${port}
-            ixNet setA $handle -name $this
+            ixNet setA $handle -name $handleName
             ixNet commit
         }   
     }
@@ -246,7 +247,7 @@ Deputs "location:$location"
 
 body Port::CheckStrangePort {} {
     set tag "body Port::CheckStrangePort [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     set root [ ixNet getRoot]
     for { set index 0 } { $index < 6 } { incr index } {
         if { [ llength [ ixNet getL $root vport ] ] > 0 } {
@@ -260,18 +261,18 @@ Deputs "----- TAG: $tag -----"
 
 body Port::Connect { location { medium NULL } { checkLink 0 } } {
     set tag "body Port::Connect [info script]"
-Deputs "----- TAG: $tag -----"
-# -- add vport
+    Deputs "----- TAG: $tag -----"
+    # -- add vport
     set root    [ ixNet getRoot ]
     set vport   [ ixNet add $root vport ]
-    ixNet setA $vport -name $this
+    ixNet setA $vport -name $handleName
     if { $medium != "NULL" } {
-Deputs "connect medium:$medium"    
+    Deputs "connect medium:$medium"    
         ixNet setA $vport/l1Config/ethernet -media $medium
     }
     set vport [ixNet remapIds $vport]
     set handle $vport
-# -- connect to hardware
+    # -- connect to hardware
     set locationInfo [ split $location "/" ]
     set chassis     [ lindex $locationInfo 0 ]
     set ModuleNo    [ lindex $locationInfo 1 ]
@@ -1399,7 +1400,7 @@ Deputs "pro caption list:$proCaptionList"
     set stats    [ ixNet getA $view/page -rowValues ]
     #set rxstats  [ ixNet getA $rxview/page -rowValues ]
     if { [catch { set rxstats  [ ixNet getA $rxview/page -rowValues ] } ]} {
-        set rxstats [list $this  "0"]
+        set rxstats [list $handleName  "0"]
     }
     set proStats [ ixNet getA $proview/page -rowValues ]
     
@@ -1478,7 +1479,7 @@ Deputs "stats val:$statsVal"
 Deputs "rxrow:$rxrow"
 
     
-        if { $this != [ lindex $rxrow $rx_port ] } {
+        if { $handleName != [ lindex $rxrow $rx_port ] } {
             continue
         }
 
@@ -2016,7 +2017,7 @@ Deputs "unconncted:$unconnected"
 Deputs "int:$int"        
                 ixNet setA $int -type routed
             }
-            ixNet setA $int -description $this
+            ixNet setA $int -description $handleName
             ixNet commit
             set int [ixNet remapIds $int]
             lappend handle $int

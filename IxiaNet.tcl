@@ -264,7 +264,6 @@ set releaseVersion 4.66
 #        122. Release on May 14th
 
 proc GetEnvTcl { product } {
-   
    set productKey     "HKEY_LOCAL_MACHINE\\SOFTWARE\\Ixia Communications\\$product"
    set versionKey     [ registry keys $productKey ]
    set latestKey      [ lindex $versionKey end ]
@@ -297,11 +296,11 @@ proc loadconfig { filename } {
         lappend portnamelist [ixNet getA $portobj -name]
     }
     
-    set trafficlist [ixNet getL [ixNet getL $root traffic] trafficItem]
-    foreach trafficItemobj $trafficlist {
-        lappend trafficnamelist [ixNet getA $trafficItemobj -name]
+    set trafficObjs [ixNet getL [ixNet getL $root traffic] trafficItem]
+    foreach trafficItemobj $trafficObjs {
         set itemlist [ixNet getL $trafficItemobj highLevelStream]
         foreach trafficobj $itemlist {
+            lappend trafficlist $trafficItemobj
             lappend trafficnamelist [ixNet getA $trafficobj -name]
             lappend tportlist [ixNet getA $trafficobj -txPortName]
         }
@@ -369,7 +368,7 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
                     Port $pname NULL NULL $pobj
                 }
                 
-                foreach tname $trafficnamelist tobj $trafficlist tport $portnamelist {
+                foreach tname $trafficnamelist tobj $trafficlist tport $tportlist {
                     Traffic $tname $tport $tobj
                 }
                 
@@ -381,7 +380,7 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
                     Port $pname NULL NULL $pobj
                 }
                 
-                foreach tname $trafficnamelist tobj $trafficlist tport $portnamelist {
+                foreach tname $trafficnamelist tobj $trafficlist tport $tportlist {
                     Traffic $tname $tport $tobj
                 }
                 
@@ -397,7 +396,7 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
                 Port $pname NULL NULL $pobj
             }
             
-            foreach tname $trafficnamelist tobj $trafficlist tport $portnamelist {
+            foreach tname $trafficnamelist tobj $trafficlist tport $tportlist {
                 Traffic $tname $tport $tobj
             }
         }

@@ -33,7 +33,7 @@ Deputs "----- TAG: $tag -----"
 		if { [ catch {
 			set hPort   [ $portObj cget -handle ]
 		} ] } {
-			error "$errNumber(1) Port Object in DhcpHost ctor"
+			error "$errNumber(1) Port Object in OspfSession ctor"
 		}
 		
 		ixNet setM $hPort/protocols/ospf -enableDrOrBdr True

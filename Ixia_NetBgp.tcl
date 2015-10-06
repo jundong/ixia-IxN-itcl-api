@@ -20,7 +20,11 @@ class BgpSession {
 	set tag "body BgpSession::ctor [info script]"
 	Deputs "----- TAG: $tag -----"
 	set portObj [ GetObject $port ]
-	set handle $hPort
+        if { [ catch {
+	    set hPort   [ $portObj cget -handle ]
+	} ] } {
+	    error "$errNumber(1) Port Object in BgpSession ctor"
+	}
 	
 	if { $hBgpSession != "NULL" } {
 	    set handle $hBgpSession
@@ -35,13 +39,7 @@ class BgpSession {
 	global errNumber
 	
 	set tag "body BgpSession::reborn [info script]"
-	Deputs "----- TAG: $tag -----"
-
-	if { [ catch {
-	    set hPort   [ $portObj cget -handle ]
-	} ] } {
-	    error "$errNumber(1) Port Object in BgpSession ctor"
-	}		
+	Deputs "----- TAG: $tag -----"		
 	
 	ixNet setA $hPort/protocols/bgp -enabled True
 		
@@ -55,8 +53,8 @@ class BgpSession {
 	ixNet commit
 	set handle [ ixNet remapIds $handle ]
 	ixNet setA $handle \
-		-name $handleName \
-		-enabled True
+	    -name $handleName \
+	    -enabled True
 	ixNet commit
 	array set routeBlock [ list ]
 	
@@ -188,7 +186,7 @@ body BgpSession::config { args } {
     }
 	
     if { $handle == "" } {
-	    reborn $ip_version
+	reborn $ip_version
     }
     
     if { [ info exists ipv4_addr ] } {

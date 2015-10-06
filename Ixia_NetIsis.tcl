@@ -13,7 +13,7 @@
 class IsisSession {
     inherit RouterEmulationObject
 		
-    constructor { port } {}
+    constructor { port { hIsisSession NULL } } {}
     method reborn {} {}
     method config { args } {}
 
@@ -60,7 +60,7 @@ Deputs "handle:$handle"
 Deputs "rb_interface:$rb_interface"    
 }
 
-body IsisSession::constructor { port } {
+body IsisSession::constructor { port { hIsisSession NULL } } {
     set tag "body IsisSession::constructor [info script]"
     Deputs "----- TAG: $tag -----"
 	

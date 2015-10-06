@@ -17,7 +17,7 @@
 class LdpSession {
     inherit RouterEmulationObject
     	
-    constructor { port } {
+    constructor { port { hLdpSession NULL } } {
 		global errNumber
 		
 		set tag "body LdpSession::ctor [info script]"

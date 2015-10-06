@@ -1367,7 +1367,7 @@ body FcNPortHost::reborn {} {
 		if { [ catch {
 			set hPort   [ $portObj cget -handle ]
 		} ] } {
-			error "$errNumber(1) Port Object in DhcpHost ctor"
+			error "$errNumber(1) Port Object in FcNPortHost ctor"
 		}
 	}
 	

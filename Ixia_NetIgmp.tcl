@@ -95,8 +95,8 @@ body IgmpHost::constructor { port { hIgmpHost NULL } } {
 	error "$errNumber(1) Port Object in DhcpHost ctor"
     }
     
-    if { $hBgpSession != "NULL" } {
-	set handle $hBgpSession
+    if { $hIgmpHost != "NULL" } {
+	set handle $hIgmpHost
 	set handleName [ ixNet getA $handle -name ] 
     } else {
 	set handleName $this

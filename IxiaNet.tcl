@@ -307,6 +307,23 @@ proc loadconfig { filename } {
     }
 }
 
+proc initLoadObjects {} {
+    global portnamelist
+    global portlist
+    global trafficlist
+    global tportlist
+    global trafficnamelist
+    
+    foreach pname $portnamelist pobj $portlist {
+        Port $pname NULL NULL $pobj
+        # Generate protocols objects
+        $pname gen_pro_objs
+    }
+    
+    foreach tname $trafficnamelist tobj $trafficlist tport $tportlist {
+        Traffic $tname $tport $tobj
+    }
+}
 proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
     global configfile
     global ixN_tcl_v
@@ -364,26 +381,12 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
             if { $filename != "null" } {
                 loadconfig $filename
                 after 15000
-                foreach pname $portnamelist pobj $portlist {
-                    Port $pname NULL NULL $pobj
-                }
-                
-                foreach tname $trafficnamelist tobj $trafficlist tport $tportlist {
-                    Traffic $tname $tport $tobj
-                }
-                
+                initLoadObjects
                 return
             } elseif { $configfile != "null" } {
                 loadconfig $configfile
                 after 15000
-                foreach pname $portnamelist pobj $portlist {
-                    Port $pname NULL NULL $pobj
-                }
-                
-                foreach tname $trafficnamelist tobj $trafficlist tport $tportlist {
-                    Traffic $tname $tport $tobj
-                }
-                
+                initLoadObjects
                 return
             }
         }
@@ -392,13 +395,7 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
         if { $configfile != "null" } {
             loadconfig $configfile
             after 15000
-            foreach pname $portnamelist pobj $portlist {
-                Port $pname NULL NULL $pobj
-            }
-            
-            foreach tname $trafficnamelist tobj $trafficlist tport $tportlist {
-                Traffic $tname $tport $tobj
-            }
+            initLoadObjects
         }
         puts "Login on port $remote_serverPort."
     } else {

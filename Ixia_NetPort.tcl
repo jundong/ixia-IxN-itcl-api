@@ -239,9 +239,6 @@ body Port::constructor { { hw_id NULL } { medium NULL } { hPort NULL } } {
             regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
             Deputs "chas:$chassis card:$card port$port"
             set location ${chassis}/${card}/${port}
-            
-            # Generate protocols objects
-            gen_pro_objs
         }   
     }
     set intf_mac      ""
@@ -258,7 +255,10 @@ body Port::protocol { name } {
     
     set protocolObj [ GetObject $name ]
     if { $protocolObj == "" } {
-        set protocolObj [ GetObject ${handleName}_$name ]
+        set protocolObj [ GetObject ${handleName}/$name ]
+    }
+    if { $protocolObj == "" } {
+        set protocolObj [ GetObject ::Port::${handleName}/$name ]
     }
     if { $protocolObj == "" } { 
         error "No protocol name: $name"
@@ -279,86 +279,106 @@ body Port::gen_pro_objs { } {
             switch -exact $pro {
                 bfd {
                     set bfdR [ixNet getL $protocol router]
-                    Deputs "******* bfdR: $bfdR,  bfdObj: $${handleName}/bfd********"
-                    BfdSession ${handleName}/bfd $handle $bfdR
+                    Deputs "******* bfdR: $bfdR,  bfdObj: ${handleName}/bfd********"
+                    BfdSession ${handleName}/bfd $handleName $bfdR
                 }
                 bgp {
                     set bgpNR [ixNet getL $protocol neighborRange]
-                    BgpSession ${handleName}/bgp $handle $bgpNR
+                    BgpSession ${handleName}/bgp $handleName $bgpNR
                 }
                 igmp {
                     set igmpH [ixNet getL $protocol host]
-                    IgmpHost ${handleName}/igmp $handle $igmpH
+                    IgmpHost ${handleName}/igmp $handleName $igmpH
                 }
                 mld {
                     set mldH [ixNet getL $protocol host]
-                    MldHost ${handleName}/mld $handle $mldH
+                    MldHost ${handleName}/mld $handleName $mldH
                 }
                 isis {
                     set isisR [ixNet getL $protocol router]
-                    IsisSession ${handleName}/isis $handle $isisR
+                    Deputs "------******* isisR: $isisR,  isisObj: ${handleName}/isis, this: $this********"
+                    IsisSession ${handleName}/isis $handleName $isisR
                 }
                 ldp {
                     set ldpR [ixNet getL $protocol router]
-                    LdpSession ${handleName}/ldp $handle $ldpR
+                    LdpSession ${handleName}/ldp $handleName $ldpR
                 }
                 ospf {
                     set ospfR [ixNet getL $protocol router]
-                    Ospfv2Session ${handleName}/ospf $handle $ospfR
+                    Ospfv2Session ${handleName}/ospf $handleName $ospfR
                 }
                 ospfV3 {
                     set ospfV3R [ixNet getL $protocol router]
-                    Ospfv3Session ${handleName}/ospfV3 $handle $ospfV3R
+                    Ospfv3Session ${handleName}/ospfV3 $handleName $ospfV3R
                 }
             }
         }
     }
-    
+
     set protocolStack [ixNet getL $handle protocolStack]
+    Deputs "******* protocolStack: $protocolStack********"
     set protocolStackList [list ipEndpoint dhcpEndpoint dhcpServerEndpoint pppoxEndpoint]
     foreach proStack $protocolStackList {
         set ethernet [ixNet getL $protocolStack ethernet]
+        if { [llength $ethernet] == 0 } {
+            continue
+        }
+        Deputs "******* ethernet: $ethernet, proStack: $proStack********"
         set stack [ixNet getL $ethernet $proStack]
+        Deputs "******* stack: $stack********"
         if { $stack != "" } {
-            switch -exact $proStack {
-                dhcpEndpoint {
-                    set range [ixNet getL $stack range]
-                    set ipType [ixNet getA $range/dhcpRange -ipType]
-                    set objName [ixNet getA $range -name]
-                    if { $ipType == "IPv4" } {
-                        Dhcpv4Host $objName $handle $stack $range
-                    } elseif { $ipType == "IPv6" } {
-                        Dhcpv6Host $objName $handle $stack $range
-                    }
-                }
-                dhcpServerEndpoint {
-                    set range [ixNet getL $stack range]
-                    set ipType [ixNet getA $range/dhcpServerRange -ipType]
-                    set objName [ixNet getA $range -name]
-                    if { $ipType == "IPv4" } {
-                        Dhcpv4Server $objName $handle $stack $range
-                    } elseif { $ipType == "IPv6" } {
-                        Dhcpv6Server $objName $handle $stack $range
-                    }
-                }
-                pppoxEndpoint {
-                    set range [ixNet getL $stack range]
-                    set objName [ixNet getA $range -name]
-                    PppoeHost $objName $handle $stack $range
-                }
-                ipEndpoint {
-                    set range [ixNet getL $stack range]
-                    set objName [ixNet getA $range -name]
-                    set ipRangeOptions [ixNet getL $protocolStack ipRangeOptions]
-                    if { [llength $ipRangeOptions] != 0 } {
-                        if { [ixNet getA $ipRangeOptions -ipv6AddressMode] == "autoconf" } {
-                            Ipv6AutoConfigHost $objName $handle $stack $range
-                        } else {
-                            IPoEHost $objName $handle $stack $range
-                        }
-                    }
-                }
-            }
+            #switch -exact $proStack {
+            #    dhcpEndpoint {
+            #        set range [ixNet getL $stack range]
+            #        set ipType [ixNet getA $range/dhcpRange -ipType]
+            #        set objName [ixNet getA $range -name]
+            #        if { $objName == "::ixNet::OK" } {
+            #            set objName $handleName/dhcp
+            #        }
+            #        if { $ipType == "IPv4" } {
+            #            Dhcpv4Host $objName $handleName $stack $range
+            #        } elseif { $ipType == "IPv6" } {
+            #            Dhcpv6Host $objName $handleName $stack $range
+            #        }
+            #    }
+            #    dhcpServerEndpoint {
+            #        set range [ixNet getL $stack range]
+            #        set ipType [ixNet getA $range/dhcpServerRange -ipType]
+            #        set objName [ixNet getA $range -name]
+            #        if { $objName == "::ixNet::OK" } {
+            #            set objName $handleName/dhcpServer
+            #        }
+            #        if { $ipType == "IPv4" } {
+            #            Dhcpv4Server $objName $handle $stack $range
+            #        } elseif { $ipType == "IPv6" } {
+            #            Dhcpv6Server $objName $handleName $stack $range
+            #        }
+            #    }
+            #    pppoxEndpoint {
+            #        set range [ixNet getL $stack range]
+            #        set objName [ixNet getA $range -name]
+            #        if { $objName == "::ixNet::OK" } {
+            #            set objName $handleName/pppox
+            #        }
+            #        PppoeHost $objName $handleName $stack $range
+            #    }
+            #    ipEndpoint {
+            #        set range [ixNet getL $stack range]
+            #        set objName [ixNet getA $range -name]
+            #        if { $objName == "::ixNet::OK" } {
+            #            set objName $handleName/ip
+            #        }
+            #        set ipRangeOptions [ixNet getL $protocolStack ipRangeOptions]
+            #        Deputs "******* range: $range, objName: $objName, ipRangeOptions: $ipRangeOptions********"
+            #        if { [llength $ipRangeOptions] != 0 } {
+            #            if { [ixNet getA $ipRangeOptions -ipv6AddressMode] == "autoconf" } {
+            #                Ipv6AutoConfigHost $objName $handleName $stack $range
+            #            } else {
+            #                IPoEHost $objName $handleName $stack $range
+            #            }
+            #        }
+            #    }
+            #}
         }
     }
 }

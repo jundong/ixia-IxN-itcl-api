@@ -192,6 +192,7 @@ body Port::constructor { { hw_id NULL } { medium NULL } { hPort NULL } } {
     set tag "body Port::ctor [info script]"
     Deputs "----- TAG: $tag -----"
 
+    set handleName $this
     #-- Check for Multiuser Login
     set portObjList [ GetAllPortObj ]
     if { [ llength $portObjList ] == 0 } {
@@ -238,25 +239,31 @@ body Port::constructor { { hw_id NULL } { medium NULL } { hPort NULL } } {
             regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
             Deputs "chas:$chassis card:$card port$port"
             set location ${chassis}/${card}/${port}
-            ixNet setA $handle -name $handleName
-            ixNet commit
+            
+            # Generate protocols objects
+            gen_pro_objs
         }   
     }
     set intf_mac      ""
     set intf_ipv4     ""
     set inter_burst_gap 12
+    
+    ixNet setA $handle -name $handleName
+    ixNet commit
 }
 
 body Port::protocol { name } {
     set tag "body Port::protocol [info script]"
     Deputs "----- TAG: $tag -----"
     
-    set protocol [ GetObject $name ]
-    if { $protocol != "" } {
-        return $protocol
-    } else {
+    set protocolObj [ GetObject $name ]
+    if { $protocolObj == "" } {
+        set protocolObj [ GetObject ${handleName}_$name ]
+    }
+    if { $protocolObj == "" } { 
         error "No protocol name: $name"
     }
+    return $protocolObj
 }
 
 body Port::gen_pro_objs { } {
@@ -264,49 +271,44 @@ body Port::gen_pro_objs { } {
     Deputs "----- TAG: $tag -----"
     
     set protocols [ixNet getL $handle protocols]
-    set protocolList [list bfd bgp igmp isis ldp mld ospf ospfV3 rip ripng static]
+    set protocolList [list bfd bgp igmp isis ldp mld ospf ospfV3 rip ripng]
     foreach pro $protocolList {
         set protocol [ixNet getL $protocols $pro]
+        Deputs "******* pro: $pro,  protocol: $protocol, enable: [ ixNet getA $protocol -enabled ]********"
         if { [ ixNet getA $protocol -enabled ] } {
             switch -exact $pro {
                 bfd {
                     set bfdR [ixNet getL $protocol router]
-                    BfdSession ${handleName}_bfd $handle $bfdR
+                    Deputs "******* bfdR: $bfdR,  bfdObj: $${handleName}/bfd********"
+                    BfdSession ${handleName}/bfd $handle $bfdR
                 }
                 bgp {
                     set bgpNR [ixNet getL $protocol neighborRange]
-                    BgpSession ${handleName}_bgp $handle $bgpNR
+                    BgpSession ${handleName}/bgp $handle $bgpNR
                 }
                 igmp {
                     set igmpH [ixNet getL $protocol host]
-                    IgmpHost ${handleName}_igmp $handle $igmpH
+                    IgmpHost ${handleName}/igmp $handle $igmpH
                 }
                 mld {
                     set mldH [ixNet getL $protocol host]
-                    MldHost ${handleName}_mld $handle $mldH
+                    MldHost ${handleName}/mld $handle $mldH
                 }
                 isis {
                     set isisR [ixNet getL $protocol router]
-                    IsisSession ${handleName}_isis $handle $isisR
+                    IsisSession ${handleName}/isis $handle $isisR
                 }
                 ldp {
                     set ldpR [ixNet getL $protocol router]
-                    LdpSession ${handleName}_ldp $handle $ldpR
+                    LdpSession ${handleName}/ldp $handle $ldpR
                 }
                 ospf {
                     set ospfR [ixNet getL $protocol router]
-                    Ospfv2Session ${handleName}_ospf $handle $ospfR
+                    Ospfv2Session ${handleName}/ospf $handle $ospfR
                 }
                 ospfV3 {
                     set ospfV3R [ixNet getL $protocol router]
-                    Ospfv3Session ${handleName}_ospfV3 $handle $ospfV3R
-                }
-                rip {
-                    set ripR [ixNet getL $protocol router]
-                    RipSession ${handleName}_rip $handle $ripR
-                }
-                static {
-                    set route_block $value
+                    Ospfv3Session ${handleName}/ospfV3 $handle $ospfV3R
                 }
             }
         }
@@ -445,29 +447,29 @@ Deputs Step30
     }
     set chassis $chas
     set realCard $chassis/card:$card
-Deputs "card:$realCard"
+    Deputs "card:$realCard"
     set cardList [ixNet getList $chassis card]
-Deputs "cardList:$cardList"
+    Deputs "cardList:$cardList"
     set findCard 0
     foreach ca $cardList {
         eval set ca $ca
         eval set realCard $realCard
-Deputs "realCard:$realCard"
-Deputs "ca:$ca"
+    Deputs "realCard:$realCard"
+    Deputs "ca:$ca"
         if { $ca == $realCard } {
             set findCard 1
             break
         } 
     }
-Deputs Step10
-Deputs "findCard:$findCard"
+    Deputs Step10
+    Deputs "findCard:$findCard"
     if { $findCard == 0} {
         return [ixNet getNull]
     }
     set realPort $chassis/card:$card/port:$port
-Deputs "port:$realPort"
+    Deputs "port:$realPort"
     set portList [ ixNet getList $chassis/card:$card port ]
-Deputs "portList:$portList"
+    Deputs "portList:$portList"
     set findPort 0
     foreach po $portList {
         eval set po $po
@@ -477,9 +479,9 @@ Deputs "portList:$portList"
             break
         }
     }
-Deputs "findPort:$findPort"
+    Deputs "findPort:$findPort"
     if { $findPort } {
-Deputs "real port:    $chassis/card:$card/port:$port"
+        Deputs "real port:    $chassis/card:$card/port:$port"
         ixNet exec clearOwnership $chassis/card:$card/port:$port
         return $chassis/card:$card/port:$port
     } else {
@@ -488,8 +490,7 @@ Deputs "real port:    $chassis/card:$card/port:$port"
 }
 
 body Port::config { args } {
-    
-# object reborn
+    # object reborn
     if { $handle == "" } {
         if { $location != "NULL" } {
             catch {
@@ -500,7 +501,7 @@ body Port::config { args } {
             return [ GetErrorReturnHeader "No port information or wrong port information." ]
         }
     }
-#
+    
     global errorInfo
     global errNumber
 
@@ -537,9 +538,9 @@ body Port::config { args } {
     set sig_end 1
     
     set tag "body Port::config [info script]"
-Deputs "----- TAG: $tag -----"
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -1450,7 +1451,7 @@ Deputs "All streams are stopped!"
 
 body Port::break_link {} {
     set tag "body Port::break_link [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     ixNet exec linkUpDn $handle down
     ixNet commit
     return [ GetStandardReturnHeader ]
@@ -1458,7 +1459,7 @@ Deputs "----- TAG: $tag -----"
 
 body Port::restore_link {} {
     set tag "body Port::restore_link [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     ixNet exec linkUpDn $handle up
     ixNet commit
     return [ GetStandardReturnHeader ]
@@ -1858,11 +1859,10 @@ Deputs "Args:$args "
     foreach obj $allObj {
         if { [ $obj isa Traffic ] } {
             if { [ $obj cget -hPort ] == $handle } {
-Deputs "trafficObj: $obj; hport :$handle"
+                Deputs "trafficObj: $obj; hport :$handle"
                 set objhandle [ $obj cget -handle]
-Deputs "$obj:$objhandle"
+                Deputs "$obj:$objhandle"
                 if {$objhandle != ""} {
-        
                     lappend trafficObj $obj
                 }
             }
@@ -1879,7 +1879,7 @@ Deputs "$obj:$objhandle"
         set load_unit "PERCENT"
     }
     set unitLoad [ expr $stream_load / [ llength $trafficObj ].0 ]
-Deputs "unitLoad : $unitLoad"
+    Deputs "unitLoad : $unitLoad"
 
     set dynamiclist [ixNet getL ::ixNet::OBJ-/traffic dynamicRate]
     foreach obj $trafficObj {
@@ -1961,7 +1961,7 @@ body Host::config { args } {
     global errNumber
     
     set tag "body Host::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     
     if { $hPort == "" } {
         reborn
@@ -2066,7 +2066,7 @@ Deputs "----- TAG: $tag -----"
     if { [ info exists ipv4_gw_step ] } {
         set gwPfxIncr    [ GetStepPrefixlen $ipv4_gw_step ]
     }
-Deputs "pfxIncr:$pfxIncr"    
+    Deputs "pfxIncr:$pfxIncr"    
     if { [ info exists static] == 0 } {
         if { [ info exists ipv4_addr ] } {
             set static 0
@@ -2129,8 +2129,8 @@ Deputs "pfxIncr:$pfxIncr"
         for { set index 0 } { $index < $count } { incr index } {
             set int [ ixNet add $hPort interface ]
             if { $unconnected } {
-Deputs "unconncted:$unconnected"
-Deputs "int:$int"        
+            Deputs "unconncted:$unconnected"
+            Deputs "int:$int"        
                 ixNet setA $int -type routed
             }
             ixNet setA $int -description $handleName
@@ -2138,7 +2138,7 @@ Deputs "int:$int"
             set int [ixNet remapIds $int]
             lappend handle $int
 
-    Deputs "int:$int"    
+            Deputs "int:$int"    
             if { [ info exists ipv4_addr ] } {
                 if { [ llength [ ixNet getL $int ipv4 ] ] == 0 } {
                     ixNet add $int ipv4
@@ -2149,7 +2149,7 @@ Deputs "int:$int"
                     -gateway $ipv4_gw \
                     -maskWidth $ipv4_prefix_len
                 ixNet commit
-    Deputs "Step10"            
+                Deputs "Step10"            
                 if { $pfxIncr > 0 } {
                     set ipv4_addr [ IncrementIPAddr $ipv4_addr $pfxIncr ]
                 }
@@ -2163,8 +2163,8 @@ Deputs "int:$int"
                     ixNet add $int ipv6
                     ixNet commit
                 }
-    Deputs "IPv6 Addr: $ipv6_addr "
-    Deputs "int/ipv6: [ ixNet getL $int ipv6 ]"
+                Deputs "IPv6 Addr: $ipv6_addr "
+                Deputs "int/ipv6: [ ixNet getL $int ipv6 ]"
                 ixNet setM [ ixNet getL $int ipv6 ] \
                     -ip $ipv6_addr \
                     -gateway $ipv6_gw \
@@ -2176,16 +2176,16 @@ Deputs "int:$int"
                 if { [ info exists ipv6_gw_step ] } {
                     set ipv6_gw   [ IncrementIPv6Addr $ipv6_gw $ipv6_prefix_len ]
                 }
-    Deputs "ipv6 addr incr: $ipv6_addr"            
+                Deputs "ipv6 addr incr: $ipv6_addr"            
             }
-Deputs "config mac"
+            Deputs "config mac"
             if { [ info exists src_mac ] } {
                 ixNet setM $int/ethernet \
-                        -macAddress $src_mac 
+                    -macAddress $src_mac 
                 ixNet commit
                 set src_mac [ IncrMacAddr $src_mac $src_mac_step ]
             }
-Deputs "config vlan1"
+            Deputs "config vlan1"
             if { [ info exists vlan_id1 ] } {
                 set vlanId    $vlan_id1
                 
@@ -2197,7 +2197,7 @@ Deputs "config vlan1"
                 incr vlan_id1 $vlan_id1_step
             }
             
-Deputs "config vlan2"
+            Deputs "config vlan2"
             if { [ info exists vlan_id2 ] } {
                 set vlanId    $vlan_id2
 
@@ -2212,15 +2212,12 @@ Deputs "config vlan2"
                 incr vlan_id2 $vlan_id2_step
             }
             
-Deputs "enable interface"
+            Deputs "enable interface"
             if { [ info exists enabled ] } {
                 ixNet setA $int -enabled $enabled
                 ixNet commit            
             }
-        }
-        
-
-        
+        } 
     }
     
     Deputs "static $static"
@@ -2229,7 +2226,7 @@ Deputs "enable interface"
 
 body Host::ping { args } {
     set tag "body Host::ping [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
     global errNumber
 
@@ -2237,8 +2234,8 @@ Deputs "----- TAG: $tag -----"
     set interval     1000
     set flag         1
 
-#param collection
-Deputs "Args:$args "
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -2282,7 +2279,7 @@ Deputs "Args:$args "
     set pingFalse    0
 
 
-Deputs Step10
+    Deputs Step10
     set pingResult [ list ]
     for { set index 0 } { $index < $count } { incr index } {
         
@@ -2293,7 +2290,7 @@ Deputs Step10
         after $interval
     }
     Deputs "The ping result is: $pingResult"
-Deputs Step20
+    Deputs Step20
     set pingPass    0
     foreach result $pingResult {
         if { [ regexp {failed} $result ] } {
@@ -2305,21 +2302,20 @@ Deputs Step20
         }
     }
     
-# Deputs Step40
+    # Deputs Step40
     # set loss [ expr $pingFalse / $count.00 * 100 ]
-    
-# Deputs Step50
+        
+    # Deputs Step50
     # if { $pingPass == $flag } {
         # set ret  [ GetStandardReturnHeader ]
     # } else {
         # set ret  [ GetErrorReturnHeader "Unexpected result $pingPass" ]
     # }
-    
-# Deputs Step60
+        
+    # Deputs Step60
     # lappend ret [ GetStandardReturnBody "loss" $loss ]
     
     return $pingPass
-
 }
 
 

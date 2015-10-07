@@ -116,7 +116,7 @@ body IgmpHost::constructor { port { hIgmpHost NULL } } {
     Deputs "view:$view"
 
     if { $handle == "" } {
-	    reborn
+	reborn
     }
 }
 

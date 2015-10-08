@@ -98,7 +98,6 @@ class Port {
     method reset {} {}
     method traffic { name } {}
     method protocol { name } {}
-    method gen_pro_objs { } {}
     method start_traffic {} {}
     method stop_traffic {} {} 
     method break_link {} {}
@@ -264,123 +263,6 @@ body Port::protocol { name } {
         error "No protocol name: $name"
     }
     return $protocolObj
-}
-
-body Port::gen_pro_objs { } {
-    set tag "body Port::gen_pro_objs [info script]"
-    Deputs "----- TAG: $tag -----"
-    
-    set protocols [ixNet getL $handle protocols]
-    set protocolList [list bfd bgp igmp isis ldp mld ospf ospfV3 rip ripng]
-    foreach pro $protocolList {
-        set protocol [ixNet getL $protocols $pro]
-        Deputs "******* pro: $pro,  protocol: $protocol, enable: [ ixNet getA $protocol -enabled ]********"
-        if { [ ixNet getA $protocol -enabled ] } {
-            switch -exact $pro {
-                bfd {
-                    set bfdR [ixNet getL $protocol router]
-                    Deputs "******* bfdR: $bfdR,  bfdObj: ${handleName}/bfd********"
-                    BfdSession ${handleName}/bfd $handleName $bfdR
-                }
-                bgp {
-                    set bgpNR [ixNet getL $protocol neighborRange]
-                    BgpSession ${handleName}/bgp $handleName $bgpNR
-                }
-                igmp {
-                    set igmpH [ixNet getL $protocol host]
-                    IgmpHost ${handleName}/igmp $handleName $igmpH
-                }
-                mld {
-                    set mldH [ixNet getL $protocol host]
-                    MldHost ${handleName}/mld $handleName $mldH
-                }
-                isis {
-                    set isisR [ixNet getL $protocol router]
-                    Deputs "------******* isisR: $isisR,  isisObj: ${handleName}/isis, this: $this********"
-                    IsisSession ${handleName}/isis $handleName $isisR
-                }
-                ldp {
-                    set ldpR [ixNet getL $protocol router]
-                    LdpSession ${handleName}/ldp $handleName $ldpR
-                }
-                ospf {
-                    set ospfR [ixNet getL $protocol router]
-                    Ospfv2Session ${handleName}/ospf $handleName $ospfR
-                }
-                ospfV3 {
-                    set ospfV3R [ixNet getL $protocol router]
-                    Ospfv3Session ${handleName}/ospfV3 $handleName $ospfV3R
-                }
-            }
-        }
-    }
-
-    set protocolStack [ixNet getL $handle protocolStack]
-    Deputs "******* protocolStack: $protocolStack********"
-    set protocolStackList [list ipEndpoint dhcpEndpoint dhcpServerEndpoint pppoxEndpoint]
-    foreach proStack $protocolStackList {
-        set ethernet [ixNet getL $protocolStack ethernet]
-        if { [llength $ethernet] == 0 } {
-            continue
-        }
-        Deputs "******* ethernet: $ethernet, proStack: $proStack********"
-        set stack [ixNet getL $ethernet $proStack]
-        Deputs "******* stack: $stack********"
-        if { $stack != "" } {
-            #switch -exact $proStack {
-            #    dhcpEndpoint {
-            #        set range [ixNet getL $stack range]
-            #        set ipType [ixNet getA $range/dhcpRange -ipType]
-            #        set objName [ixNet getA $range -name]
-            #        if { $objName == "::ixNet::OK" } {
-            #            set objName $handleName/dhcp
-            #        }
-            #        if { $ipType == "IPv4" } {
-            #            Dhcpv4Host $objName $handleName $stack $range
-            #        } elseif { $ipType == "IPv6" } {
-            #            Dhcpv6Host $objName $handleName $stack $range
-            #        }
-            #    }
-            #    dhcpServerEndpoint {
-            #        set range [ixNet getL $stack range]
-            #        set ipType [ixNet getA $range/dhcpServerRange -ipType]
-            #        set objName [ixNet getA $range -name]
-            #        if { $objName == "::ixNet::OK" } {
-            #            set objName $handleName/dhcpServer
-            #        }
-            #        if { $ipType == "IPv4" } {
-            #            Dhcpv4Server $objName $handle $stack $range
-            #        } elseif { $ipType == "IPv6" } {
-            #            Dhcpv6Server $objName $handleName $stack $range
-            #        }
-            #    }
-            #    pppoxEndpoint {
-            #        set range [ixNet getL $stack range]
-            #        set objName [ixNet getA $range -name]
-            #        if { $objName == "::ixNet::OK" } {
-            #            set objName $handleName/pppox
-            #        }
-            #        PppoeHost $objName $handleName $stack $range
-            #    }
-            #    ipEndpoint {
-            #        set range [ixNet getL $stack range]
-            #        set objName [ixNet getA $range -name]
-            #        if { $objName == "::ixNet::OK" } {
-            #            set objName $handleName/ip
-            #        }
-            #        set ipRangeOptions [ixNet getL $protocolStack ipRangeOptions]
-            #        Deputs "******* range: $range, objName: $objName, ipRangeOptions: $ipRangeOptions********"
-            #        if { [llength $ipRangeOptions] != 0 } {
-            #            if { [ixNet getA $ipRangeOptions -ipv6AddressMode] == "autoconf" } {
-            #                Ipv6AutoConfigHost $objName $handleName $stack $range
-            #            } else {
-            #                IPoEHost $objName $handleName $stack $range
-            #            }
-            #        }
-            #    }
-            #}
-        }
-    }
 }
 
 body Port::CheckStrangePort {} {
@@ -1944,7 +1826,7 @@ Deputs "Args:$args "
 
 class Host {
     inherit NetObject
-    constructor { port } {}
+    constructor { port { hHost NULL } } {}
     method config { args } {}
     method unconfig {} {
     set tag "body Host::unconfig [info script]"
@@ -1955,14 +1837,7 @@ class Host {
     method enable {} {}
     method disable {} {}
     method ping { args } {}
-    method reborn {} {
-        if { [ catch {
-            set hPort [ $portObj cget -handle ]
-        } ] } {
-            set port [ GetObject $portObj ]
-            set hPort [ $port cget -handle ]
-        }
-    }
+    method reborn {} {}
     
     public variable hPort
     public variable portObj
@@ -1970,11 +1845,24 @@ class Host {
     public variable ip_version
 }
 
-body Host::constructor { port } {
+body Host::constructor { port { hHost NULL } } {
     set portObj $port
-    
-    reborn
+    if { [ catch {
+        set hPort [ $portObj cget -handle ]
+    } ] } {
+        set port [ GetObject $portObj ]
+        set hPort [ $port cget -handle ]
+    }
     set handle ""
+    if { $hHost != "null" } {
+        set handle $hHost
+        set handleName ""
+    } else {
+        set handleName $this
+    }
+    if { $handle == "" } {
+        reborn
+    }
 }
 
 body Host::config { args } {

@@ -317,7 +317,7 @@ proc initLoadObjects {} {
     foreach pname $portnamelist pobj $portlist {
         Port $pname NULL NULL $pobj
         # Generate protocols objects
-        $pname gen_pro_objs
+        GenerateProtocolsObjects $pname
     }
     
     foreach tname $trafficnamelist tobj $trafficlist tport $tportlist {
@@ -415,6 +415,117 @@ proc GetAllPortObj {} {
     }
     
     return $portObj
+}
+
+
+proc GenerateProtocolsObjects { portObj } {
+    set tag "body Port::gen_pro_objs [info script]"
+    Deputs "----- TAG: $tag -----"
+    
+    set portObj [GetObject $portObj]
+    set handle [$portObj cget -handle]
+    set handleName [$portObj cget -handleName]
+    set protocols [ixNet getL $handle protocols]
+    set protocolList [list bfd bgp igmp isis ldp mld ospf ospfV3 rip ripng static]
+    foreach pro $protocolList {
+        set protocol [ixNet getL $protocols $pro]
+        # Special to handle static
+        set enabled [ ixNet getA $protocol -enabled ]
+        if { $pro == "static" && $enabled == "::ixNet::OK" } {
+            set enabled true
+        }
+        if { $enabled } {
+            switch -exact $pro {
+                bfd {
+                    set bfdR [ixNet getL $protocol router]
+                    BfdSession ${handleName}/bfd $handleName $bfdR
+                }
+                bgp {
+                    set bgpNR [ixNet getL $protocol neighborRange]
+                    BgpSession ${handleName}/bgp $handleName $bgpNR
+                }
+                igmp {
+                    set igmpH [ixNet getL $protocol host]
+                    IgmpHost ${handleName}/igmp $handleName $igmpH
+                }
+                mld {
+                    set mldH [ixNet getL $protocol host]
+                    MldHost ${handleName}/mld $handleName $mldH
+                }
+                isis {
+                    set isisR [ixNet getL $protocol router]
+                    IsisSession ${handleName}/isis $handleName $isisR
+                }
+                ldp {
+                    set ldpR [ixNet getL $protocol router]
+                    LdpSession ${handleName}/ldp $handleName $ldpR
+                }
+                ospf {
+                    set ospfR [ixNet getL $protocol router]
+                    Ospfv2Session ${handleName}/ospf $handleName $ospfR
+                }
+                ospfV3 {
+                    set ospfV3R [ixNet getL $protocol router]
+                    Ospfv3Session ${handleName}/ospfV3 $handleName $ospfV3R
+                }
+                static {
+                    set staticLan [ixNet getL $protocol lan]
+                    Host ${handleName}/static $handleName $staticLan
+                }
+            }
+        }
+    }
+
+    set protocolStack [ixNet getL $handle protocolStack]
+    set protocolStackList [list ipEndpoint dhcpEndpoint dhcpServerEndpoint pppoxEndpoint]
+    foreach proStack $protocolStackList {
+        set ethernet [ixNet getL $protocolStack ethernet]
+        if { [llength $ethernet] == 0 } {
+            continue
+        }
+        set stack [ixNet getL $ethernet $proStack]
+        if { $stack != "" } {
+            switch -exact $proStack {
+                dhcpEndpoint {
+                    set range [ixNet getL $stack range]
+                    set ipType [ixNet getA $range/dhcpRange -ipType]
+                    set objName [ixNet getA $stack -name]
+                    if { $ipType == "IPv4" } {
+                        Dhcpv4Host $objName $handleName $stack $range
+                    } elseif { $ipType == "IPv6" } {
+                        Dhcpv6Host $objName $handleName $stack $range
+                    }
+                }
+                dhcpServerEndpoint {
+                    set range [ixNet getL $stack range]
+                    set ipType [ixNet getA $range/dhcpServerRange -ipType]
+                    set objName [ixNet getA $stack -name]
+                    if { $ipType == "IPv4" } {
+                        Dhcpv4Server $objName $handleName $stack $range
+                    } elseif { $ipType == "IPv6" } {
+                        Dhcpv6Server $objName $handleName $stack $range
+                    }
+                }
+                pppoxEndpoint {
+                    set range [ixNet getL $stack range]
+                    set objName [ixNet getA $stack -name]
+                    PppoeHost $objName $handleName $stack $range
+                }
+                ipEndpoint {
+                    set range [ixNet getL $stack range]
+                    set objName [ixNet getA $stack -name]
+                    set ipRangeOptions [ixNet getL $protocolStack ipRangeOptions]
+                    if { [llength $ipRangeOptions] != 0 } {
+                        if { [ixNet getA $ipRangeOptions -ipv6AddressMode] == "autoconf" } {
+                            Ipv6AutoConfigHost $objName $handleName $stack $range
+                        } else {
+                            IPoEHost $objName $handleName $stack $range
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 set currDir [file dirname [info script]]

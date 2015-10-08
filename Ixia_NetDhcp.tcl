@@ -109,7 +109,7 @@ class DhcpHost {
 	array set rangeStats [list]
 	if { $onStack == "null" } {
 	    Deputs "new dhcp endpoint"
-	    chain 
+	    #chain 
 	    set sg_ethernet $stack
 	    #-- add dhcp endpoint stack
 	    set sg_dhcpEndpoint [ixNet add $sg_ethernet dhcpEndpoint]
@@ -1417,7 +1417,7 @@ class Dhcpv4Host {
 	    return 
 	}
 	
-	chain $onStack
+	#chain $onStack
 	ixNet setA $handle/dhcpRange -ipType IPv4
 	ixNet commit
 	
@@ -1509,7 +1509,7 @@ class Dhcpv6Host {
 	    return 
 	}
 	
-	chain $onStack
+	#chain $onStack
 	ixNet setA $handle/dhcpRange -ipType IPv6
 	ixNet commit
 
@@ -1948,7 +1948,7 @@ class DhcpServer {
     
     public variable type
     
-    constructor { port { onStack null } { hDhcp null } {hDhcpServer null} } { chain $port $onStack $hDhcpServer } {
+    constructor { port { onStack null } {hDhcpServer null} } { chain $port $onStack $hDhcpServer } {
 	if { $hDhcpServer != "null" } {
 	    set trafficObj $handle
 	}
@@ -1963,7 +1963,7 @@ class DhcpServer {
     method get_lease_address {} {}
 }
 
-body DhcpServer::reborn { args } {
+body DhcpServer::reborn { { onStack null } } {
     global errNumber
     
     set tag "body DhcpServer::reborn [info script]"
@@ -1979,7 +1979,7 @@ body DhcpServer::reborn { args } {
 	set stack [ lindex [ ixNet getL $hPort/protocolStack ethernet ] 0 ]
 	set sg_dhcpEndpoint [ ixNet getL $stack dhcpServerEndpoint ]
     } else {
-	chain
+	#chain
 	set sg_ethernet $stack
 	Deputs "stack:$stack"
 	#-- add dhcp endpoint stack
@@ -2236,12 +2236,12 @@ class Dhcpv4Server {
 
     constructor { port { onStack null } { hDhcpv4Server null } } { chain $port $onStack $hDhcpv4Server } {}
     method get_stats {} {}
-    method reborn {} {
+    method reborn { { onStack null } } {
 	if { $handle != "" } {
 	    set trafficObj $handle
 	    return 
 	}
-	chain
+	#chain
 	ixNet setA $handle/dhcpServerRange -ipType IPv4
 	ixNet commit
     }
@@ -2380,12 +2380,12 @@ class Dhcpv6Server {
     constructor { port { onStack null } { hDhcpv6Server null } } { chain $port $onStack $hDhcpv6Server } {}
     method get_stats {} {}
     method config { args } {}
-    method reborn {} {
+    method reborn { { onStack null } } {
 	if { $handle != "" } {
 	    set trafficObj $handle
 	    return 
 	}
-	chain
+	#chain
 	ixNet setA $handle/dhcpServerRange -ipType IPv6
 	ixNet commit
     }
@@ -2600,16 +2600,15 @@ class IPoEHost {
     inherit ProtocolStackObject
     
     constructor { port { onStack null } { hIPoEHost null } } { chain $port $onStack $hIPoEHost } {}
-    method reborn {} {
+    method reborn { { onStack null } } {
 	set tag "body IPoEHost::reborn [info script]"
 	Deputs "----- TAG: $tag -----"
-	
+	Deputs "***************** Handle: $handle ***************"
 	if { $handle != "" } {
 	    return 
 	}
-	
-	chain 
-				
+        Deputs "***************** Handle-----2: $handle ***************"
+	#chain 		
 	set sg_ethernet $stack
 	#-- add dhcp endpoint stack
 	set sg_ipEndpoint [ixNet add $sg_ethernet ipEndpoint]
@@ -2740,7 +2739,7 @@ class Ipv6AutoConfigHost {
     
     public variable hIp
     constructor { port { onStack null } { hIpv6AutoConfigHost null } } { chain $port $onStack $hIpv6AutoConfigHost } {}
-    method reborn {} {
+    method reborn { { onStack null } } {
 	set tag "body Ipv6AutoConfigHost::reborn [info script]"
 	Deputs "----- TAG: $tag -----"
 
@@ -2748,7 +2747,7 @@ class Ipv6AutoConfigHost {
 	    return 
 	}
 	
-	chain 
+	#chain 
 				
 	set sg_ethernet $stack
 	#-- add ipoe endpoint stack

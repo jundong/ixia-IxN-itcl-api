@@ -18,12 +18,12 @@ Dhcpv6Host @dhcpv6withindex @portwithname null 1
 Dhcpv6Host @dhcpv6withname @portwithname null "DHCP-R3"
 
 IgmpHost @igmphostwithindex @portwithname 1
-MldHost @mldhostwithindex @portwithname 1
+#MldHost @mldhostwithindex @portwithname 1
 
-IsisSession @isiswithindex @portwithname 1
+#IsisSession @isiswithindex @portwithname 1
 
-PppoeHost @ppoxwithindex @portwithname 1
-PppoeHost @ppoxwithname @portwithname "PPPOE_dual-4"
+PppoeHost @ppoxwithindex @portwithname null 1
+PppoeHost @ppoxwithname @portwithname null "PPPOE_dual-4"
 
 #$traffic disable
 #$traffic traffic_enable

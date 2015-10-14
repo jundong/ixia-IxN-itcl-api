@@ -22,11 +22,11 @@ class PppoeHost {
         global errNumber
         
         if { $hPppoe != "null" } {
-            set handle [GetValidHandleObj "pppoe_host" hPppoe $hPort]
+            set handle [GetValidHandleObj "pppoe_host" $hPppoe $hPort]
             if { $handle != "" } {
                 set handleName [ ixNet getA $handle -name ]
             } else {
-                error "$errNumber(5) handle:hPppoe"
+                error "$errNumber(5) handle:$hPppoe"
             }
         }
     }

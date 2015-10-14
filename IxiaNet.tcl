@@ -412,7 +412,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 	if { [ catch {
 		set index [expr $index + $handle] 
 	} err ] } {
-		set index 1
+		set index 0
 	}
 	
 	switch -exact $objType {
@@ -452,7 +452,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { [llength $routes] > $index} {
+				if { $index >= 0 && [llength $routes] > $index} {
 					return [lindex $routers $index]
 				}
 			}
@@ -471,7 +471,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { [llength $routers] != 0 && [llength $routers] > $index } {
+				if { $index >= 0 && [llength $routers] != 0 && [llength $routers] > $index } {
 					return [lindex $routers $index]
 				}
 			}			
@@ -489,7 +489,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { [llength $hosts] != 0 && [llength $hosts] > $index } {
+				if { $index >= 0 && [llength $hosts] != 0 && [llength $hosts] > $index } {
 					return [lindex $hosts $index]
 				}
 			}			
@@ -507,7 +507,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { [llength $hosts] != 0 && [llength $hosts] > $index } {
+				if { $index >= 0 && [llength $hosts] != 0 && [llength $hosts] > $index } {
 					return [lindex $hosts $index]
 				}
 			}			
@@ -525,7 +525,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { [llength $routes] > $index} {
+				if { $index >= 0 && [llength $routes] > $index} {
 					return [lindex $routers $index]
 				}
 			}			
@@ -543,7 +543,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { [llength $routes] > $index} {
+				if { $index >= 0 && [llength $routes] > $index} {
 					return [lindex $routers $index]
 				}
 			}			
@@ -561,7 +561,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { [llength $routes] > $index} {
+				if { $index >= 0 && [llength $routes] > $index} {
 					return [lindex $routers $index]
 				}
 			}			
@@ -579,7 +579,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { [llength $routes] > $index} {
+				if { $index >= 0 && [llength $routes] > $index} {
 					return [lindex $routers $index]
 				}
 			}			
@@ -597,7 +597,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { [llength $lans] > $index} {
+				if { $index >= 0 && [llength $lans] > $index} {
 					return [lindex $lans $index]
 				}
 			}
@@ -623,7 +623,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					}
 				}
                 set index [expr $index - 1]
-                if { [llength $ranges] > $index} {
+                if { $index >= 0 && [llength $ranges] > $index} {
                     return [lindex $ranges $index]
                 }
 			}
@@ -649,7 +649,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					}	
 				}
                 set index [expr $index - 1]
-                if { [llength $ranges] > $index} {
+                if { $index >= 0 && [llength $ranges] > $index} {
                     return [lindex $ranges $index]
                 }
 			}
@@ -675,7 +675,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					}
 				}
                 set index [expr $index - 1]
-                if { [llength $ranges] > $index} {
+                if { $index >= 0 && [llength $ranges] > $index} {
                     return [lindex $ranges $index]
                 }	
 			}
@@ -701,7 +701,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					}
 				}
                 set index [expr $index - 1]
-                if { [llength ranges] > $index} {
+                if { $index >= 0 && [llength ranges] > $index} {
                     return [lindex ranges $index]
                 }
 			}
@@ -724,7 +724,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					}
 				}
                 set index [expr $index - 1]
-                if { [llength $ranges] > $index} {
+                if { $index >= 0 && [llength $ranges] > $index} {
                     return [lindex $ranges $index]
                 }
 			}

@@ -32,8 +32,12 @@ class LdpSession {
         }
         
         if { $hLdpSession != "NULL" } {
-            set handle $hLdpSession
-            set handleName [ ixNet getA $handle -name ] 
+            set handle [GetValidHandleObj "ldp" $hLdpSession $hPort]
+            if { $handle != "" } {
+                set handleName [ ixNet getA $handle -name ]
+            } else {
+                error "$errNumber(5) handle:$hLdpSession"
+            }
         } else {
             set handleName $this
             set handle ""

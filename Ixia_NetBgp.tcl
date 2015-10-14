@@ -17,22 +17,28 @@ class BgpSession {
     inherit RouterEmulationObject
        
     constructor { port { hBgpSession NULL } } {
-	set tag "body BgpSession::ctor [info script]"
-	Deputs "----- TAG: $tag -----"
-	set portObj [ GetObject $port ]
+        set tag "body BgpSession::ctor [info script]"
+        Deputs "----- TAG: $tag -----"
+        global errNumber
+        
+        set portObj [ GetObject $port ]
         if { [ catch {
-	    set hPort   [ $portObj cget -handle ]
-	} ] } {
-	    error "$errNumber(1) Port Object in BgpSession ctor"
-	}
-	
-	if { $hBgpSession != "NULL" } {
-	    set handle $hBgpSession
-	    set handleName [ ixNet getA $handle -name ] 
-	} else {
+            set hPort   [ $portObj cget -handle ]
+        } ] } {
+            error "$errNumber(1) Port Object in BgpSession ctor"
+        }
+        
+        if { $hBgpSession != "NULL" } {
+            set handle [GetValidHandleObj "bgp" $hBgpSession $hPort]
+            if { $handle != "" } {
+                set handleName [ ixNet getA $handle -name ] 
+            } else {
+                error "$errNumber(5) handle:$hBgpSession"
+            }
+        } else {
             set handleName $this
-	    set handle ""
-	}
+            set handle ""
+        }
     }
 
     method reborn { { ip_version ipv4 } } {

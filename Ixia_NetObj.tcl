@@ -129,21 +129,21 @@ class ProtocolStackObject {
             error "$errNumber(1) Port Object in ProtocolStackObject ctor"
         }
         
-	if { $hProtocol != "null" } {
-	    set handle $hProtocol
-	    set handleName [ ixNet getA $handle -name ] 
-	} else {
-            set handleName $this
-	    set handle ""
-	}
+        #if { $hProtocol != "null" } {
+        #    set handle $hProtocol
+        #    set handleName [ ixNet getA $handle -name ] 
+        #} else {
+        #    set handleName $this
+        #    set handle ""
+        #}
         
-        Deputs "onStack:$onStack"        
-        if { $onStack != "null" } {
-            set stack $onStack
-            reborn $onStack
-        } else {
-            reborn
-        }
+        #Deputs "onStack:$onStack"        
+        #if { $onStack != "null" } {
+        #    set stack $onStack
+        #    reborn $onStack
+        #} else {
+        #    reborn
+        #}
     }
     
     method config { args } {}

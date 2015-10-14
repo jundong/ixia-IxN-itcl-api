@@ -190,7 +190,8 @@ class Port {
 body Port::constructor { { hw_id NULL } { medium NULL } { hPort NULL } } {
     set tag "body Port::ctor [info script]"
     Deputs "----- TAG: $tag -----"
-
+    
+    global errNumber
     set handleName $this
     #-- Check for Multiuser Login
     set portObjList [ GetAllPortObj ]
@@ -227,17 +228,21 @@ body Port::constructor { { hw_id NULL } { medium NULL } { hPort NULL } } {
         Deputs "location:$location" 
     } else {
         if { $hPort != "NULL" } {
-            set chassis ""
-            set card ""
-            set port ""
+            set handle [GetValidHandleObj "port" $hPort]
+            if { $handle != "" } {
+                set chassis ""
+                set card ""
+                set port ""
 
-            set handle $hPort
-            set handleName [ ixNet getA $handle -name ]
-            set connectionInfo [ ixNet getA $handle -connectionInfo ]
-            Deputs "connectionInfo :$connectionInfo"
-            regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-            Deputs "chas:$chassis card:$card port$port"
-            set location ${chassis}/${card}/${port}
+                set handleName [ ixNet getA $handle -name ]
+                set connectionInfo [ ixNet getA $handle -connectionInfo ]
+                Deputs "connectionInfo :$connectionInfo"
+                regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
+                Deputs "chas:$chassis card:$card port$port"
+                set location ${chassis}/${card}/${port}
+            } else {
+                error "$errNumber(5) handle:$hPort"
+            }            
         }   
     }
     set intf_mac      ""
@@ -1846,6 +1851,8 @@ class Host {
 }
 
 body Host::constructor { port { hHost NULL } } {
+    global errNumber
+    
     set portObj $port
     if { [ catch {
         set hPort [ $portObj cget -handle ]
@@ -1854,9 +1861,14 @@ body Host::constructor { port { hHost NULL } } {
         set hPort [ $port cget -handle ]
     }
     set handle ""
-    if { $hHost != "null" } {
-        set handle $hHost
-        set handleName ""
+    if { $hHost != "NULL" } {
+        set handle [GetValidHandleObj "host" $hHost $hPort]
+        if { $handle != "" } {
+            set handle $hHost
+            set handleName ""
+        } else {
+            error "$errNumber(5) handle:$hHost"
+        }
     } else {
         set handleName $this
     }

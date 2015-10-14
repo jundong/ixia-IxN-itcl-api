@@ -28,14 +28,6 @@ class OspfSession {
         } ] } {
             error "$errNumber(1) Port Object in OspfSession ctor"
         }
-        
-        if { $hOspfSession != "NULL" } {
-            set handle $hOspfSession
-            set handleName [ ixNet getA $handle -name ] 
-        } else {
-            set handleName $this
-            set handle ""
-        }
     }
 	
     method reborn {} {
@@ -384,7 +376,18 @@ body OspfSession::unset_topo {} {
 class Ospfv2Session {
     inherit OspfSession
 
-    constructor { port { hOspfv2Session NULL } } { chain $port $hOspfv2Session} {}
+    constructor { port { hOspfv2Session NULL } } { chain $port $hOspfv2Session} {
+        global errNumber
+        
+        if { $hOspfv2Session != "NULL" } {
+            set handle [GetValidHandleObj "ospfv2" $hOspfSession $hPort]
+            if { $handle != "" } {
+                set handleName [ ixNet getA $handle -name ] 
+            } else {
+                error "$errNumber(5) handle:$hOspfSession"
+            }
+        }
+    }
 	
     method reborn {} {
         set tag "body Ospfv2Session::reborn [info script]"
@@ -926,7 +929,18 @@ body Ospfv2Session::config { args } {
 class Ospfv3Session {
     inherit OspfSession
 	
-    constructor { port { hOspfv3Session NULL } } { chain $port $Ospfv3Session } {}
+    constructor { port { hOspfv3Session NULL } } { chain $port $Ospfv3Session } {
+        global errNumber
+        
+        if { hOspfv3Session != "NULL" } {
+            set handle [GetValidHandleObj "ospfv3" hOspfv3Session $hPort]
+            if { $handle != "" } {
+                set handleName [ ixNet getA $handle -name ] 
+            } else {
+                error "$errNumber(5) handle:hOspfv3Session"
+            }
+        }
+    }
 	
     method reborn {} {
         set tag "body Ospfv3Session::reborn [info script]"

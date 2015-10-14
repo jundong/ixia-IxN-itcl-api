@@ -90,17 +90,21 @@ body IgmpHost::constructor { port { hIgmpHost NULL } } {
 
     set portObj [ GetObject $port ]
     if { [ catch {
-	set hPort   [ $portObj cget -handle ]
+        set hPort   [ $portObj cget -handle ]
     } ] } {
-	error "$errNumber(1) Port Object in DhcpHost ctor"
+        error "$errNumber(1) Port Object in IgmpHost ctor"
     }
     
     if { $hIgmpHost != "NULL" } {
-	set handle $hIgmpHost
-	set handleName [ ixNet getA $handle -name ] 
+        set handle [GetValidHandleObj "igmp_host" $hIgmpHost $hPort]
+        if { $handle != "" } {
+            set handleName [ ixNet getA $handle -name ] 
+        } else {
+            error "$errNumber(5) handle:$hIgmpHost"
+        }
     } else {
-	set handleName $this
-	set handle ""
+        set handleName $this
+        set handle ""
     }
     
     set count 		1
@@ -116,7 +120,7 @@ body IgmpHost::constructor { port { hIgmpHost NULL } } {
     Deputs "view:$view"
 
     if { $handle == "" } {
-	reborn
+        reborn
     }
 }
 
@@ -824,34 +828,43 @@ class MldHost {
     inherit IgmpHost
 	
     constructor { port { hMldHost NULL } } { chain $port $hMldHost } {
-	set view ""
-	
-	if { $handle == "" } {
-	    reborn
-	}
+        global errNumber
+        
+        set view ""
+        if { $hMldHost != "NULL" } {
+            set handle [GetValidHandleObj "mld_host" $hMldHost $hPort]
+            if { $handle == "" } {
+                error "$errNumber(5) handle:$hMldHost"
+            }
+        }
+        
+        if { $handle == "" } {
+            reborn
+        }
     }
+    
     method join_group { args } {}
     method reborn {} {
-	set tag "body MldHost::reborn [info script]"
-	Deputs "----- TAG: $tag -----"
-
-	#-- enable mld emulation
-	ixNet setA $hPort/protocols/mld -enabled True
-	ixNet commit
-
-	set handle [ ixNet add $hPort/protocols/mld host ]
-	Deputs "handle:$handle"		
-	set handle [ ixNet remapIds $handle ]
-
-	ixNet setA $handle \
-	    -name $this \
-	    -enabled True
-	ixNet commit
-
-	set protocol mld
+        set tag "body MldHost::reborn [info script]"
+        Deputs "----- TAG: $tag -----"
+    
+        #-- enable mld emulation
+        ixNet setA $hPort/protocols/mld -enabled True
+        ixNet commit
+    
+        set handle [ ixNet add $hPort/protocols/mld host ]
+        Deputs "handle:$handle"		
+        set handle [ ixNet remapIds $handle ]
+    
+        ixNet setA $handle \
+            -name $this \
+            -enabled True
+        ixNet commit
+    
+        set protocol mld
     }
     method config { args } {
-	eval chain $args -ip_version ipv6 
+        eval chain $args -ip_version ipv6 
     }
 }
 body MldHost::join_group { args } {

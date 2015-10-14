@@ -75,8 +75,12 @@ body IsisSession::constructor { port { hIsisSession NULL } } {
     }
     
     if { $hIsisSession != "NULL" } {
-        set handle $hIsisSession
-        set handleName [ ixNet getA $handle -name ] 
+        set handle [GetValidHandleObj "isis" $hIsisSession $hPort]
+        if { $handle != "" } {
+            set handleName [ ixNet getA $handle -name ] 
+        } else {
+            error "$errNumber(5) handle:$hIsisSession"
+        }
     } else {
         set handleName $this
         set handle ""

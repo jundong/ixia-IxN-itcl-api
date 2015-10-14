@@ -510,11 +510,17 @@ body Traffic::constructor { port { hTraffic NULL } } {
     set tag "body Traffic::ctor [info script]"
     Deputs "----- TAG: $tag -----"
 
+    global errNumber
+    
     if { $hTraffic != "NULL" } {
-        set handle $hTraffic
-        set highLevelStream [ ixNet getL $handle configElement ]
-        set endpointSet     [ ixNet getL $handle endpointSet ]
-        set handleName     [ ixNet getA $handle -name ]
+        set handle [GetValidHandleObj "traffic" $hTraffic]
+        if { $handle != "" } {
+            set highLevelStream [ ixNet getL $handle configElement ]
+            set endpointSet     [ ixNet getL $handle endpointSet ]
+            set handleName     [ ixNet getA $handle -name ]
+        } else {
+            error "$errNumber(5) handle:$hTraffic"
+        }
     } else {
         set root        [ixNet getRoot]
         set handle      [ixNet add $root/traffic trafficItem]

@@ -18,13 +18,17 @@ class BfdSession {
         set tag "body BfdSession::ctor [info script]"
         Deputs "----- TAG: $tag -----"
         
-	if { $hBfdSession != "NULL" } {
-	    set handle $hBfdSession
-	    set handleName [ ixNet getA $handle -name ] 
-	} else {
+        if { $hBfdSession != "NULL" } {
+            set handle [GetValidHandleObj "bfd" $hBfdSession]
+            if { $handle != "" } {
+                set handleName [ ixNet getA $handle -name ]
+            } else {
+                error "$errNumber(5) handle:$hBfdSession"
+            }
+        } else {
             set handleName $this
-	    set handle ""
-	}
+            set handle ""
+        }
         
         set portObj [ GetObject $port ]
         if { [ catch {

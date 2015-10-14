@@ -18,7 +18,18 @@ class PppoeHost {
     public variable hostCnt
     public variable hPppox
     
-    constructor { port  { onStack null } { hPppoe null } } { chain $port $onStack $hPppoe } {}
+    constructor { port  { onStack null } { hPppoe null } } { chain $port $onStack $hPppoe } {
+        global errNumber
+        
+        if { $hPppoe != "null" } {
+            set handle [GetValidHandleObj "pppoe_host" hPppoe $hPort]
+            if { $handle != "" } {
+                set handleName [ ixNet getA $handle -name ]
+            } else {
+                error "$errNumber(5) handle:hPppoe"
+            }
+        }
+    }
     method reborn {} {}
     method config { args } {}
     method get_summary_stats {} {}

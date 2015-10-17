@@ -192,6 +192,7 @@ body Port::constructor { { hw_id NULL } { medium NULL } { hPort NULL } } {
     Deputs "----- TAG: $tag -----"
     
     global errNumber
+	set handle ""
     set handleName $this
     #-- Check for Multiuser Login
     set portObjList [ GetAllPortObj ]
@@ -213,6 +214,9 @@ body Port::constructor { { hw_id NULL } { medium NULL } { hPort NULL } } {
         set chassis     [ lindex $locationInfo 0 ]
         set ModuleNo    [ lindex $locationInfo 1 ]
         set PortNo      [ lindex $locationInfo 2 ]
+		set handle		[GetValidHandleObj "port" $hw_id]
+        Deputs "hw_id:$hw_id, locationInfo: $locationInfo, handle: $handle, ModuleNo: $ModuleNo, PortNo: $PortNo"    
+        Deputs Step10
         if { [ GetRealPort $chassis $ModuleNo $PortNo ] == [ ixNet getNull ] } {
             error "Port hardware not found: $hw_id"
         }
@@ -249,25 +253,11 @@ body Port::constructor { { hw_id NULL } { medium NULL } { hPort NULL } } {
     set intf_ipv4     ""
     set inter_burst_gap 12
     
+	if { $handle != "" } {
+		set handleName [ixNet getA $handle -name]
+	}
     ixNet setA $handle -name $handleName
     ixNet commit
-}
-
-body Port::protocol { name } {
-    set tag "body Port::protocol [info script]"
-    Deputs "----- TAG: $tag -----"
-    
-    set protocolObj [ GetObject $name ]
-    if { $protocolObj == "" } {
-        set protocolObj [ GetObject ${handleName}/$name ]
-    }
-    if { $protocolObj == "" } {
-        set protocolObj [ GetObject ::Port::${handleName}/$name ]
-    }
-    if { $protocolObj == "" } { 
-        error "No protocol name: $name"
-    }
-    return $protocolObj
 }
 
 body Port::CheckStrangePort {} {
@@ -288,15 +278,18 @@ body Port::Connect { location { medium NULL } { checkLink 0 } } {
     set tag "body Port::Connect [info script]"
     Deputs "----- TAG: $tag -----"
     # -- add vport
-    set root    [ ixNet getRoot ]
-    set vport   [ ixNet add $root vport ]
-    ixNet setA $vport -name $handleName
-    if { $medium != "NULL" } {
-    Deputs "connect medium:$medium"    
-        ixNet setA $vport/l1Config/ethernet -media $medium
-    }
-    set vport [ixNet remapIds $vport]
-    set handle $vport
+	set root    [ ixNet getRoot ]
+	if { $handle == "" } {
+		set vport   [ ixNet add $root vport ]
+		ixNet setA $vport -name $handleName
+		set vport [ixNet remapIds $vport]
+		set handle $vport
+	}
+	
+	if { $medium != "NULL" } {
+		Deputs "connect medium:$medium"    
+		ixNet setA $handle/l1Config/ethernet -media $medium
+	}
     # -- connect to hardware
     set locationInfo [ split $location "/" ]
     set chassis     [ lindex $locationInfo 0 ]
@@ -304,12 +297,12 @@ body Port::Connect { location { medium NULL } { checkLink 0 } } {
     set PortNo      [ lindex $locationInfo 2 ]
 
     if { [ string tolower [ ixNet getA $root/statistics -guardrailEnabled ] ] != "true" } {
-Deputs "guardrail: false"
+        Deputs "guardrail: false"
         catch {
             ixNet setA $root/statistics -guardrailEnabled True
             ixNet commit
         }
-Deputs "guardrail:[ ixNet getA $root/statistics -guardrailEnabled  ]"
+        Deputs "guardrail:[ ixNet getA $root/statistics -guardrailEnabled  ]"
     }
 
     if { $checkLink } {
@@ -320,32 +313,38 @@ Deputs "guardrail:[ ixNet getA $root/statistics -guardrailEnabled  ]"
         ixNet commit
     }
     set handle [ixNet remapIds $handle]
-Deputs "handle:$handle"    
+    Deputs "handle:$handle"    
     ixNet setA $vport -transmitIgnoreLinkStatus True
-       ixNet commit
+    ixNet commit
  
     return $handle
 }
 
 body Port::GetRealPort { chassis card port } {
     set tag "body Port::GetRealPort [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     set root    [ixNet getRoot]
-Deputs "chassis:$chassis"        
+    Deputs "chassis:$chassis"        
     set root [ixNet getRoot]
+    set chas ""
     if { [ llength [ixNet getList $root/availableHardware chassis] ] == 0 } {
-Deputs Step20
+        Deputs Step20
         set chas [ixNet add $root/availableHardware chassis]
         ixNet setA $chas -hostname $chassis
         ixNet commit
         set chas [ixNet remapIds $chas]
     } else {
-Deputs Step30
-        set chas [ixNet getList $root/availableHardware chassis]
-        set hostname [ixNet getA $chas -hostname]
-        if { $hostname != $chassis } {
-            ixNet remove $chas
-            ixNet commit
+        Deputs Step30
+        foreach chasObj [ixNet getList $root/availableHardware chassis] {
+			set hostname [ixNet getA $chasObj -hostname]
+			if { $hostname != $chassis } {
+				ixNet remove $chasObj
+				ixNet commit
+			} else {
+                set chas $chasObj
+            }
+		}
+        if { $chas == "" } {
             set chas [ixNet add $root/availableHardware chassis]
             ixNet setA $chas -hostname $chassis
             ixNet commit
@@ -353,6 +352,7 @@ Deputs Step30
         }
     }
     set chassis $chas
+    Deputs "chas:$chas"
     set realCard $chassis/card:$card
     Deputs "card:$realCard"
     set cardList [ixNet getList $chassis card]
@@ -361,8 +361,8 @@ Deputs Step30
     foreach ca $cardList {
         eval set ca $ca
         eval set realCard $realCard
-    Deputs "realCard:$realCard"
-    Deputs "ca:$ca"
+        Deputs "realCard:$realCard"
+        Deputs "ca:$ca"
         if { $ca == $realCard } {
             set findCard 1
             break
@@ -932,20 +932,20 @@ body Port::get_status { } {
     global errNumber
 
     set tag "body Port::get_status [info script]"
-Deputs "----- TAG: $tag -----"
-#param collection
-Deputs "handle:$handle"
+    Deputs "----- TAG: $tag -----"
+    #param collection
+    Deputs "handle:$handle"
     set phy_status [ ixNet getA $handle -state ]
-Deputs Step10
+    Deputs Step10
     set neighbor [ lindex [ ixNet getL $handle discoveredNeighbor ] 0 ]
-Deputs Step20
-Deputs "neighbor:$neighbor"
+    Deputs Step20
+    Deputs "neighbor:$neighbor"
     if { [ catch {
         set dutMac    [ MacTrans [ ixNet getA $neighbor -neighborMac ] 1 ]
     } ] } {
         set dutMac 00-00-00-00-00-00
     }
-Deputs Step30
+    Deputs Step30
     if { [ catch {
         set dutIp     [ ixNet getA $neighbor -neighborIp ]
     } ] } {
@@ -1270,17 +1270,17 @@ Deputs "----- TAG: $tag -----"
     return [ GetStandardReturnHeader ]
 }
 
-body Port::traffic { name } {
-    global trafficnamelist
+# body Port::traffic { name } {
+    # global trafficnamelist
     
-    set tag "body Port::start_traffic [info script]"
-    Deputs "----- TAG: $tag -----"
-    if { [lsearch $trafficnamelist $name] >= 0 } {
-        return [ GetObject $name ]
-    } else {
-        error "No Traffic name: $name"
-    }
-}
+    # set tag "body Port::start_traffic [info script]"
+    # Deputs "----- TAG: $tag -----"
+    # if { [lsearch $trafficnamelist $name] >= 0 } {
+        # return [ GetObject $name ]
+    # } else {
+        # error "No Traffic name: $name"
+    # }
+# }
 
 body Port::start_traffic {} {
     set tag "body Port::start_traffic [info script]"
@@ -1861,6 +1861,11 @@ body Host::constructor { port { hHost NULL } } {
         set hPort [ $port cget -handle ]
     }
     set handle ""
+    
+    if { $hHost == "NULL" } {
+        set hHost [GetObjNameFromString $this "NULL"]
+    }
+        
     if { $hHost != "NULL" } {
         set handle [GetValidHandleObj "host" $hHost $hPort]
         if { $handle != "" } {

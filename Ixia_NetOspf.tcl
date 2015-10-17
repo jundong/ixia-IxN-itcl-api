@@ -15,7 +15,7 @@ class OspfSession {
     
     public variable hNetworkRange
 	
-    constructor { port { hOspfSession NULL } } {
+    constructor { port } {
         global errNumber
         
         set tag "body OspfvSession::ctor [info script]"
@@ -376,15 +376,19 @@ body OspfSession::unset_topo {} {
 class Ospfv2Session {
     inherit OspfSession
 
-    constructor { port { hOspfv2Session NULL } } { chain $port $hOspfv2Session} {
+    constructor { port { hOspfv2Session NULL } } { chain $port } {
         global errNumber
-        
+		
+		if { $hOspfv2Session == "NULL" } {
+			set hOspfv2Session [GetObjNameFromString $this]
+		}
+		
         if { $hOspfv2Session != "NULL" } {
-            set handle [GetValidHandleObj "ospfv2" $hOspfSession $hPort]
+            set handle [GetValidHandleObj "ospfv2" $hOspfv2Session $hPort]
             if { $handle != "" } {
                 set handleName [ ixNet getA $handle -name ] 
             } else {
-                error "$errNumber(5) handle:$hOspfSession"
+                error "$errNumber(5) handle:$hOspfv2Session"
             }
         }
     }
@@ -929,9 +933,13 @@ body Ospfv2Session::config { args } {
 class Ospfv3Session {
     inherit OspfSession
 	
-    constructor { port { hOspfv3Session NULL } } { chain $port $Ospfv3Session } {
+    constructor { port { hOspfv3Session NULL } } { chain $port } {
         global errNumber
-        
+		
+		if { $hOspfv3Session == "NULL" } {
+			set hOspfv3Session [GetObjNameFromString $this "NULL" "NULL"]
+		}
+		
         if { hOspfv3Session != "NULL" } {
             set handle [GetValidHandleObj "ospfv3" hOspfv3Session $hPort]
             if { $handle != "" } {

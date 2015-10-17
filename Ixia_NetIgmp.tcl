@@ -95,7 +95,11 @@ body IgmpHost::constructor { port { hIgmpHost NULL } } {
         error "$errNumber(1) Port Object in IgmpHost ctor"
     }
     
-    if { $hIgmpHost != "NULL" } {
+	if { $hIgmpHost == "NULL" } {
+		set hIgmpHost [GetObjNameFromString $this "NULL"]
+	}
+		
+    if { $hIgmpHost != "" } {
         set handle [GetValidHandleObj "igmp_host" $hIgmpHost $hPort]
         if { $handle != "" } {
             set handleName [ ixNet getA $handle -name ] 
@@ -831,6 +835,11 @@ class MldHost {
         global errNumber
         
         set view ""
+        
+        if { $hMldHost == "NULL" } {
+            set hMldHost [GetObjNameFromString $this "NULL"]
+        }
+        
         if { $hMldHost != "NULL" } {
             set handle [GetValidHandleObj "mld_host" $hMldHost $hPort]
             if { $handle == "" } {

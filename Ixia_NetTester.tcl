@@ -383,7 +383,7 @@ Deputs "==SHOW CONTROL CAPTURE CONTENT=="
 proc Tester::cleanup { args } {
 # IxDebugOn
 
-    set tag "proc Tester::cleanup [info script]"
+    set tag "proc TesterXXX::cleanup [info script]"
 Deputs "----- TAG: $tag -----"
 
     set release_port 0

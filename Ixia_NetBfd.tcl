@@ -18,6 +18,10 @@ class BfdSession {
         set tag "body BfdSession::ctor [info script]"
         Deputs "----- TAG: $tag -----"
         
+        if { $hBfdSession == "NULL" } {
+            set hBfdSession [GetObjNameFromString $this "NULL"]
+        }
+    
         if { $hBfdSession != "NULL" } {
             set handle [GetValidHandleObj "bfd" $hBfdSession]
             if { $handle != "" } {

@@ -21,7 +21,7 @@ body L3Vpn::config { args } {
     global errorInfo
     global errNumber
     set tag "body L3Vpn::config [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 	
 # -- Default value initiation
 	set ce_num				0

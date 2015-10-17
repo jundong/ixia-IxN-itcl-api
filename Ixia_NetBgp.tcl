@@ -27,9 +27,13 @@ class BgpSession {
         } ] } {
             error "$errNumber(1) Port Object in BgpSession ctor"
         }
-        
+        if { $hBgpSession == "NULL" } {
+            set hBgpSession [GetObjNameFromString $this "NULL"]
+        }
+        Deputs "----- hBgpSession: $hBgpSession, hPort: $hPort -----"
         if { $hBgpSession != "NULL" } {
             set handle [GetValidHandleObj "bgp" $hBgpSession $hPort]
+            Deputs "----- handle: $handle -----"
             if { $handle != "" } {
                 set handleName [ ixNet getA $handle -name ] 
             } else {
@@ -42,74 +46,74 @@ class BgpSession {
     }
 
     method reborn { { ip_version ipv4 } } {
-	global errNumber
-	
-	set tag "body BgpSession::reborn [info script]"
-	Deputs "----- TAG: $tag -----"		
-	
-	ixNet setA $hPort/protocols/bgp -enabled True
-		
-	#-- add bgp protocol
-	set handle [ ixNet add $hPort/protocols/bgp neighborRange ]
-	if { $ip_version == "ipv6" } {
-	    ixNet setM $handle \
-		-dutIpAddress 0:0:0:0:0:0:0:0 \
-		-localIpAddress 0:0:0:0:0:0:0:0
-	} 
-	ixNet commit
-	set handle [ ixNet remapIds $handle ]
-	ixNet setA $handle \
-	    -name $handleName \
-	    -enabled True
-	ixNet commit
-	array set routeBlock [ list ]
-	
-	#-- add interface
-	set interface [ ixNet getL $hPort interface ]
-	if { [ llength $interface ] == 0 } {
-	    set interface [ ixNet add $hPort interface ]
-	    ixNet add $interface ipv4
-	    ixNet commit
-	    set interface [ ixNet remapIds $interface ]
-	    Deputs "interface:$interface"			
-	    ixNet setM $interface -enabled True
-	    ixNet commit
-	} else {
-	    set interface [ lindex $interface end ]
-	}
-	ixNet setA $handle \
-	    -interfaceType "Protocol Interface" \
-	    -interfaces [ lindex $interface end ]
-	ixNet commit
-	
-	#-- set capability
-	ixNet setM $handle \
-	    -ipV4Mpls true \
-	    -ipV4MplsVpn true \
-	    -ipV4Multicast true \
-	    -ipV4Unicast true \
-	    -ipV6Mpls true \
-	    -ipV6MplsVpn true \
-	    -ipV6Multicast true \
-	    -ipV6Unicast true
-		
-	ixNet setM $handle/learnedFilter/capabilities \
-	    -ipV4Mpls true \
-	    -ipV4MplsVpn true \
-	    -ipV4Multicast true \
-	    -ipV4MulticastMplsVpn true \
-	    -ipV4MulticastVpn true \
-	    -ipV4Unicast true \
-	    -ipV6Mpls true \
-	    -ipV6MplsVpn true \
-	    -ipV6Multicast true \
-	    -ipV6MulticastMplsVpn true \
-	    -ipV6MulticastVpn true \
-	    -ipV6Unicast true \
-	    -vpls true
-
-	ixNet commit
-	set protocol bgp
+        global errNumber
+        
+        set tag "body BgpSession::reborn [info script]"
+        Deputs "----- TAG: $tag -----"		
+        
+        ixNet setA $hPort/protocols/bgp -enabled True
+            
+        #-- add bgp protocol
+        set handle [ ixNet add $hPort/protocols/bgp neighborRange ]
+        if { $ip_version == "ipv6" } {
+            ixNet setM $handle \
+            -dutIpAddress 0:0:0:0:0:0:0:0 \
+            -localIpAddress 0:0:0:0:0:0:0:0
+        } 
+        ixNet commit
+        set handle [ ixNet remapIds $handle ]
+        ixNet setA $handle \
+            -name $handleName \
+            -enabled True
+        ixNet commit
+        array set routeBlock [ list ]
+        
+        #-- add interface
+        set interface [ ixNet getL $hPort interface ]
+        if { [ llength $interface ] == 0 } {
+            set interface [ ixNet add $hPort interface ]
+            ixNet add $interface ipv4
+            ixNet commit
+            set interface [ ixNet remapIds $interface ]
+            Deputs "interface:$interface"			
+            ixNet setM $interface -enabled True
+            ixNet commit
+        } else {
+            set interface [ lindex $interface end ]
+        }
+        ixNet setA $handle \
+            -interfaceType "Protocol Interface" \
+            -interfaces [ lindex $interface end ]
+        ixNet commit
+        
+        #-- set capability
+        ixNet setM $handle \
+            -ipV4Mpls true \
+            -ipV4MplsVpn true \
+            -ipV4Multicast true \
+            -ipV4Unicast true \
+            -ipV6Mpls true \
+            -ipV6MplsVpn true \
+            -ipV6Multicast true \
+            -ipV6Unicast true
+            
+        ixNet setM $handle/learnedFilter/capabilities \
+            -ipV4Mpls true \
+            -ipV4MplsVpn true \
+            -ipV4Multicast true \
+            -ipV4MulticastMplsVpn true \
+            -ipV4MulticastVpn true \
+            -ipV4Unicast true \
+            -ipV6Mpls true \
+            -ipV6MplsVpn true \
+            -ipV6Multicast true \
+            -ipV6MulticastMplsVpn true \
+            -ipV6MulticastVpn true \
+            -ipV6Unicast true \
+            -vpls true
+    
+        ixNet commit
+        set protocol bgp
     }
     method config { args } {}
     method enable {} {}

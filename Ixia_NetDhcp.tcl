@@ -1409,11 +1409,16 @@ class Dhcpv4Host {
     constructor { port { onStack null } { hDhcpv4Host null } } { chain $port $onStack $hDhcpv4Host } {
         global errNumber
         
+        if { $hDhcpv4Host == "null" } {
+            set hDhcpv4Host [GetObjNameFromString $this "null"]
+        }
+        
         if { $hDhcpv4Host != "null" } {
-            set handle [GetValidHandleObj "dhcp" $hDhcpv4Host $hPort]
-            if { $handle != "" } {
-                set handleName [ ixNet getA $handle -name ]
-                set stack $onStack	
+            set eth_hnd [GetValidHandleObj "dhcp" $hDhcpv4Host $hPort]
+            if { [llength $eth_hnd] == 2 } {
+                set handle [lindex $eth_hnd 1]
+                set stack [lindex $eth_hnd 0]
+                set handleName [ ixNet getA $handle/dhcpRange -name ]
             } else {
                 error "$errNumber(5) handle:$hDhcpv4Host"
             }
@@ -1514,11 +1519,16 @@ class Dhcpv6Host {
 
     constructor { port { onStack null } { hDhcpv6Host null } } { chain $port $onStack $hDhcpv6Host } {
         global errNumber
-        
+
+        if { $hDhcpv6Host == "null" } {
+            set hDhcpv6Host [GetObjNameFromString $this "null"]
+        }
         if { $hDhcpv6Host != "null" } {
-            set handle [GetValidHandleObj "dhcpv6" $hDhcpv6Host $hPort]
-            if { $handle != "" } {
-                set handleName [ ixNet getA $handle -name ]
+            set eth_hnd [GetValidHandleObj "dhcpv6" $hDhcpv6Host $hPort]
+            if { [llength $eth_hnd] == 2 } {
+                set handle [lindex $eth_hnd 1]
+                set stack [lindex $eth_hnd 0]
+                set handleName [ ixNet getA $handle/dhcpRange -name ]
             } else {
                 error "$errNumber(5) handle:$hDhcpv6Host"
             }
@@ -2271,10 +2281,16 @@ class Dhcpv4Server {
     constructor { port { onStack null } { hDhcpv4Server null } } { chain $port $onStack $hDhcpv4Server } {
         global errNumber
         
+        if { $hDhcpv4Server == "null" } {
+            set hDhcpv4Server [GetObjNameFromString $this "null"]
+        }
+        
         if { $hDhcpv4Server != "null" } {
-            set handle [GetValidHandleObj "dhcp_server" $hDhcpv4Server $hPort]
-            if { $handle != "" } {
-                set handleName [ ixNet getA $handle -name ]
+            set eth_hnd [GetValidHandleObj "dhcp_server" $hDhcpv4Server $hPort]
+            if { [llength $eth_hnd] == 2 } {
+                set handle [lindex $eth_hnd 1]
+                set stack [lindex $eth_hnd 0]
+                set handleName [ ixNet getA $handle/dhcpServerRange -name ]
                 set trafficObj $handle
             } else {
                 error "$errNumber(5) handle:$hDhcpv4Server"
@@ -2431,10 +2447,16 @@ class Dhcpv6Server {
     constructor { port { onStack null } { hDhcpv6Server null } } { chain $port $onStack $hDhcpv6Server } {
         global errNumber
         
+        if { $hDhcpv6Server == "null" } {
+            set hDhcpv6Server [GetObjNameFromString $this "null"]
+        }
+        
         if { $hDhcpv6Server != "null" } {
-            set handle [GetValidHandleObj "dhcpv6_server" $hDhcpv6Server $hPort]
-            if { $handle != "" } {
-                set handleName [ ixNet getA $handle -name ]
+            set eth_hnd [GetValidHandleObj "dhcpv6_server" $hDhcpv6Server $hPort]
+            if { [llength $eth_hnd] == 2 } {
+                set handle [lindex $eth_hnd 1]
+                set stack [lindex $eth_hnd 0]
+                set handleName [ ixNet getA $handle/dhcpServerRange -name ]
             } else {
                 error "$errNumber(5) handle:$hDhcpv6Server"
             }

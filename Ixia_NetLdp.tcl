@@ -31,6 +31,10 @@ class LdpSession {
             error "$errNumber(1) Port Object in LdpSession ctor"
         }
         
+        if { $hLdpSession == "NULL" } {
+            set hLdpSession [GetObjNameFromString $this "NULL"]
+        }
+    
         if { $hLdpSession != "NULL" } {
             set handle [GetValidHandleObj "ldp" $hLdpSession $hPort]
             if { $handle != "" } {

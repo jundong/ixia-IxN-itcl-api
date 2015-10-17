@@ -884,3 +884,13 @@ proc GetResultFromReturn { stats } {
 		return 0
 	}
 }
+
+proc GetObjNameFromString { str { retVal "" } } {
+	set name ""
+	if { [ catch {
+		set name [lindex [split [lindex [split $str "\("] 1] "\)"] 0]
+	} err ] } {
+		return $retVal
+	} 
+	return $name
+}

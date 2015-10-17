@@ -128,7 +128,7 @@ class ProtocolStackObject {
         } ] } {
             error "$errNumber(1) Port Object in ProtocolStackObject ctor"
         }
-        
+        set handle ""
         #if { $hProtocol != "null" } {
         #    set handle $hProtocol
         #    set handleName [ ixNet getA $handle -name ] 

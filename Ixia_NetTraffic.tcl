@@ -509,11 +509,24 @@ class GreHdr {
 body Traffic::constructor { port { hTraffic NULL } } {
     set tag "body Traffic::ctor [info script]"
     Deputs "----- TAG: $tag -----"
-
     global errNumber
     
-    if { $hTraffic != "NULL" } {
-        set handle [GetValidHandleObj "traffic" $hTraffic]
+    set portObj $port
+    Deputs "portObj:$portObj"
+    if { [ catch {
+        set hPort [ $port cget -handle ]
+    } ] } {
+        Deputs "port:$port"
+        set port [ GetObject $port ]
+        Deputs "port:$port"		
+        set hPort [ $port cget -handle ]
+    }
+    
+	if { $hTraffic == "NULL" } {
+		set hTraffic [GetObjNameFromString $this "NULL"]
+	}
+    if { $hTraffic != "" } {
+        set handle [GetValidHandleObj "traffic" $hTraffic $hPort]
         if { $handle != "" } {
             set highLevelStream [ ixNet getL $handle configElement ]
             set endpointSet     [ ixNet getL $handle endpointSet ]
@@ -530,17 +543,6 @@ body Traffic::constructor { port { hTraffic NULL } } {
     ixNet setM $handle \
             -name $handleName
     Deputs "traffic item handle:$handle"
-    
-    set portObj $port
-    Deputs "portObj:$portObj"
-    if { [ catch {
-        set hPort [ $port cget -handle ]
-    } ] } {
-        Deputs "port:$port"
-        set port [ GetObject $port ]
-        Deputs "port:$port"		
-        set hPort [ $port cget -handle ]
-    }
 }
 
 body Traffic::config { args  } {

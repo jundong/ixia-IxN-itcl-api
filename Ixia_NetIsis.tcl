@@ -74,6 +74,10 @@ body IsisSession::constructor { port { hIsisSession NULL } } {
         error "$errNumber(1) Port Object in IsisSession ctor"
     }
     
+    if { $hIsisSession == "NULL" } {
+        set hIsisSession [GetObjNameFromString $this "NULL"]
+    }
+        
     if { $hIsisSession != "NULL" } {
         set handle [GetValidHandleObj "isis" $hIsisSession $hPort]
         if { $handle != "" } {

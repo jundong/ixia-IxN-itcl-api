@@ -289,7 +289,9 @@ proc loadconfig { filename } {
     global trafficnamelist
     global tportlist
     puts "Loadconfig $filename"
+	Deputs "----- TAG: Starting to load profile $filename-----"
     ixNet exec loadConfig [ixNet readFrom $filename]
+	Deputs "----- TAG: Ended to load profile $filename-----"
     set root [ixNet getRoot]
     set portlist [ixNet getL $root vport]
     foreach portobj $portlist {
@@ -422,6 +424,14 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					return $handle
 				} elseif { [ixNet getA $port -name] == $handle } {
 					return $port 
+				} elseif { [llength [ split $handle "/" ]] == 3 } {
+					set realLocationInfo [ split $handle "/" ]
+					set assignedTo [ixNet getA $port -assignedTo]
+					set ModuleNo    [lindex [split $assignedTo ":"] 1]
+					set PortNo      [lindex [split $assignedTo ":"] 2]
+					if { $ModuleNo == [lindex $realLocationInfo 1] && $PortNo == [lindex $realLocationInfo 2]} {
+						return $port
+					}
 				}
 			}
 			return ""
@@ -430,14 +440,24 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 			set trafficObjs [ixNet getL [ixNet getL [ixNet getRoot] traffic] trafficItem]
 			foreach trafficItemobj $trafficObjs {
 				set itemlist [ixNet getL $trafficItemobj highLevelStream]
+                set itemName [ixNet getA $trafficItemobj -name]
 				foreach trafficobj $itemlist {
-					if { [ixNet getA $trafficobj -name] == $handle } {
-                        return $trafficItemobj
-                    } elseif { $trafficItemobj == $handle } {
-                        return $trafficItemobj
+                    set highName [ixNet getA $trafficobj -name]
+                    if { [ixNet getA $trafficobj -txPortName] == [ixNet getA $parentHnd -name] } {
+                        if { $highName == $handle || [string range $handle 1 [expr [string length $handle] - 2]] == $highName } {
+                            return $trafficItemobj
+                        } elseif { $itemName == $handle || [string range $handle 1 [expr [string length $handle] - 2]] == $itemName } {
+                            return $trafficItemobj
+                        }
                     }
 				}
 			}
+            
+            set index [expr $index - 1]
+            if { $index >= 0 && [llength $trafficObjs] != 0 && [llength $trafficObjs] > $index } {
+                return [lindex $trafficObjs $index]
+            }
+            
             return ""
 		}
 		bfd {
@@ -612,19 +632,22 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					continue
 				}
 				set ranges [ixNet getL $stack range]
+                set ipv4Ranges [list ]
 				foreach range $ranges {
 				    if { [ixNet getA $range/dhcpRange -ipType] != "IPv4" } {
 						continue
 					}
+                    lappend ipv4Ranges $range
+                    set rangeName [ixNet getA $range/dhcpRange -name]
 					if { $range == $handle } {
-						return $handle
-					} elseif { [ixNet getA $range/dhcpRange -name] == $handle } {
-						return $range
+						return [list $stack $range]
+					} elseif { $rangeName == $handle || [string range $handle 1 [expr [string length $handle] - 2]] == $rangeName } {
+						return [list $stack $range]
 					}
 				}
                 set index [expr $index - 1]
-                if { $index >= 0 && [llength $ranges] > $index} {
-                    return [lindex $ranges $index]
+                if { $index >= 0 && [llength $ipv4Ranges] > $index} {
+                    return [list $stack [lindex $ipv4Ranges $index]]
                 }
 			}
 			return ""
@@ -638,19 +661,22 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					continue
 				}
 				set ranges [ixNet getL $stack range]
+                set ipv4Ranges [list ]
 				foreach range $ranges {
 				    if { [ixNet getA $range/dhcpServerRange -ipType] != "IPv4" } {
 						continue
-					}				
+					}
+                    lappend ipv4Ranges $range
+                    set rangeName [ixNet getA $range/dhcpRange -name]
 					if { $range == $handle } {
-						return $handle
-					} elseif { [ixNet getA $range/dhcpServerRange -name] == $handle } {
-						return $range
+						return [list $stack $range]
+					} elseif { $rangeName == $handle || [string range $handle 1 [expr [string length $handle] - 2]] == $rangeName } {
+						return [list $stack $range]
 					}	
 				}
                 set index [expr $index - 1]
-                if { $index >= 0 && [llength $ranges] > $index} {
-                    return [lindex $ranges $index]
+                if { $index >= 0 && [llength $ipv4Ranges] > $index} {
+                    return [list $stack [lindex $ipv4Ranges $index]]
                 }
 			}
 			return ""
@@ -664,19 +690,22 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					continue
 				}
 				set ranges [ixNet getL $stack range]
+                set ipv6Ranges [list ]
 				foreach range $ranges {
 				    if { [ixNet getA $range/dhcpRange -ipType] != "IPv6" } {
 						continue
-					}				
+					}
+                    lappend ipv6Ranges $range
+                    set rangeName [ixNet getA $range/dhcpRange -name]
 					if { $range == $handle } {
-						return $handle
-					} elseif { [ixNet getA $range/dhcpRange -name] == $handle } {
-						return $range
+						return [list $stack $range]
+					} elseif { $rangeName == $handle || [string range $handle 1 [expr [string length $handle] - 2]] == $rangeName } {
+						return [list $stack $range]
 					}
 				}
                 set index [expr $index - 1]
-                if { $index >= 0 && [llength $ranges] > $index} {
-                    return [lindex $ranges $index]
+                if { $index >= 0 && [llength $ipv6Ranges] > $index} {
+                    return [list $stack [lindex $ipv6Ranges $index]]
                 }	
 			}
 			return ""
@@ -690,19 +719,22 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					continue
 				}
 				set ranges [ixNet getL $stack range]
+                set ipv6Ranges [list ]
 				foreach range $ranges {
 				    if { [ixNet getA $range/dhcpServerRange -ipType] != "IPv6" } {
 						continue
-					}				
+					}
+                    lappend ipv6Ranges $range
+                    set rangeName [ixNet getA $range/dhcpRange -name]
 					if { $range == $handle } {
-						return $handle
-					} elseif { [ixNet getA $range/dhcpServerRange -name] == $handle } {
-						return $range
+						return [list $stack $range]
+					} elseif { $rangeName == $handle || [string range $handle 1 [expr [string length $handle] - 2]] == $rangeName } {
+						return [list $stack $range]
 					}
 				}
                 set index [expr $index - 1]
-                if { $index >= 0 && [llength ranges] > $index} {
-                    return [lindex ranges $index]
+                if { $index >= 0 && [llength $ipv6Ranges] > $index} {
+                    return [list $stack [lindex $ipv6Ranges $index]]
                 }
 			}
 			return ""
@@ -716,20 +748,53 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 					continue
 				}
 				set ranges [ixNet getL $stack range]
-				foreach range $ranges {			
+				foreach range $ranges {
+                    set rangeName [ixNet getA $range/pppoxRange -name]
 					if { $range == $handle } {
-						return $handle
-					} elseif { [ixNet getA $range/pppoxRange -name] == $handle } {
-						return $range
+						return [list $stack $range]
+					} elseif { $rangeName == $handle || [string range $handle 1 [expr [string length $handle] - 2]] == $rangeName } {
+						return [list $stack $range]
 					}
 				}
                 set index [expr $index - 1]
                 if { $index >= 0 && [llength $ranges] > $index} {
-                    return [lindex $ranges $index]
+                    return [list $stack [lindex $ranges $index]]
                 }
 			}
 			return ""
 		}
+        ipoe_host {
+			set protocolStack [ixNet getL $parentHnd protocolStack]
+            set ipRangeOptions [ixNet getL $protocolStack ipRangeOptions]
+			set ethernets [ixNet getL $protocolStack ethernet]
+			foreach ethernet $ethernets {
+				set stack [ixNet getL $ethernet ipEndpoint]
+				if { $stack == "" } {
+					continue
+				}
+				set ranges [ixNet getL $stack range]
+                set ipoeRanges [list ]
+				foreach range $ranges {
+                    if { [llength $ipRangeOptions] != 0 } {
+                        if { [ixNet getA $ipRangeOptions -ipv6AddressMode] == "autoconf" } {
+                            continue
+                        }
+                    }
+                    lappend ipoeRanges $range
+                    set rangeName [ixNet getA $range/ipRange -name]
+                    if { $range == $handle } {
+                        return [list $stack $range]
+                    } elseif { $rangeName == $handle || [string range $handle 1 [expr [string length $handle] - 2]] == $rangeName } {
+                        return [list $stack $range]
+                    }
+				}
+                set index [expr $index - 1]
+                if { $index >= 0 && [llength $ipoeRanges] > $index} {
+                    return [list $stack [lindex $ipoeRanges $index]]
+                }
+			}
+			return ""
+        }
         default {
             return ""
         }
@@ -803,7 +868,7 @@ proc GenerateProtocolsObjects { portObj } {
             continue
         }
 		
-		foreach $ethernet {
+		foreach ethernet $ethernet {
 			set stack [ixNet getL $ethernet $proStack]
 			if { $stack != "" } {
 				switch -exact $proStack {

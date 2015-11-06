@@ -14,7 +14,9 @@
 class IgmpHost {
     inherit RouterEmulationObject
     	
-    constructor { port { hIgmpHost NULL } } {}
+    constructor { port { hIgmpHost NULL } } {
+		
+}
     method reborn {} {
 	set tag "body IgmpHost::reborn [info script]"
 	Deputs "----- TAG: $tag -----"
@@ -87,7 +89,7 @@ body IgmpHost::constructor { port { hIgmpHost NULL } } {
     
     set tag "body IgmpHost::ctor [info script]"
     Deputs "----- TAG: $tag -----"
-
+set protocol igmp
     set portObj [ GetObject $port ]
     if { [ catch {
         set hPort   [ $portObj cget -handle ]

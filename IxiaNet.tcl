@@ -472,7 +472,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { $index >= 0 && [llength $routes] > $index} {
+				if { $index >= 0 && [llength $routers] > $index} {
 					return [lindex $routers $index]
 				}
 			}
@@ -491,7 +491,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { $index >= 0 && [llength $routers] != 0 && [llength $routers] > $index } {
+				if { $index >= 0 && [llength $routers] != 0 && [llength $routers] > $index } {         
 					return [lindex $routers $index]
 				}
 			}			
@@ -545,7 +545,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { $index >= 0 && [llength $routes] > $index} {
+				if { $index >= 0 && [llength $routers] > $index} {
 					return [lindex $routers $index]
 				}
 			}			
@@ -563,7 +563,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { $index >= 0 && [llength $routes] > $index} {
+				if { $index >= 0 && [llength $routers] > $index} {
 					return [lindex $routers $index]
 				}
 			}			
@@ -581,7 +581,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { $index >= 0 && [llength $routes] > $index} {
+				if { $index >= 0 && [llength $routers] > $index} {
 					return [lindex $routers $index]
 				}
 			}			
@@ -599,7 +599,7 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 				}
 				
 				set index [expr $index - 1]
-				if { $index >= 0 && [llength $routes] > $index} {
+				if { $index >= 0 && [llength $routers] > $index} {
 					return [lindex $routers $index]
 				}
 			}			
@@ -1173,7 +1173,7 @@ set errNumber(4)    "Confilct argument..."
 set errNumber(5)    "Unknown object name or out of range..."
 puts "set error message list..."
 
-set ixN_tcl_v "6.0"
+set ixN_tcl_v "7.0"
 puts "connect to ixNetwork Tcl Server version $ixN_tcl_v"
 if { $::tcl_platform(platform) == "windows" } {
     puts "windows platform..."

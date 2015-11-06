@@ -13,7 +13,10 @@
 class IsisSession {
     inherit RouterEmulationObject
 		
-    constructor { port { hIsisSession NULL } } {}
+    constructor { port { hIsisSession NULL } } {
+
+
+}
     method reborn {} {}
     method config { args } {}
 
@@ -67,6 +70,7 @@ body IsisSession::constructor { port { hIsisSession NULL } } {
     Deputs "----- TAG: $tag -----"
     
     #-- enable protocol
+set protocol isis
     set portObj [ GetObject $port ]
     if { [ catch {
         set hPort   [ $portObj cget -handle ]

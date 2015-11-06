@@ -19,7 +19,7 @@ class LdpSession {
     	
     constructor { port { hLdpSession NULL } } {
         global errNumber
-        
+        set protocol ldp
         set tag "body LdpSession::ctor [info script]"
         Deputs "----- TAG: $tag -----"
 

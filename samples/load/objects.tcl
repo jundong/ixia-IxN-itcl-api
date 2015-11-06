@@ -3,7 +3,7 @@ lappend auto_path [file dirname [file dirname [file dirname [info script]]]]
 package req IxiaNet
 #set configfile "C:/Ixia/Configs/B2BTraffic.ixncfg"
 set configfile "C:/Ixia/Workspace/ixia-IxN-itcl-api/samples/load/SR+_2G_L3_ipoe_v4.ixncfg"
-Login "localhost/8009" 0 $configfile
+Login "localhost/8009" 1 $configfile
 IxDebugOn
 Port @portwithname11 "172.16.174.137/1/1"
 Traffic @trafficwithname(1) @portwithname11

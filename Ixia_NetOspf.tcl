@@ -379,6 +379,7 @@ class Ospfv2Session {
     constructor { port { hOspfv2Session NULL } } { chain $port } {
         global errNumber
 		
+        set protocol ospf 
 		if { $hOspfv2Session == "NULL" } {
 			set hOspfv2Session [GetObjNameFromString $this]
 		}
@@ -408,7 +409,6 @@ class Ospfv2Session {
         set handle [ ixNet remapIds $handle ]
         ixNet setA $handle -name $this
         Deputs "handle:$handle"		
-        set protocol ospf
     }
     
     method config { args } {}
@@ -935,17 +935,18 @@ class Ospfv3Session {
 	
     constructor { port { hOspfv3Session NULL } } { chain $port } {
         global errNumber
-		
+        
+		set protocol ospfV3
 		if { $hOspfv3Session == "NULL" } {
 			set hOspfv3Session [GetObjNameFromString $this "NULL" "NULL"]
 		}
 		
-        if { hOspfv3Session != "NULL" } {
-            set handle [GetValidHandleObj "ospfv3" hOspfv3Session $hPort]
+        if { $hOspfv3Session != "NULL" } {
+            set handle [GetValidHandleObj "ospfv3" $hOspfv3Session $hPort]
             if { $handle != "" } {
                 set handleName [ ixNet getA $handle -name ] 
             } else {
-                error "$errNumber(5) handle:hOspfv3Session"
+                error "$errNumber(5) handle:$hOspfv3Session"
             }
         }
     }
@@ -967,7 +968,6 @@ class Ospfv3Session {
         ixNet commit
         set handle [ ixNet remapIds $handle ]
         ixNet setA $handle -name $this		
-        set protocol ospfV3
         generate_interface	
     }
     
@@ -1110,7 +1110,7 @@ body Ospfv3Session::get_stats {} {
         Deputs "connectionInfo :$connectionInfo"
         regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
         Deputs "chas:$chassis card:$card port$port"
-	set portName ${chassis}/Card${card}/Port${port}
+        set portName ${chassis}/Card${card}/Port${port}
         Deputs "filter name: $portName"
         if { [ regexp $portName $rowPortName ] } {
             set portFound 1

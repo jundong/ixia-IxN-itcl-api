@@ -21,6 +21,7 @@ class BgpSession {
         Deputs "----- TAG: $tag -----"
         global errNumber
         
+	set protocol bgp
         set portObj [ GetObject $port ]
         if { [ catch {
             set hPort   [ $portObj cget -handle ]

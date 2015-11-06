@@ -262,19 +262,19 @@ class Traffic {
 class Header {
     inherit NetObject
     constructor { pduPro { pduType "APP" } } {
-	   #set EMode [ list Incrementing Decremeting Fixed Random ]
-	   set fieldModes [ list ]
-	   set fields [ list ]
-	   set fieldConfigs [ list ]
-	   set optionals [ list ]
-	   set autos [ list ]
-	   set valid 0
-	   set type $pduType
-	   set protocol $pduPro
-Deputs "type:$type\tprotocol:$protocol"
+        #set EMode [ list Incrementing Decremeting Fixed Random ]
+        set fieldModes [ list ]
+        set fields [ list ]
+        set fieldConfigs [ list ]
+        set optionals [ list ]
+        set autos [ list ]
+        set valid 0
+        set type $pduType
+        set protocol $pduPro
+        Deputs "type:$type\tprotocol:$protocol"
 		set noMac 1
 		set noIp 1
-Deputs "constructor success"		
+        Deputs "constructor success"		
     }
     method ConfigPdu { args } {}
     destructor {}

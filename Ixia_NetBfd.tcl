@@ -15,6 +15,13 @@ class BfdSession {
     constructor { port { hBfdSession NULL } } {
         global errNumber
         
+set protocol bfd
+        set portObj [ GetObject $port ]
+        if { [ catch {
+            set hPort   [ $portObj cget -handle ]
+        } ] } {
+            error "$errNumber(1) Port Object in BgpSession ctor"
+        }
         set tag "body BfdSession::ctor [info script]"
         Deputs "----- TAG: $tag -----"
         
@@ -23,7 +30,7 @@ class BfdSession {
         }
     
         if { $hBfdSession != "NULL" } {
-            set handle [GetValidHandleObj "bfd" $hBfdSession]
+            set handle [GetValidHandleObj "bfd" $hBfdSession $hPort]
             if { $handle != "" } {
                 set handleName [ ixNet getA $handle -name ]
             } else {

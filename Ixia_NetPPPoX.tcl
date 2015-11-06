@@ -36,35 +36,37 @@ class PppoeHost {
             }
         }
     }
+    method connect {} { start }
+    method disconnect {} { stop }
     method reborn {} {}
     method config { args } {}
     method get_summary_stats {} {}
     method wait_connect_complete { args } {}
     method CreatePPPoEPerSessionView {} {
         set tag "body PppoeHost::CreateDhcpPerSessionView [info script]"
-	Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
         set root [ixNet getRoot]
         set customView          [ ixNet add $root/statistics view ]
         ixNet setM  $customView -caption "dhcpPerSessionView" -type layer23ProtocolStack -visible true
         ixNet commit
         set customView          [ ixNet remapIds $customView ]
-	Deputs "view:$customView"
+        Deputs "view:$customView"
         set availableFilter     [ ixNet getList $customView availableProtocolStackFilter ]
-	Deputs "available filter:$availableFilter"
+        Deputs "available filter:$availableFilter"
         set filter              [ ixNet getList $customView layer23ProtocolStackFilter ]
-	Deputs "filter:$filter"
-	Deputs "handle:$handle"
+        Deputs "filter:$filter"
+        Deputs "handle:$handle"
         set pppoxRange [ixNet getList $handle pppoxRange]
-	Deputs "pppoxRange:$pppoxRange"
+        Deputs "pppoxRange:$pppoxRange"
         set rangeName [ ixNet getA $pppoxRange -name ]
-	Deputs "range name:$rangeName"
+        Deputs "range name:$rangeName"
         foreach afil $availableFilter {
 	    Deputs "$afil"
             if { [ regexp $rangeName $afil ] } {
                 set stackFilter $afil
             }
         }
-	Deputs "stack filter:$stackFilter"
+        Deputs "stack filter:$stackFilter"
         ixNet setM $filter -drilldownType perSession -protocolStackFilterId [ list $stackFilter ]
         ixNet commit
         set srtStat [lindex [ixNet getF $customView statistic -caption {Session Name}] 0]
@@ -84,7 +86,7 @@ body PppoeHost::reborn {} {
     Deputs "----- TAG: $tag -----"
 
     if { $handle != "" } {
-	return 
+        return 
     }
 	
     chain 
@@ -100,14 +102,14 @@ body PppoeHost::reborn {} {
     #-- add range
     set sg_range [ixNet add $sg_pppoxEndpoint range]
     ixNet setMultiAttrs $sg_range/macRange \
-	-enabled True 
+        -enabled True 
     
     ixNet setMultiAttrs $sg_range/vlanRange \
-	-enabled False \
+        -enabled False \
     
     ixNet setMultiAttrs $sg_range/pppoxRange \
-	-enabled True \
-	-numSessions 1
+        -enabled True \
+        -numSessions 1
     
     ixNet commit
     set sg_range [ixNet remapIds $sg_range]
@@ -117,7 +119,7 @@ body PppoeHost::reborn {} {
 	
     #disable all the interface defined on port
     foreach int [ ixNet getL $hPort interface ] {
-	ixNet setA $int -enabled false
+        ixNet setA $int -enabled false
     }
     ixNet commit
 }
@@ -184,20 +186,20 @@ body PppoeHost::config { args } {
     }
 	
     if { [ info exists count ] } {
-	ixNet setMultiAttrs $handle/pppoxRange \
-	    -numSessions $count
+        ixNet setMultiAttrs $handle/pppoxRange \
+            -numSessions $count
     }
     
     if { [ info exists ipcp_encap ] } {
 	switch $ipcp_encap {
 	    ipv4 {
-		set ipcp_encap IPv4
+            set ipcp_encap IPv4
 	    }
 	    ipv6 {
-		set ipcp_encap IPv6
+            set ipcp_encap IPv6
 	    }
 	    ipv4v6 {
-		set ipcp_encap DualStack
+            set ipcp_encap DualStack
 	    }
 	}
 	ixNet setA $handle/pppoxRange -ncpType $ipcp_encap
@@ -206,7 +208,7 @@ body PppoeHost::config { args } {
     if { [ info exists authentication ] } {
 	switch $authentication {
 	    auto {
-		set authentication papOrChap
+            set authentication papOrChap
 	    }
 	    chap_md5 {
 		set authentication chap

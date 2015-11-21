@@ -1964,18 +1964,10 @@ body Traffic::enable {} {
     set tag "body Traffic::enable [info script]"
     Deputs "----- TAG: $tag -----"
 
-    Deputs "enable:[ ixNet getA $handle -enabled ] suspend:[ ixNet getA $handle -suspend ]"
     ixNet setA $handle -enabled true 
     ixNet setA $handle -suspend false
     ixNet commit
-    
-    foreach flow [ixNet getL $handle highLevelStream] {
-        set flowName [ ixNet getA $flow -name ]
-        if { $flowName == $this || "::$flowName" == $this } {
-            ixNet setA $flow -suspend false
-            ixNet commit
-        }
-    }
+    Deputs "enable:[ ixNet getA $handle -enabled ] suspend:[ ixNet getA $handle -suspend ]"
 		
     return [ GetStandardReturnHeader ]
 }
@@ -1986,19 +1978,7 @@ body Traffic::disable {} {
     ixNet setA $handle -enabled false
     ixNet setA $handle -suspend true
     ixNet commit
-    
     Deputs "enable:[ ixNet getA $handle -enabled ] suspend:[ ixNet getA $handle -suspend ]"
-    foreach flow [ixNet getL $handle highLevelStream] {
-        set flowName [ ixNet getA $flow -name ]
-        if { $flowName == $this || "::$flowName" == $this } {
-            ixNet setA $flow -suspend true
-            ixNet commit
-        } else {
-            ixNet setA $handle -enabled true
-            ixNet setA $handle -suspend false
-            ixNet commit
-        }
-    }
     
     return [ GetStandardReturnHeader ]
 }

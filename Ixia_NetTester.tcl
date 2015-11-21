@@ -53,6 +53,7 @@
 class Tester {
     
     proc constructor {} {}
+    proc apply_traffic {} {}
     proc start_traffic { { restartCaptureJudgement 1 } } {}
     proc stop_traffic {} {}
     proc start_router {} {}
@@ -71,7 +72,7 @@ class Tester {
 
 proc Tester::getAllTx {} {
     set tag "proc Tester::getAllTx  [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     
 	set allObj [ find objects ]
 	set allTx 0
@@ -477,7 +478,7 @@ Deputs $err
 
 proc Tester::apply_traffic {} {
 	set tag "proc Tester::apply_traffic [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	ixTclNet::ApplyTraffic
 

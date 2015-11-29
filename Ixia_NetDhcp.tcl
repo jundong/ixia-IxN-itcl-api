@@ -1224,10 +1224,10 @@ body DhcpHost::set_igmp_over_dhcp { args } {
 
 body DhcpHost::unset_igmp_over_dhcp {} {
     if { [ info exists hIgmp ] } {
-	if { [ ixNet exists $hIgmp ] } {
-	    ixNet remove $hIgmp
-	    ixNet commit
-	}
+        if { [ ixNet exists $hIgmp ] } {
+            ixNet remove $hIgmp
+            ixNet commit
+        }
     }
 }
 
@@ -1523,6 +1523,7 @@ class Dhcpv6Host {
         if { $hDhcpv6Host == "null" } {
             set hDhcpv6Host [GetObjNameFromString $this "null"]
         }
+        
         if { $hDhcpv6Host != "null" } {
             set eth_hnd [GetValidHandleObj "dhcpv6" $hDhcpv6Host $hPort]
             if { [llength $eth_hnd] == 2 } {
@@ -2693,10 +2694,16 @@ class IPoEHost {
     constructor { port { onStack null } { hIPoEHost null } } { chain $port $onStack $hIPoEHost } {
         global errNumber
         
+        if { $hIPoEHost == "null" } {
+            set hIPoEHost [GetObjNameFromString $this "null"]
+        }
+        
         if { $hIPoEHost != "null" } {
-            set handle [GetValidHandleObj "ipoe" $hIPoEHost $hPort]
-            if { $handle != "" } {
-                set handleName [ ixNet getA $handle -name ]
+            set eth_hnd [GetValidHandleObj "ipoe_host" $hIPoEHost $hPort]
+            if { [llength $eth_hnd] == 2 } {
+                set handle [lindex $eth_hnd 1]
+                set stack [lindex $eth_hnd 0]
+                set handleName [ ixNet getA $handle/ipRange -name ]
             } else {
                 error "$errNumber(5) handle:$hIPoEHost"
             }
@@ -2711,35 +2718,35 @@ class IPoEHost {
         }
     }
     method reborn { { onStack null } } {
-	set tag "body IPoEHost::reborn [info script]"
-	Deputs "----- TAG: $tag -----"
-	Deputs "***************** Handle: $handle ***************"
-    Deputs "***************** Handle-----2: $handle ***************"
-	chain $onStack	
-	set sg_ethernet $stack
-	#-- add dhcp endpoint stack
-	set sg_ipEndpoint [ixNet add $sg_ethernet ipEndpoint]
-	ixNet setA $sg_ipEndpoint -name $this
-	ixNet commit
-	set sg_ipEndpoint [lindex [ixNet remapIds $sg_ipEndpoint] 0]
-	set hIp $sg_ipEndpoint
-
-	#-- add range
-	set sg_range [ixNet add $sg_ipEndpoint range]
-	ixNet setMultiAttrs $sg_range/macRange \
-	    -enabled True 
-
-	ixNet setMultiAttrs $sg_range/vlanRange \
-	    -enabled False \
-
-	ixNet setMultiAttrs $sg_range/ipRange \
-	    -enabled True \
-	    -count 1
-
-	ixNet commit
-	set sg_range [ixNet remapIds $sg_range]
-
-	set handle $sg_range
+        set tag "body IPoEHost::reborn [info script]"
+        Deputs "----- TAG: $tag -----"
+        Deputs "***************** Handle: $handle ***************"
+        Deputs "***************** Handle-----2: $handle ***************"
+        chain $onStack	
+        set sg_ethernet $stack
+        #-- add dhcp endpoint stack
+        set sg_ipEndpoint [ixNet add $sg_ethernet ipEndpoint]
+        ixNet setA $sg_ipEndpoint -name $this
+        ixNet commit
+        set sg_ipEndpoint [lindex [ixNet remapIds $sg_ipEndpoint] 0]
+        set hIp $sg_ipEndpoint
+    
+        #-- add range
+        set sg_range [ixNet add $sg_ipEndpoint range]
+        ixNet setMultiAttrs $sg_range/macRange \
+            -enabled True 
+    
+        ixNet setMultiAttrs $sg_range/vlanRange \
+            -enabled False \
+    
+        ixNet setMultiAttrs $sg_range/ipRange \
+            -enabled True \
+            -count 1
+    
+        ixNet commit
+        set sg_range [ixNet remapIds $sg_range]
+    
+        set handle $sg_range
     }
     
     method config { args } {}

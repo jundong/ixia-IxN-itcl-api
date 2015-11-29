@@ -6,13 +6,14 @@ package req IxiaNet
 Login "localhost/8009" 1
 IxDebugOn
 Port @portwithname11 "172.16.174.137/1/1"
+IPoEHost @ipoe_host("IP-R6") @portwithname11
 Traffic @trafficwithname("t1") @portwithname11
 Traffic @trafficwithname("t2") @portwithname11
 Traffic @trafficwithname("t3") @portwithname11
 Traffic @trafficwithname("t4") @portwithname11
 Traffic @trafficwithname("t6") @portwithname11
 Traffic @trafficwithname("t7") @portwithname11
-#Traffic @trafficwithname("t8") @portwithname11
+#Traffic @trafficwithname("t8") @portwithname11za
 Traffic @trafficwithname("t9") @portwithname11
 Traffic @trafficwithname("t10") @portwithname11
 

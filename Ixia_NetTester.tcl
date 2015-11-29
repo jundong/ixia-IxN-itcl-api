@@ -92,7 +92,7 @@ Deputs "port tx:$tx"
 proc Tester::start_traffic { args } {
 
     set tag "proc Tester::start_traffic [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
     set restartCaptureJudgement 1
 	set apply 0
@@ -520,20 +520,20 @@ Deputs "----- TAG: $tag -----"
 
 proc Tester::clear_traffic_stats {} {
     set tag "proc Tester::synchronize [info script]"
-Deputs "----- TAG: $tag -----"
-    	ixNet exec clearStats
-    	return [ GetStandardReturnHeader ]
+    Deputs "----- TAG: $tag -----"
+    ixNet exec clearStats
+    return [ GetStandardReturnHeader ]
 }
 
 proc Tester::get_log { { file default } } {
 	set tag "proc Tester::get_log [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 	if { $file == "default" } {
-Deputs Step10
+        Deputs Step10
 		set currDir [file dirname [info script]]
 		set file "$currDir/[clock seconds].zip"
 	}
-Deputs "file path:$file"
+    Deputs "file path:$file"
 	ixNet exec collectLogs [ ixNet writeTo $file -ixNetRelative ]	
 	return [ GetStandardReturnHeader ]
 }

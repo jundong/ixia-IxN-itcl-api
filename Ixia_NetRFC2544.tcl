@@ -647,12 +647,12 @@ Deputs "path:$path"
 		if { [ catch {
 			file copy $path $resultdir
 		} err ] } {
-Deputs "err:$err"
+            Deputs "err:$err"
 		}
 		if { [ info exists resultfile ] } {
-Deputs "result file:$resultfile"		
+            Deputs "result file:$resultfile"		
 		    if { [file exists $resultdir/$resultfile ] } {
-Deputs "result file:$resultdir/$resultfile"
+                Deputs "result file:$resultdir/$resultfile"
 			    if { [ catch {
 				
 					#- DC format
@@ -673,13 +673,11 @@ Deputs "result file:$resultdir/$resultfile"
 			} else {				
 			    if { [ catch {
 						if { $resultLevel == 0 } {
-Deputs "copy aggregate results..."
+                            Deputs "copy aggregate results..."
 							if { $measure_jitter } {
-Deputs "run jitter test on traffic: $trafficSelection"								
+                                Deputs "run jitter test on traffic: $trafficSelection"								
 								set rfile [ open $path/aggregateresults.csv r ]
 								set desfile [open $resultdir/$resultfile w+]
-
-
 								close $desfile
 								
 								ixNet setMultiAttribute $root/traffic/statistics/latency -enabled false
@@ -725,8 +723,7 @@ Deputs "run jitter test on traffic: $trafficSelection"
 											   -rate $itemtxrate
 											ixNet setA $fstream -enabled true
 									        ixNet commit
-											ixNet exec generate $fstream
-											  										   
+											ixNet exec generate $fstream  										   
 										}
 										#ixNet commit
 										# ixNet exec apply $root/traffic
@@ -751,10 +748,8 @@ Deputs "run jitter test on traffic: $trafficSelection"
 										set stats [ ixNet getA $view/page -rowValues ]
 										set aveLatency   0
 										set minLatency   0
-										set maxLatency   0
-										
+										set maxLatency   0		
 										set totallatency 0
-										
 										set totaljitter  0
 										set minjitter    0
 										set maxjitter    0
@@ -793,7 +788,6 @@ Deputs "run jitter test on traffic: $trafficSelection"
 									Deputs "rpattern:$rpattern"
 									puts  $desfile $rpattern
 								    close $desfile
-									
 								}
 								#set rpattern [ read -nonewline $rfile ]
 								close $rfile
@@ -803,8 +797,7 @@ Deputs "run jitter test on traffic: $trafficSelection"
 								ixNet setMultiAttribute $root/traffic/statistics/latency -enabled true \
 			                                                  -mode $latency_type
 								ixNet commit
-								
-								
+					
 								foreach suspend $enableList item $trafficitemlist {
 									ixNet setA $item -enabled $suspend
 								}
@@ -815,8 +808,7 @@ Deputs "run jitter test on traffic: $trafficSelection"
 							}
 						}
 						if { $resultLevel == 1 } {
-Deputs "copy results..."
-							
+                            Deputs "copy results..."
 							file copy $path/results.csv $resultdir/$resultfile
 						}
 					} err ] } {
@@ -867,7 +859,6 @@ body Async2544::reborn {} {
 }
 
 body Async2544::config { args } {
-
     global errorInfo
     global errNumber
     set tag "body Async2544::config [info script]"

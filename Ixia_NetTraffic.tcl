@@ -1783,13 +1783,19 @@ Deputs Step240
 		}
     }
     
+    
     if {[info exists burst_gap ]} {
         ixNet setA $configElement/transmissionControl  \
-          -frameCount $burst_packet_count \
+            -frameCount $burst_packet_count \
 			-interBurstGap $burst_gap \
 			-interBurstGapUnits $burst_gap_units \
 			-enableInterBurstGap $enable_burst_gap
         
+    }
+    
+    if {[info exists burst_packet_count ]} {
+        ixNet setA $configElement/transmissionControl  \
+            -burstPacketCount $burst_packet_count
     }
     
     if { [ info exists stream_load ] } {

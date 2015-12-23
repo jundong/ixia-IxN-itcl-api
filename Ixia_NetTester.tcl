@@ -91,9 +91,9 @@ Deputs "port tx:$tx"
 proc Tester::start_traffic { args } {
 
     set tag "proc Tester::start_traffic [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-    set restartCaptureJudgement 1
+    set restartCaptureJudgement 0
 	set apply 0
     
 	foreach { key value } $args {

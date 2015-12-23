@@ -145,7 +145,7 @@ body ProtocolStackObject::config { args } {
     global errorInfo
     global errNumber
     set tag "body ProtocolStackObject::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {

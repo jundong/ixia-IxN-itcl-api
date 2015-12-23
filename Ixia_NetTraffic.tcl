@@ -264,19 +264,19 @@ Deputs "----- TAG: $tag -----"
 class Header {
     inherit NetObject
     constructor { pduPro { pduType "APP" } } {
-	   #set EMode [ list Incrementing Decremeting Fixed Random ]
-	   set fieldModes [ list ]
-	   set fields [ list ]
-	   set fieldConfigs [ list ]
-	   set optionals [ list ]
-	   set autos [ list ]
-	   set valid 0
-	   set type $pduType
-	   set protocol $pduPro
-Deputs "type:$type\tprotocol:$protocol"
+        #set EMode [ list Incrementing Decremeting Fixed Random ]
+        set fieldModes [ list ]
+        set fields [ list ]
+        set fieldConfigs [ list ]
+        set optionals [ list ]
+        set autos [ list ]
+        set valid 0
+        set type $pduType
+        set protocol $pduPro
+        Deputs "type:$type\tprotocol:$protocol"
 		set noMac 1
 		set noIp 1
-Deputs "constructor success"		
+        Deputs "constructor success"		
     }
     method ConfigPdu { args } {}
     destructor {}
@@ -1268,7 +1268,7 @@ Deputs "create raw stream..."
 				 if { [ $name isa Ipv4Hdr ] } {
 					 if { [ $name cget -noIp ] } {
 						if { $default_ip != "" } {
-				 Deputs "config default ip..."
+                            Deputs "config default ip..."
 							$name config -src $default_ip
 						}
 					 }
@@ -1390,7 +1390,7 @@ Deputs "Mesh the field:$obj"
 								 set start [ eval lindex $conf 1]
 								 set count [ eval lindex $conf 2]
 								 set step  [ eval lindex $conf 3]
-	Deputs "start:$start count:$count step:$step mode:$mode"
+	Deputs "start:$start count:$count step:$step mode:$mode obj:$obj"
 								 ixNet setMultiAttrs $obj \
 									-valueType $mode \
 									-countValue $count \
@@ -1497,18 +1497,19 @@ Deputs "fullMesh:[ixNet getA $obj -fullMesh ]"
 						   }
 						   Incrementing -
 						   Decrementing {
-							  set mode [string range $mode 0 8]
-							  set mode [string tolower $mode]
-	Deputs "Mode:$mode\tProtocol:$protocol\tConfig:$conf"
-							  set start [ eval lindex $conf 1]
-							  set count [ eval lindex $conf 2]
-							  set step  [ eval lindex $conf 3]
-	Deputs "start:$start count:$count step:$step"
-							  ixNet setMultiAttrs $obj \
-								 -valueType $mode \
-								 -countValue $count \
-								 -stepValue $step \
-								 -startValue $start
+                                set mode [string range $mode 0 8]
+                                set mode [string tolower $mode]
+                                Deputs "Mode:$mode\tProtocol:$protocol\tConfig:$conf"
+                                set start [ eval lindex $conf 1]
+                                set count [ eval lindex $conf 2]
+                                set step  [ eval lindex $conf 3]
+                                Deputs "start:$start count:$count step:$step obj:$obj"
+                                ixNet setMultiAttrs $obj \
+                                   -valueType $mode \
+                                   -countValue $count \
+                                   -stepValue $step \
+                                   -startValue $start
+                                ixNet commit
 						   }
 						   Commit {
 							  ixNet setMultiAttrs $obj \
@@ -3463,7 +3464,7 @@ body Ipv4Hdr::config { args } {
     global errNumber
 
     set tag "body Ipv4Hdr::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     set EType [ list Fixed Random Incrementing Decrementing List ]
     set EPrecedence [ list routine priority immediate flash \
 				 "flash_override" "critical" "internetwork_control"\
@@ -3625,7 +3626,7 @@ Deputs "----- TAG: $tag -----"
     set darepeat 1
     set saStep 1
     set daStep 1
-#    set protocolType 6
+    #set protocolType 6
     set ipprotocolmode Fixed
     set precedence_mode Fixed
 	set precedence_num 1
@@ -3633,8 +3634,8 @@ Deputs "----- TAG: $tag -----"
 	set precedence_fullmesh 0
 	
     set level 2
-Deputs Step10
-# param collection
+    Deputs Step10
+    # param collection
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
@@ -3752,6 +3753,7 @@ Deputs Step10
 					}
 					set sa $value
 				}
+                set noIp 0
 			}
 			-src_num {
 			 set trans [ UnitTrans $value ]
@@ -3774,12 +3776,12 @@ Deputs Step10
 			 }
 			}
 			-src_mod {
-			 set trans [ UnitTrans $value ]
-			 if { [ string is integer $trans ] && $trans <= 32 && $trans >= 1 } {
-				set saoffset $trans
-			 } else {
-				error "$errNumber(1) key:$key value:$value"
-			 }                    
+                set trans [ UnitTrans $value ]
+                if { [ string is integer $trans ] && $trans <= 32 && $trans >= 1 } {
+                   set saoffset $trans
+                } else {
+                   error "$errNumber(1) key:$key value:$value"
+                }                    
 			}
 			-dst {
 				if { [ llength $value ] > 1000 } {
@@ -3814,12 +3816,12 @@ Deputs Step10
 			 }
 			}
 			-dst_mod {
-			 set trans [ UnitTrans $value ]
-			 if { [ string is integer $trans ] && $trans <= 32 && $trans >= 1 } {
-				set daoffset $trans
-			 } else {
-				error "$errNumber(1) key:$key value:$value"
-			 }                    
+                set trans [ UnitTrans $value ]
+                if { [ string is integer $trans ] && $trans <= 32 && $trans >= 1 } {
+                   set daoffset $trans
+                } else {
+                   error "$errNumber(1) key:$key value:$value"
+                }                    
 			}
 			-dscp {
 			 if { [ catch { format %x $value } ] == 0 } {
@@ -3892,11 +3894,11 @@ Deputs Step10
 #        $pdu Clear
     set pro [ string tolower $protocol ]
 
-Deputs "Pro: $pro"
+    Deputs "Pro: $pro"
     if { $pro != "ipv4" } {
 	   error "$errNumber(3) key:protocol value:$pro"
     }
-Deputs Step50
+    Deputs Step50
     SetProtocol IPv4
     #--------------------------
     #-----Config TOS ------
@@ -4017,40 +4019,40 @@ Deputs "qosval:$qosval"
 
     #--------------------------
     #-----Config IP Address-----
-Deputs Step100
+    Deputs Step100
     if { [ info exists sa ] } {
-Deputs Step110
-	   if { [ info exists samode ] } {
-		  switch -exact $samode {
-			 Fixed -
-			List {
-				AddFieldMode $samode
-				AddField srcIp
-				AddFieldConfig $sa
-			 }
-			 Decrementing -
-			 Incrementing {
-				if { [ info exists sarepeat ] && [ info exists saStep ] } {
-Deputs "sarepeat:$sarepeat"					
-Deputs "saStep:$saStep"
-Deputs "saStep Ip validation...[ IsIPv4Address $saStep ]..."
-				    if { [ IsIPv4Address $saStep ] == "0" } {
-					   set saoffset [ expr 32 - $saoffset ]
-Deputs "saoffset:$saoffset"							
-					   set saStep [GetIpStep $saoffset $saStep]
-				    }
-Deputs "saStep:$saStep"
-				    AddFieldMode $samode
-				    AddField srcIp
-				    AddFieldConfig [ list $saoffset $sa $sarepeat $saStep ]
-				} else {
-				    error "$errNumber(2) key:src_num/src_step"
-				}
-			 }
-		  }
+        Deputs Step110
+        if { [ info exists samode ] } {
+           switch -exact $samode {
+             Fixed -
+             List {
+                 AddFieldMode $samode
+                 AddField srcIp
+                 AddFieldConfig $sa
+              }
+              Decrementing -
+              Incrementing {
+                 if { [ info exists sarepeat ] && [ info exists saStep ] } {
+                     Deputs "sarepeat:$sarepeat"					
+                     Deputs "saStep:$saStep"
+                     Deputs "saStep Ip validation...[ IsIPv4Address $saStep ]..."
+                     if { [ IsIPv4Address $saStep ] == "0" } {
+                        set saoffset [ expr 32 - $saoffset ]
+                         Deputs "saoffset:$saoffset"							
+                        set saStep [GetIpStep $saoffset $saStep]
+                     }
+                     Deputs "saStep:$saStep"
+                     AddFieldMode $samode
+                     AddField srcIp
+                     AddFieldConfig [ list $saoffset $sa $sarepeat $saStep ]
+                 } else {
+                     error "$errNumber(2) key:src_num/src_step"
+                 }
+              }
+           }
 	   } 
     }
-Deputs Step200
+    Deputs Step200
     if { [ info exists da ] } {
 	   if { [ info exists damode ] } {
 		  switch -exact $damode {
@@ -4145,6 +4147,7 @@ Deputs Step10
 		  }
 		  -src {
 			 set sourceAddress $value
+             set noIp 0
 		  }
 		  -src_num {
 			 set trans [ UnitTrans $value ]
@@ -5191,7 +5194,7 @@ body ArpHdr::config { args } {
     global errNumber
 
     set tag "body ArpHdr::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     
     set EType [ list Fixed Random Incrementing Decrementing ]
     set EOperation [ list arprequest arpreply ]
@@ -5295,7 +5298,7 @@ Deputs "sha:$sa"
 		  -sender_ipv4_addr {
 			 if { [ IsIPv4Address $value ] } {
 				set srcProAddr $value
-					set  noIp	0
+				set  noIp	0
 			 } else {
 				error "$errNumber(1) key:$key value:$value"
 			 }

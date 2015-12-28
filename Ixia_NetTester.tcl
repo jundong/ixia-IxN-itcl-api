@@ -381,10 +381,10 @@ Deputs "==SHOW CONTROL CAPTURE CONTENT=="
 }
 
 proc Tester::cleanup { args } {
-# IxDebugOn
+    # IxDebugOn
 
     set tag "proc Tester::cleanup [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
     set release_port 0
 	set reboot_port 0
@@ -431,16 +431,16 @@ Deputs "----- TAG: $tag -----"
 		ixNet exec newConfig
 	}
 	set objects [ find objects ]
-Deputs "objects:$objects"
+    Deputs "objects:$objects"
 	foreach obj $objects {
-Deputs "obj:$obj"
+        Deputs "obj:$obj"
 		if { [ catch {
 			if { [ $obj isa NetObject ] } {
-Deputs Step10
+                Deputs Step10
 				if { [ $obj isa Port ] } {
-Deputs Step20
+                    Deputs Step20
 					set location [ $obj cget -location ]
-Deputs "location:$location"
+                    Deputs "location:$location"
 					if { $reboot_port } {
 						set portInfo [ split $location "/" ]
 						set chas [ lindex $portInfo 0 ] 
@@ -453,12 +453,12 @@ Deputs "location:$location"
 					}
 					if { $new_config } {
 						if { $release_port == 0 } {
-	Deputs "obj: $obj location:$location"					
+                            Deputs "obj: $obj location:$location"					
 							$obj Connect $location
 						}
 					}
 				} else {
-Deputs Step30
+                    Deputs Step30
 					$obj unconfig
 					#delete object $obj
 				}
@@ -466,8 +466,8 @@ Deputs Step30
 				continue
 			}
 		} err ] } { 
-Deputs $err
-		continue 
+            Deputs $err
+            continue 
 		}
 	}
 	ixNet commit

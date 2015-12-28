@@ -1,4 +1,4 @@
- package req IxiaNet
+package req IxiaNet
 Login 111.207.146.100/8012
 IxDebugOff
 

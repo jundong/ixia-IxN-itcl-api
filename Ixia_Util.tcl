@@ -431,10 +431,10 @@ proc IsInt {value} {
     }
 }
 
-proc List2Str { value } {
+proc List2Str { value { sep " " } } {
     set retStr ""
     foreach item $value {
-	set retStr $retStr$item
+        set retStr $retStr$item$sep
     }
     return $retStr
 }

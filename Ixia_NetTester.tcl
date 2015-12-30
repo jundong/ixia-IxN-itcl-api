@@ -53,6 +53,7 @@
 class Tester {
     
     proc constructor {} {}
+    proc apply_traffic {} {}
     proc start_traffic { { restartCaptureJudgement 1 } } {}
     proc stop_traffic {} {}
     proc start_router {} {}

@@ -515,30 +515,32 @@ class GreHdr {
 # -- Traffic implmentation
 body Traffic::constructor { port { hTraffic NULL } } {
     set tag "body Traffic::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	if { $hTraffic != "NULL" } {
 		set handle $hTraffic
 		set highLevelStream [ ixNet getL $handle configElement ]
 		set endpointSet [ ixNet getL $handle endpointSet ]
 	} else {
-
 		set root    [ixNet getRoot]
 		set handle  [ixNet add $root/traffic trafficItem]
+        ixNet commit
+        set handle      [ ixNet remapIds $handle ]
+        Deputs "handle:$handle"
 	}
 	regexp {\d+} $handle id
 	ixNet setM $handle \
 		-name $this
-Deputs "traffic item handle:$handle"
+    Deputs "traffic item handle:$handle"
 	
 	set portObj $port
-Deputs "portObj:$portObj"
+    Deputs "portObj:$portObj"
 	if { [ catch {
 		set hPort [ $port cget -handle ]
 	} ] } {
-Deputs "port:$port"
+        Deputs "port:$port"
 		set port [ GetObject $port ]
-Deputs "port:$port"		
+        Deputs "port:$port"		
 		set hPort [ $port cget -handle ]
 	}
 }
@@ -549,7 +551,10 @@ body Traffic::config { args  } {
         Deputs "reborn traffic...."
 		set root    [ixNet getRoot]
 		set handle  [ixNet add $root/traffic trafficItem]
-	
+        ixNet commit
+        set handle      [ ixNet remapIds $handle ]
+        Deputs "handle:$handle"
+            
 		regexp {\d+} $handle id
 		ixNet setA $handle -name $this
 		set port $portObj
@@ -568,8 +573,8 @@ body Traffic::config { args  } {
 	set root [ixNet getRoot]
 	ixNet setA $root/traffic/statistics/l1Rates -enabled True
 	ixNet setA $root/traffic \
-			-enableDataIntegrityCheck False \
-			-enableMinFrameSize True
+        -enableDataIntegrityCheck False \
+        -enableMinFrameSize True
 	ixNet commit
 
     # get default port Mac and IP address
@@ -1070,10 +1075,8 @@ body Traffic::config { args  } {
             ixNet setA $endpointSet -sources $srcHandle
             Deputs "dst:$dstHandle"
             ixNet setA $endpointSet -destinations $dstHandle
-            
             ixNet commit
-            set handle      [ ixNet remapIds $handle ]
-            Deputs "handle:$handle"
+
             Deputs Step170
             ixNet commit
             Deputs Step180

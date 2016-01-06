@@ -54,7 +54,7 @@ class Tester {
     
     proc constructor {} {}
     proc apply_traffic {} {}
-    proc start_traffic { { restartCaptureJudgement 1 } } {}
+    proc start_traffic { args } {}
     proc stop_traffic {} {}
     proc start_router {} {}
     proc stop_router {} {}
@@ -72,7 +72,7 @@ class Tester {
 
 proc Tester::getAllTx {} {
     set tag "proc Tester::getAllTx  [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     
 	set allObj [ find objects ]
 	set allTx 0

@@ -304,11 +304,9 @@ proc loadconfig { filename } {
             lappend tportlist [ixNet getA $trafficobj -txPortName]
         }
     }
-
 }
 
 proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
-
 	global ixN_tcl_v
 	global loginInfo
     

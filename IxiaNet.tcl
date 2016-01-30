@@ -304,11 +304,9 @@ proc loadconfig { filename } {
             lappend tportlist [ixNet getA $trafficobj -txPortName]
         }
     }
-
 }
 
 proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
-
 	global ixN_tcl_v
 	global loginInfo
     
@@ -661,7 +659,7 @@ if { $::tcl_platform(platform) == "windows" } {
 		puts "Try to load IxNetwork local lib..."
 	}
 
-puts "load package IxTclNetwork..."
+    puts "load package IxTclNetwork..."
 	package require IxTclNetwork
 	puts "load package IxTclHal..."	
 	catch {	

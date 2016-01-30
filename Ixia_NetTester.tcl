@@ -53,7 +53,8 @@
 class Tester {
     
     proc constructor {} {}
-    proc start_traffic { { restartCaptureJudgement 1 } } {}
+    proc apply_traffic {} {}
+    proc start_traffic { args } {}
     proc stop_traffic {} {}
     proc start_router {} {}
     proc stop_router {} {}
@@ -71,7 +72,7 @@ class Tester {
 
 proc Tester::getAllTx {} {
     set tag "proc Tester::getAllTx  [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     
 	set allObj [ find objects ]
 	set allTx 0
@@ -91,9 +92,9 @@ Deputs "port tx:$tx"
 proc Tester::start_traffic { args } {
 
     set tag "proc Tester::start_traffic [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-    set restartCaptureJudgement 1
+    set restartCaptureJudgement 0
 	set apply 0
     
 	foreach { key value } $args {
@@ -381,10 +382,10 @@ Deputs "==SHOW CONTROL CAPTURE CONTENT=="
 }
 
 proc Tester::cleanup { args } {
-# IxDebugOn
+    # IxDebugOn
 
     set tag "proc Tester::cleanup [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
     set release_port 0
 	set reboot_port 0
@@ -431,16 +432,16 @@ Deputs "----- TAG: $tag -----"
 		ixNet exec newConfig
 	}
 	set objects [ find objects ]
-Deputs "objects:$objects"
+    Deputs "objects:$objects"
 	foreach obj $objects {
-Deputs "obj:$obj"
+        Deputs "obj:$obj"
 		if { [ catch {
 			if { [ $obj isa NetObject ] } {
-Deputs Step10
+                Deputs Step10
 				if { [ $obj isa Port ] } {
-Deputs Step20
+                    Deputs Step20
 					set location [ $obj cget -location ]
-Deputs "location:$location"
+                    Deputs "location:$location"
 					if { $reboot_port } {
 						set portInfo [ split $location "/" ]
 						set chas [ lindex $portInfo 0 ] 
@@ -453,12 +454,12 @@ Deputs "location:$location"
 					}
 					if { $new_config } {
 						if { $release_port == 0 } {
-	Deputs "obj: $obj location:$location"					
+                            Deputs "obj: $obj location:$location"					
 							$obj Connect $location
 						}
 					}
 				} else {
-Deputs Step30
+                    Deputs Step30
 					$obj unconfig
 					#delete object $obj
 				}
@@ -466,8 +467,8 @@ Deputs Step30
 				continue
 			}
 		} err ] } { 
-Deputs $err
-		continue 
+            Deputs $err
+            continue 
 		}
 	}
 	ixNet commit

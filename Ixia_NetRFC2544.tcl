@@ -131,6 +131,7 @@ body Rfc2544::config { args } {
     #set payload_type PRBS
     set fill_type prbs
     set clean false
+    set enable_min_frame_size true
 
     foreach { key value } $args {
         set key [string tolower $key]
@@ -142,6 +143,9 @@ body Rfc2544::config { args } {
 				} else {
 					error "$errNumber(1) key:$key value:$value"
 				}	
+            }
+            -enable_min_frame_size {
+                set enable_min_frame_size $value
             }
         	-frame_len {
 				if { [ llength $value ] < 1 } {
@@ -591,7 +595,7 @@ Deputs "Step120"
 		-binarySearchType $binary_mode \
 		-forceRegenerate $regenerate \
 		-rfc2889ordering val2889Ordering \
-		-enableMinFrameSize True \
+		-enableMinFrameSize $enable_min_frame_size \
 		-reportSequenceError True
 	ixNet setA $handle/learnFrames \
 		-learnSendMacOnly True

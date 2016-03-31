@@ -572,9 +572,6 @@ body Traffic::config { args  } {
     # enable l1Rate use 4 bytes signature and disable data integrity check
 	set root [ixNet getRoot]
 	ixNet setA $root/traffic/statistics/l1Rates -enabled True
-	ixNet setA $root/traffic \
-        -enableDataIntegrityCheck False \
-        -enableMinFrameSize True
 	ixNet commit
 
     # get default port Mac and IP address
@@ -627,6 +624,7 @@ body Traffic::config { args  } {
     #set burst_gap_units "nanoseconds"
     set enable_burst_gap "true"
     set burst_packet_count 1
+    set enable_min_frame_size "true"
 	
     set tag "body Traffic::config [info script]"
     Deputs "----- TAG: $tag -----"
@@ -637,6 +635,9 @@ body Traffic::config { args  } {
         switch -exact -- $key {
             -location {
                 set location $value
+            }
+            -enable_min_frame_size {
+                set enable_min_frame_size $value
             }
             -src {
                 set src $value
@@ -832,6 +833,10 @@ body Traffic::config { args  } {
         }
     }
     
+    ixNet setA $root/traffic \
+    -enableDataIntegrityCheck False \
+    -enableMinFrameSize $enable_min_frame_size
+        
     if { [ info exists location ] } {
         if { [ regexp  {(\d+\.\d+\.\d+\.\d+)/(\d+)/(\d+)} $location match chas card port ] } {
             set root    [ixNet getRoot]

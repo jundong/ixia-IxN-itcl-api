@@ -501,6 +501,7 @@ class GreHdr {
 	public variable key
 	public variable sn_present
 	public variable sn
+    public variable min_frame_size
 
 	method config { args } {}
 }
@@ -547,38 +548,26 @@ body Traffic::constructor { port { hTraffic NULL } } {
 
 body Traffic::config { args  } {
 # in case the handle was removed
-	if { $handle == "" } {
-	   
-Deputs "reborn traffic...."
+	if { $handle == "" } {	   
+        Deputs "reborn traffic...."
 		set root    [ixNet getRoot]
 		set handle  [ixNet add $root/traffic trafficItem]
 	
 		regexp {\d+} $handle id
 		ixNet setA $handle -name $handleName
 		set port $portObj
-Deputs "port:$port"
+        Deputs "port:$port"
 		if { [ catch {
 			set hPort [ $port cget -handle ]
 		} ] } {
 			set port [ GetObject $port ]
 			set hPort [ $port cget -handle ]
 		}
-		    set highLevelStream ""
-Deputs "hport:$hPort" 
-       
+		set highLevelStream ""
+        Deputs "hport:$hPort" 
 	}
-#
 
-# enable l1Rate use 4 bytes signature and disable data integrity check
-	set root [ixNet getRoot]
-	ixNet setA $root/traffic/statistics/l1Rates -enabled True
-	ixNet setA $root/traffic \
-			-enableDataIntegrityCheck False \
-			-enableMinFrameSize True
-	ixNet commit
-#
-
-# get default port Mac and IP address
+    # get default port Mac and IP address
 	set default_mac [ lindex [ $portObj cget -intf_mac ] 0 ]
 	set default_ip  [ lindex [ $portObj cget -intf_ipv4 ] 0 ]
 	if { ( $default_ip == "0.0.0.0" ) || ( $default_ip == "" ) } {
@@ -586,18 +575,17 @@ Deputs "hport:$hPort"
 	}
 	if { $default_mac == "" } {
 		set default_int [ lindex [ ixNet getL [ $portObj cget -handle ] interface ] 0 ]
-Deputs "default interface:$default_int"
+        Deputs "default interface:$default_int"
 		if { $default_int != "" } {
 			set default_mac [ ixNet getA $default_int/ethernet -macAddress ]
 		}
 		if { $default_mac == "::ixNet::OK" } {
-Deputs "get mac error"		
+            Deputs "get mac error"		
 			set default_mac "00:00:01:01:01:01"
 		}
 	}
-Deputs "default mac:$default_mac"
-Deputs "default ip:$default_ip"
-#
+    Deputs "default mac:$default_mac"
+    Deputs "default ip:$default_ip"
 
     global errorInfo
     global errNumber
@@ -628,17 +616,21 @@ Deputs "default ip:$default_ip"
     #set burst_gap_units "nanoseconds"
     set enable_burst_gap "true"
     set burst_packet_count 1
+    set enable_min_frame_size "true"
 	
     set tag "body Traffic::config [info script]"
-Deputs "----- TAG: $tag -----"
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
 		  -location {
 			 set location $value
 		  }
+          -enable_min_frame_size {
+            set enable_min_frame_size $value
+          }
 		  -src {
 			 set src $value
 		  }
@@ -650,7 +642,7 @@ Deputs "Args:$args "
 		  }
 		  -pdu {
 			 set pdu $value
-Deputs "pdu:$pdu"
+            Deputs "pdu:$pdu"
 		  }
 		  -pdu_index {
 			set pdu_index $value
@@ -838,6 +830,14 @@ Deputs "pdu:$pdu"
 		  }
 	   }
     }
+    
+    # enable l1Rate use 4 bytes signature and disable data integrity check
+	set root [ixNet getRoot]
+	ixNet setA $root/traffic/statistics/l1Rates -enabled True
+	ixNet setA $root/traffic \
+			-enableDataIntegrityCheck False \
+			-enableMinFrameSize $enable_min_frame_size
+	ixNet commit
     
     if { [ info exists location ] } {
 	   if { [ regexp  {(\d+\.\d+\.\d+\.\d+)/(\d+)/(\d+)} $location match chas card port ] } {

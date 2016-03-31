@@ -1180,7 +1180,8 @@ if { $::tcl_platform(platform) == "windows" } {
     package require registry
 
     if { [ catch {
-        lappend auto_path  "[ GetEnvTcl IxNetwork ]/TclScripts/lib/IxTclNetwork"
+        #lappend auto_path  "[ GetEnvTcl IxNetwork ]/TclScripts/lib/IxTclNetwork"
+        lappend auto_path  "C:/Program Files (x86)/Ixia/IxNetwork/7.50-EA/TclScripts/lib/IxTclNetwork"
     } err ] } {
         lappend auto_path $currDir/IxNetwork
         puts "Failed to invoke IxNetwork environment...$err"

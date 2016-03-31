@@ -121,6 +121,7 @@ body Rfc2544::config { args } {
 	
 	set frame_len_step 64
 	set frame_len_max  1518
+    set enable_min_frame_size "true"
 	set binary_mode perPort
     set EPayloadType [ list CYCBYTE INCRBYTE DECRBYTE PRBS USERDEFINE ]
     set EFillType   [ list constant incr decr prbs random ]
@@ -135,9 +136,12 @@ body Rfc2544::config { args } {
 					 error "$errNumber(1) key:$key value:$value"
 				} else {
 					set frame_len $value
-Deputs "frame len under test:$frame_len"			 
+                    Deputs "frame len under test:$frame_len"			 
 				}
         	}
+            -enable_min_frame_size {
+                set enable_min_frame_size $value
+            }
 			-dif_len_type -
 			-frame_len_type {
 				set frame_len_type $value
@@ -247,7 +251,7 @@ Deputs "frame len under test:$frame_len"
                 	set resultfile $value
         	}
 			-resultlvl {
-Deputs "set result level:$value"			
+                Deputs "set result level:$value"			
 				set resultLevel $value
 			}
         	-inter_frame_gap {
@@ -289,12 +293,12 @@ Deputs "set result level:$value"
 	
     # reborn
     if { [ info exists handle ] == 0 || $handle == "" } {
-Deputs "Step10"
+        Deputs "Step10"
 		reborn
     }
-Deputs "Step20"	
+    Deputs "Step20"	
     if { [ info exists frame_len ] == 0 } {
-Deputs "Step30"
+        Deputs "Step30"
     	error "$errNumber(2) key:frame_len"
     } 
 	
@@ -302,13 +306,13 @@ Deputs "Step30"
 	catch { 
 		delete object $this.traffic
 	}
-Deputs "Step40"
+    Deputs "Step40"
     if { [ info exists upstream ] && [ info exists downstream ] } {
-Deputs "Step41"
+        Deputs "Step41"
 		#-- add existing traffic item
 		foreach stream $upstream {
 			set upTs [ ixNet add $handle trafficSelection ]
-	Deputs "upTs:$upTs"
+            Deputs "upTs:$upTs"
 			ixNet setM $upTs \
 				-id [ $stream cget -handle ] \
 				-includeMode inTest \
@@ -319,7 +323,7 @@ Deputs "Step41"
 		}
 		foreach stream $downstream {
 			set dnTs [ ixNet add $handle trafficSelection ]
-	Deputs "dnTs:$dnTs"		
+            Deputs "dnTs:$dnTs"		
 			ixNet setM $dnTs \
 				-id [ $stream cget -handle ] \
 				-includeMode inTest \
@@ -332,7 +336,7 @@ Deputs "Step41"
 			lappend trafficSelection $stream 
 		}
     } elseif { [ info exists src_endpoint ] && [ info exists dst_endpoint ] } {
-Deputs "Step42"
+        Deputs "Step42"
 	    #-- add new traffic item
 		set stream $this.traffic
 		if { [ [ lindex $src_endpoint 0 ] isa Port ] } {
@@ -340,7 +344,7 @@ Deputs "Step42"
 		} else {
 			Traffic $stream [ [ lindex $src_endpoint 0 ] cget -portObj ]
 		}
-Deputs "traffic type:$traffic_type"
+        Deputs "traffic type:$traffic_type"
 		if { [ string tolower $traffic_type ] == "l2" } {
 			set trafficType ethernetVlan
 		} elseif { [ string tolower $traffic_type ] == "ipv6" } {
@@ -350,14 +354,14 @@ Deputs "traffic type:$traffic_type"
 		}
 		
 	    if { [ string tolower $traffic_mesh ] == "fullmesh" } {
-Deputs "create full mesh traffic"		
+            Deputs "create full mesh traffic"		
 			set full_mesh 1
 	    } else {
-Deputs "create one 2 one traffic"
+            Deputs "create one 2 one traffic"
 			set full_mesh 0
 		}
 
-Deputs "traffic type:$trafficType"		
+        Deputs "traffic type:$trafficType"		
 	    
         if { [ info exists payload_type ] } {
            $this.traffic config \
@@ -383,10 +387,10 @@ Deputs "traffic type:$trafficType"
 	    lappend trafficSelection $this.traffic
 
     } else {
-Deputs "Step43"
+        Deputs "Step43"
 		if { [ info exists teststream ] } {
 			foreach stream $teststream {
-Deputs "streams :$stream"
+                Deputs "streams :$stream"
 				set ts [ ixNet add $handle trafficSelection ]
 				ixNet setM $ts \
 					-id [ $stream cget -handle ] \
@@ -401,21 +405,21 @@ Deputs "streams :$stream"
 		}
     }
 	    
-Deputs "Step50"
+    Deputs "Step50"
     if { [ info exists bg_traffic ] } {
 	    #-- add bg traffic
 	    foreach stream $bg_traffic {
-Deputs "bg_traffic :$stream"
-        	    set ts [ ixNet add $handle trafficSelection ]
-        	    ixNet setM $ts \
-                        -id [ $stream cget -handle ] \
-                        -includeMode background \
-        		-itemType trafficItem
-        	    ixNet commit
+            Deputs "bg_traffic :$stream"
+            set ts [ ixNet add $handle trafficSelection ]
+            ixNet setM $ts \
+                    -id [ $stream cget -handle ] \
+                    -includeMode background \
+            -itemType trafficItem
+            ixNet commit
 	    }
 		lappend trafficBackground $bg_traffic
     }
-Deputs "Step60"
+    Deputs "Step60"
     if { [ info exists latency_type ] } {
     	switch $latency_type {
             lifo {
@@ -437,35 +441,35 @@ Deputs "Step60"
 		ixNet setA $handle/testConfig -latencyType $latency_type
 		ixNet commit
     }
-Deputs "Step70"
+    Deputs "Step70"
     if { [ info exists frame_len_type ] } {
-Deputs "Step71"	
-Deputs "frame len type:$frame_len_type"
+        Deputs "Step71"	
+        Deputs "frame len type:$frame_len_type"
     	switch $frame_len_type {
 			custom {
-Deputs "Step73"			
+                Deputs "Step73"			
                 ixNet setA $handle/testConfig -frameSizeMode custom
 				ixNet commit
-Deputs "Step74"				
+                Deputs "Step74"				
 				ixNet setA $handle/downstreamConfig -downstreamFrameSizeMode custom
 				ixNet setA $handle/upstreamConfig -upstreamFrameSizeMode custom
 				ixNet commit
-Deputs "Step75"
-Deputs "frame len:$frame_len len:[ llength $frame_len ]"		
+                Deputs "Step75"
+                Deputs "frame len:$frame_len len:[ llength $frame_len ]"		
                 set customLen ""
                 foreach len $frame_len {
                 	set len [string trim $len]
                 	set customLen "$customLen,$len"
                 }
                 set customLen [ string range $customLen 1 end ]
-Deputs "handle:$handle custom len:$customLen"
+                Deputs "handle:$handle custom len:$customLen"
                 ixNet setA $handle/testConfig -framesizeList $customLen
                 ixNet setA $handle/downstreamConfig -downstreamFramesizeList $customLen
                 ixNet setA $handle/upstreamConfig -upstreamFramesizeList $customLen
                 ixNet commit
             }
             imix {
-Deputs "Step72"
+                Deputs "Step72"
                 foreach traffic $trafficSelection {
                     set el [$traffic cget -highLevelStream]
 					foreach stream $el {
@@ -490,7 +494,7 @@ Deputs "Step72"
 					-maxIncrementFrameSize $frame_len_max \
 					-stepIncrementFrameSize $frame_len_step
 				ixNet commit
-Deputs "Step76"				
+                Deputs "Step76"				
 				ixNet setA $handle/downstreamConfig \
 					-downstreamFrameSizeMode increment \
 					-minIncrementFrameSize $frame_len \
@@ -506,9 +510,9 @@ Deputs "Step76"
 			}
 		}
     }
-Deputs "Step80"	
+    Deputs "Step80"	
     if { [ info exists inter_frame_gap ] } {
-Deputs "traffic selection: $trafficSelection len: [ llength $trafficSelection ]"	
+        Deputs "traffic selection: $trafficSelection len: [ llength $trafficSelection ]"	
 	    foreach traffic $trafficSelection {
 		    set el [$traffic cget -highLevelStream]
 			foreach highLevelStream $el {
@@ -518,7 +522,7 @@ Deputs "traffic selection: $trafficSelection len: [ llength $trafficSelection ]"
 	    }
     }
 	
-Deputs "Step90"
+    Deputs "Step90"
     if { [ info exists port_load ] } {
 	    set port_load_init [ lindex $port_load 0 ]
 	    set port_load_min  [ lindex $port_load 1 ]
@@ -533,7 +537,7 @@ Deputs "Step90"
 			ixNet setA $handle/testConfig -initialBinaryLoadRate $port_load_init 
 		}
     }
-Deputs "Step100"	
+    Deputs "Step100"	
     if { [ info exists load_unit ] } {
 	    set load_unit [ string tolower $load_unit ]
 	    switch $load_unit {
@@ -560,11 +564,11 @@ Deputs "Step100"
 	    ixNet setA $handle/testConfig  -binaryLoadUnit $load_unit
     }
 	
-Deputs "Step110"
+    Deputs "Step110"
     if { [ info exists duration ] } {
 	    ixNet setA $handle/testConfig -duration $duration
     }
-Deputs "Step120"  
+    Deputs "Step120"  
 	if { [ info exists binary_mode ] } {
 		if { [ string tolower $binary_mode ] == "port" } {
 			set binary_mode perPort
@@ -573,14 +577,14 @@ Deputs "Step120"
 			set binary_mode perFlow
 		}
 	}
-# enable latency
-# type=kEnumValue=noOrdering,unchanged,val2889Ordering
+    # enable latency
+    # type=kEnumValue=noOrdering,unchanged,val2889Ordering
 	ixNet setM $handle/testConfig \
 		-calculateLatency True \
 		-binarySearchType $binary_mode \
 		-forceRegenerate $regenerate \
 		-rfc2889ordering val2889Ordering \
-		-enableMinFrameSize True \
+		-enableMinFrameSize $enable_min_frame_size \
 		-reportSequenceError True
 	ixNet setA $handle/learnFrames \
 		-learnSendMacOnly True

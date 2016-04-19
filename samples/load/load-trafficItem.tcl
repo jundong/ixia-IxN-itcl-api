@@ -9,7 +9,7 @@ IxDebugOn
 Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
 Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
 
-# Wait 60s for Port Reseting
+# Wait 60s for Port Reseting, here should invoke code to check the port state, we have to wait until the port link up
 after 60000
 
 # Create Traffic objects based on traffic name (Don't use space in name)

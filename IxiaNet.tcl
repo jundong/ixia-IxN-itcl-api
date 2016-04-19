@@ -1190,7 +1190,7 @@ if { $::tcl_platform(platform) == "windows" } {
         puts "Try to load IxNetwork local lib..."
     }
 
-puts "load package IxTclNetwork..."
+    puts "load package IxTclNetwork..."
     package require IxTclNetwork
     puts "load package IxTclHal..."    
     catch {    

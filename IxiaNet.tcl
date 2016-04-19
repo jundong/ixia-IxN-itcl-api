@@ -269,7 +269,9 @@ proc GetEnvTcl { product } {
    set versionKey     [ registry keys $productKey ]
    set latestKey      [ lindex $versionKey end ]
 
-   if { $latestKey == "Multiversion" } {
+   if { $latestKey == "InstallInfo" } {
+        set latestKey      [ lindex $versionKey [ expr [ llength $versionKey ] - 2 ] ]
+   } elseif { $latestKey == "Multiversion" } {
       set latestKey   [ lindex $versionKey [ expr [ llength $versionKey ] - 2 ] ]
    }
    set installInfo    [ append productKey \\ $latestKey \\ InstallInfo ]            

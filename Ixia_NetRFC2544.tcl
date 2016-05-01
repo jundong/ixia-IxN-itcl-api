@@ -298,6 +298,12 @@ Deputs "set result level:$value"
 					error "$errNumber(1) key:$key value:$value"
 				}	
         	}
+			-frame_ordering_mode {
+				set frame_ordering_mode [ string tolower $value ]
+			}
+			-peak_loading_replication_count {
+				set peak_loading_replication_count $value
+			}
         	default {
         	    error "$errNumber(3) key:$key value:$value"
         	}
@@ -398,10 +404,10 @@ Deputs "Step30"
 			-itemType trafficItem 
 	    lappend trafficSelection $this.traffic
     } else {
-Deputs "Step43"
+		Deputs "Step43"
 		if { [ info exists teststream ] } {
 			foreach stream $teststream {
-Deputs "streams :$stream"
+				Deputs "streams :$stream"
 				set ts [ ixNet add $handle trafficSelection ]
 				ixNet setM $ts \
 					-id [ $stream cget -handle ] \
@@ -431,6 +437,7 @@ Deputs "streams :$stream"
     }
 
     Deputs "Step60"
+	set root [ ixNet getRoot ]
     if { [ info exists latency_type ] } {
     	switch $latency_type {
             lifo {
@@ -446,41 +453,58 @@ Deputs "streams :$stream"
     	    	set latency_type cutThrough
     	    }
     	}
-		set root [ ixNet getRoot ]
+		
     	ixNet setA $root/traffic/statistics/latency -mode $latency_type
     	ixNet commit
 		ixNet setA $handle/testConfig -latencyType $latency_type
 		ixNet commit
     }
-Deputs "Step70"
+	
+	if { [ info exists frame_ordering_mode ] } {
+		if { $frame_ordering_mode == "rfc2889" } {
+			ixNet setMultiAttribute $root/traffic \
+				-enableStreamOrdering true \
+				-frameOrderingMode RFC2889
+		} elseif { $frame_ordering_mode == "peakloading" } {
+			ixNet setMultiAttribute $root/traffic \
+				-frameOrderingMode peakLoading
+			
+			if { [ info exists frame_ordering_mode ] } {
+				ixNet setMultiAttribute $root/traffic \
+					-peakLoadingReplicationCount $peak_loading_replication_count
+			}
+		}
+	}
+	
+	Deputs "Step70"
     if { [ info exists frame_len_type ] } {
-Deputs "Step71"	
-Deputs "frame len type:$frame_len_type"
+		Deputs "Step71"	
+		Deputs "frame len type:$frame_len_type"
     	switch $frame_len_type {
 			custom {
-Deputs "Step73"			
+				Deputs "Step73"			
                 ixNet setA $handle/testConfig -frameSizeMode custom
 				ixNet commit
-Deputs "Step74"				
+				Deputs "Step74"				
 				ixNet setA $handle/downstreamConfig -downstreamFrameSizeMode custom
 				ixNet setA $handle/upstreamConfig -upstreamFrameSizeMode custom
 				ixNet commit
-Deputs "Step75"
-Deputs "frame len:$frame_len len:[ llength $frame_len ]"		
+				Deputs "Step75"
+				Deputs "frame len:$frame_len len:[ llength $frame_len ]"		
                 set customLen ""
                 foreach len $frame_len {
                 	set len [string trim $len]
                 	set customLen "$customLen,$len"
                 }
                 set customLen [ string range $customLen 1 end ]
-Deputs "handle:$handle custom len:$customLen"
+				Deputs "handle:$handle custom len:$customLen"
                 ixNet setA $handle/testConfig -framesizeList $customLen
                 ixNet setA $handle/downstreamConfig -downstreamFramesizeList $customLen
                 ixNet setA $handle/upstreamConfig -upstreamFramesizeList $customLen
                 ixNet commit
             }
             imix {
-Deputs "Step72"
+				Deputs "Step72"
                 foreach traffic $trafficSelection {
                     set el [$traffic cget -highLevelStream]
 					foreach stream $el {
@@ -505,7 +529,7 @@ Deputs "Step72"
 					-maxIncrementFrameSize $frame_len_max \
 					-stepIncrementFrameSize $frame_len_step
 				ixNet commit
-Deputs "Step76"				
+				Deputs "Step76"				
 				ixNet setA $handle/downstreamConfig \
 					-downstreamFrameSizeMode increment \
 					-minIncrementFrameSize $frame_len \
@@ -521,9 +545,9 @@ Deputs "Step76"
 			}
 		}
     }
-Deputs "Step80"	
+	Deputs "Step80"	
     if { [ info exists inter_frame_gap ] } {
-Deputs "traffic selection: $trafficSelection len: [ llength $trafficSelection ]"	
+		Deputs "traffic selection: $trafficSelection len: [ llength $trafficSelection ]"	
 	    foreach traffic $trafficSelection {
 		    set el [$traffic cget -highLevelStream]
 			foreach highLevelStream $el {
@@ -533,7 +557,7 @@ Deputs "traffic selection: $trafficSelection len: [ llength $trafficSelection ]"
 	    }
     }
 	
-Deputs "Step90"
+	Deputs "Step90"
     if { [ info exists port_load ] } {
 	    set port_load_init [ lindex $port_load 0 ]
 	    set port_load_min  [ lindex $port_load 1 ]

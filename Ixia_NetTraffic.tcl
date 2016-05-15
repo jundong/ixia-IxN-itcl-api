@@ -140,6 +140,7 @@ class Traffic {
     #--public method
     constructor { port { hTraffic NULL } } {}
     method config { args  } {}
+    method search_min_frame_size_by_load {} {}
     method enable {} {}
     method disable {} {}
     method traffic_enable {} {}
@@ -161,13 +162,13 @@ class Traffic {
     method CreatePortView {} {}
 	method start {} {
 		set tag "body Traffic::start [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		if { [ catch {
 			if { [ ixNet getA $handle -state ] == "unapplied" } {
 				Tester::apply_traffic
 			}
 		} err ] } {
-Deputs "traffic start error:$err"		
+            Deputs "traffic start error:$err"		
 		}
 		if { [ catch {
 			ixNet exec startStatelessTraffic $handle
@@ -179,13 +180,13 @@ Deputs "traffic start error:$err"
 	}
 	method stop {} {
 		set tag "body Traffic::stop [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		ixNet exec stopStatelessTraffic $handle
 		return [ GetStandardReturnHeader ]
 	}
 	method completed {} {
 		set tag "body Traffic::completed [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 	
 		set rate [ GetStatsFromReturn [ get_stats ] tx_frame_rate ]
 		set tx [ GetStatsFromReturn [ get_stats ] tx_frame_count ]
@@ -198,7 +199,7 @@ Deputs "----- TAG: $tag -----"
 	
 	method wait_started {} {
 		set tag "body Traffic::wait_started [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		set timeout 30
 		set start_click [ clock seconds ]
 		while { 1 } {
@@ -218,7 +219,7 @@ Deputs "----- TAG: $tag -----"
 	
 	method wait_stopped {} {
 		set tag "body Traffic::wait_stopped [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		set timeout 30
 		set start_click [ clock seconds ]
 		while { 1 } {
@@ -238,14 +239,14 @@ Deputs "----- TAG: $tag -----"
 	
 	method suspend {} {
 		set tag "body Traffic::suspend [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		ixNet setA $handle -suspend True
 		ixNet commit
 	}
 	
 	method unsuspend {} {
 		set tag "body Traffic::unsuspend [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		ixNet setA $handle -suspend False
 		ixNet commit
 	}
@@ -257,6 +258,15 @@ Deputs "----- TAG: $tag -----"
     public variable highLevelStream
     public variable portObj
     
+    #Binary search enhancement
+    public variable stream_load
+    public variable frame_len
+    public variable min_frame_len
+    public variable max_frame_len
+    public variable resolution
+    public variable frame_len_step
+    public variable iteration_duration
+
     #stats var
     #public variable portView
     #public variable flowView
@@ -516,7 +526,10 @@ class GreHdr {
 body Traffic::constructor { port { hTraffic NULL } } {
     set tag "body Traffic::ctor [info script]"
     Deputs "----- TAG: $tag -----"
-
+    
+    set iteration_duration 10
+    set resolution 1
+    
 	if { $hTraffic != "NULL" } {
 		set handle $hTraffic
 		set highLevelStream [ ixNet getL $handle configElement ]
@@ -546,7 +559,7 @@ body Traffic::constructor { port { hTraffic NULL } } {
 }
 
 body Traffic::config { args  } {
-# in case the handle was removed
+    # in case the handle was removed
 	if { $handle == "" } {
         Deputs "reborn traffic...."
 		set root    [ixNet getRoot]
@@ -633,6 +646,26 @@ body Traffic::config { args  } {
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
+            -frame_ordering_mode {
+                set root [ixNet getRoot]
+                if { [string tolower $value] == "rfc2889" } {
+                    ixNet setA $root/traffic -enableStreamOrdering true
+                    ixNet setA $root/traffic -frameOrderingMode RFC2889
+                } elseif { [string tolower $value] == "none" } {
+                    ixNet setA $root/traffic -enableStreamOrdering fasle
+                    ixNet setA $root/traffic -frameOrderingMode none
+                } else {
+                    ixNet setA $root/traffic -enableStreamOrdering true
+                    ixNet setA $root/traffic -frameOrderingMode $value
+                }
+                ixNet commit
+            }
+            -iteration_duration {
+                set iteration_duration [expr $value * 1000]
+            }
+            -resolution {
+                set resolution $value
+            }
             -location {
                 set location $value
             }
@@ -1950,6 +1983,71 @@ body Traffic::config { args  } {
     return [GetStandardReturnHeader]
 
 }
+
+body Traffic::search_min_frame_size_by_load {} {
+    set iteration 1
+    set iterationResult false
+    while { 1 } {
+        set qulified_min_frame_size 0
+        config  -frame_len $frame_len 
+
+        Tester::start_traffic
+        after $iteration_duration
+        Tester::stop_traffic
+        
+        set rx_frame_count [ GetStatsFromReturn [ get_stats ] rx_frame_count ]
+		set tx_frame_count [ GetStatsFromReturn [ get_stats ] tx_frame_count ]
+        
+        if { $rx_frame_count >= $tx_frame_count } {
+            set iterationResult true
+        } else {
+            set iterationResult false
+        }
+        if { !$iterationResult } {
+            # Failed
+            set min_frame_len $frame_len
+   
+            # Round frame_len to supported resolution
+            if { [expr $min_frame_len + $resolution] > $max_frame_len } {
+               set frame_len $max_frame_len
+            } else {
+                set frame_len [expr int(($min_frame_len + $max_frame_len)/2)]
+            }
+   
+            if { $min_frame_len == $max_frame_len} {
+                break
+            }
+        } else {
+           # Passed
+           set qulified_min_frame_size $frame_len
+           set max_frame_len $frame_len
+  
+            # Round frame_len to supported resolution
+            if { [expr $min_frame_len + $resolution] > $max_frame_len } {
+               set frame_len $min_frame_len
+            } else {
+                set frame_len [expr int(($min_frame_len + $max_frame_len)/2)]
+            }
+   
+            if { $min_frame_len == $max_frame_len} {
+                break
+            }
+        }
+
+        Deputs "Iteration #$iteration - Frame Size(Bytes): $frame_len, Min Frame Size: $min_frame_len, Max Frame Size: $max_frame_len, Load (Mbps): $stream_load, Iteration Result: $iterationResult"
+        incr iteration
+    }
+    
+    set ret [ GetStandardReturnHeader ]
+    if { $qulified_min_frame_size != 0 } {
+        Deputs "Successed to determine Min Frame Size: $qulified_min_frame_size"
+    } else {
+        Deputs "Failed to determine Min Frame Size"
+    }
+    set ret $ret[ GetStandardReturnBody "frame_size" $qulified_min_frame_size ]
+    return $ret
+}
+
 body Traffic::enable {} {
     set tag "body Traffic::enable [info script]"
 Deputs "----- TAG: $tag -----"
@@ -2248,12 +2346,12 @@ Deputs "caption list:$captionList"
     set ret [ GetStandardReturnHeader ]
 	
     set stats [ ixNet getA $view/page -rowValues ]
-Deputs "stats:$stats"
+    Deputs "stats:$stats"
 
     foreach row $stats {
 	   
 	   eval {set row} $row
-Deputs "row:$row"
+        Deputs "row:$row"
 
 		if { [ info exists rx_port ] == 0 } {
 			if { [ lindex $row $traNameIndex ] != $this } {
@@ -2262,16 +2360,16 @@ Deputs "row:$row"
 		}
 		
 		if { $tracking == "precedence" } {
-		   set statsItem   "precedence"
-		   set statsVal    [ lindex $row $ipv4PrecedenceIndex ]
-	Deputs "stats val:$statsVal"
-		   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+            set statsItem   "precedence"
+            set statsVal    [ lindex $row $ipv4PrecedenceIndex ]
+            Deputs "stats val:$statsVal"
+            set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			
 		}
 
 	   set statsItem   "tx_frame_count"
 	   set statsVal    [ lindex $row $txFramesIndex ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		
 	   set statsItem   "rx_frame_count"

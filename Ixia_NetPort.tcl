@@ -803,7 +803,7 @@ ixNet commit
 				# -vlanPriority   $outer_vlan_priority
 		# }
     # }
-ixNet commit    
+    ixNet commit    
     
     if { [ info exists type ] } {
 		set flagIntType 0
@@ -826,11 +826,13 @@ ixNet commit
         ixNet setA $handle -type $ix_type
 		if { $flagIntType } {
 			ixNet setA $handle/l1Config/tenGigWan -interfaceType wanSdh
+            ixNet commit
 		}
     }
     
     if { [ info exists media ] } {
         ixNet setA $handle/l1Config/ethernet -media $media
+        ixNet commit
     }
     
     if { [ info exists auto_neg ] } {
@@ -841,17 +843,18 @@ ixNet commit
         }
 		catch {
 			ixNet setA $handle/l1Config/ethernet -autoNegotiate $auto_neg 
-			
+			ixNet commit
 		}
     } 
     if { [ info exists speed ] } {
         set ori_speed [ ixNet getA $handle/l1Config/ethernet -speed ]
-Deputs "ori speed:$ori_speed"
+        Deputs "ori speed:$ori_speed"
 		if { $ori_speed == "null" } {
 			set ori_speed auto
 		}
         if { $speed == 1000 } {
             ixNet setA $handle/l1Config/ethernet -speed speed1000
+            ixNet commit
         } else {
             if { ($ori_speed == "auto") || ($ori_speed == "speed1000") } {
                 set duplex fd
@@ -859,6 +862,7 @@ Deputs "ori speed:$ori_speed"
                 regexp {\d+([fh]d)} $ori_speed match duplex
             }
             ixNet setA $handle/l1Config/ethernet -speed speed$speed$duplex
+            ixNet commit
         }
     }
     if { [ info exists duplex ] } {
@@ -868,10 +872,11 @@ Deputs "ori speed:$ori_speed"
         }
         set speed [ ixNet getA $handle/l1Config/ethernet -speed ]
         if { ( $speed == "speed1000" ) || ( $speed == "auto" ) } {
-Deputs "wrong configuration for duplex with speed1000 or auto speed"
+            Deputs "wrong configuration for duplex with speed1000 or auto speed"
         } else {
             if { [ regexp {(\d+)} $speed match speed ] } {
                 ixNet setA $handle/l1Config/ethernet -speed speed$speed$duplex
+                ixNet commit
             }
         }
     }
@@ -879,9 +884,10 @@ Deputs "wrong configuration for duplex with speed1000 or auto speed"
     if { [ info exists enable_arp ] } {
         set root [ixNet getRoot]
         ixNet setA $root/globals/interfaces -arpOnLinkup $enable_arp
+        ixNet commit
     }
     if { [ info exists flow_control ] } {
-Deputs "flow_control:$flow_control"
+        Deputs "flow_control:$flow_control"
 		ixNet setA $handle/l1Config/[ixNet getA $handle -type] -enabledFlowControl $flow_control
 		ixNet commit
     }

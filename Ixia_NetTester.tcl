@@ -79,9 +79,9 @@ proc Tester::getAllTx {} {
 
 	foreach obj $allObj {
 		if { [ $obj isa Port ] } {
-Deputs "port obj:$obj"
+			Deputs "port obj:$obj"
 			set tx [ GetStatsFromReturn [ $obj get_stats ] tx_frame_count ]
-Deputs "port tx:$tx"
+			Deputs "port tx:$tx"
 			incr allTx $tx
 		}
 	}

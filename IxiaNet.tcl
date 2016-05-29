@@ -264,15 +264,21 @@ set releaseVersion 4.66
 #        122. Release on May 14th
 
 proc GetEnvTcl { product } {
-   set productKey     "HKEY_LOCAL_MACHINE\\SOFTWARE\\Ixia Communications\\$product"
-   set versionKey     [ registry keys $productKey ]
-   set latestKey      [ lindex $versionKey end ]
+    set productKey     "HKEY_LOCAL_MACHINE\\SOFTWARE\\Ixia Communications\\$product"
+    set versionKey     [ registry keys $productKey ]
+    set latestKey      [ lindex $versionKey end ]
 
-   if { $latestKey == "Multiversion" } {
-      set latestKey   [ lindex $versionKey [ expr [ llength $versionKey ] - 2 ] ]
-   }
-   set installInfo    [ append productKey \\ $latestKey \\ InstallInfo ]            
-   return             [ registry get $installInfo  HOMEDIR ]
+    if { $latestKey == "Multiversion" } {
+        set latestKey   [ lindex $versionKey [ expr [ llength $versionKey ] - 2 ] ]
+        if { $latestKey == "InstallInfo" } {
+            set latestKey   [ lindex $versionKey [ expr [ llength $versionKey ] - 3 ] ]
+        }
+    } elseif { $latestKey == "InstallInfo" } {
+        set latestKey   [ lindex $versionKey [ expr [ llength $versionKey ] - 2 ] ]
+    }
+    
+    set installInfo    [ append productKey \\ $latestKey \\ InstallInfo ]            
+    return             [ registry get $installInfo  HOMEDIR ]
 
 }
 
@@ -795,6 +801,25 @@ proc GetValidHandleObj { objType handle { parentHnd "" } } {
 			}
 			return ""
         }
+		rfc2544 {
+            set quickTest [ixNet getL [ixNet getRoot] quickTest] 
+			foreach qt [ixNet getL $quickTest rfc2544frameLoss] {
+				if { [ixNet getA $qt -name] == $handle || [ixNet getA $qt -name] == [string range $handle 1 [expr [string length $handle] - 2]] } {
+					return $qt 
+				} 
+			}
+			foreach qt [ixNet getL $quickTest rfc2544back2back] {
+				if { [ixNet getA $qt -name] == $handle || [ixNet getA $qt -name] == [string range $handle 1 [expr [string length $handle] - 2]] } {
+					return $qt 
+				} 
+			}
+			foreach qt [ixNet getL $quickTest rfc2544throughput] {
+				if { [ixNet getA $qt -name] == $handle || [ixNet getA $qt -name] == [string range $handle 1 [expr [string length $handle] - 2]] } {
+					return $qt 
+				} 
+			}
+			return ""
+		}
         default {
             return ""
         }
@@ -1180,15 +1205,15 @@ if { $::tcl_platform(platform) == "windows" } {
     package require registry
 
     if { [ catch {
-        #lappend auto_path  "[ GetEnvTcl IxNetwork ]/TclScripts/lib/IxTclNetwork"
-        lappend auto_path  "C:/Program Files (x86)/Ixia/IxNetwork/7.50-EA/TclScripts/lib/IxTclNetwork"
+        lappend auto_path  "[ GetEnvTcl IxNetwork ]/TclScripts/lib/IxTclNetwork"
+        #lappend auto_path  "C:/Program Files (x86)/Ixia/IxNetwork/8.01-EA/TclScripts/lib/IxTclNetwork"
     } err ] } {
         lappend auto_path $currDir/IxNetwork
         puts "Failed to invoke IxNetwork environment...$err"
         puts "Try to load IxNetwork local lib..."
     }
 
-puts "load package IxTclNetwork..."
+    puts "load package IxTclNetwork..."
     package require IxTclNetwork
     puts "load package IxTclHal..."    
     catch {    

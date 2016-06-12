@@ -264,7 +264,7 @@ body Rfc2544::config { args } {
                 	set resultfile $value
         	}
 			-resultlvl {
-Deputs "set result level:$value"			
+                Deputs "set result level:$value"			
 				set resultLevel $value
 			}
         	-inter_frame_gap {
@@ -638,6 +638,7 @@ Deputs "Step120"
 		if { $measure_jitter } {
 			if { $resultLevel } {
 				ixNet setA $handle/testConfig -calculateJitter True
+                ixNet setA $handle/testConfig -reportSequenceError False
             } else {
 				ixNet setA $handle/testConfig -calculateLatency False
 				ixNet setA $handle/testConfig -calculateJitter False
@@ -727,6 +728,7 @@ Deputs "Step120"
                                 -enabled true \
                                 -statisticsMode rxDelayVariationAverage \
                                 -latencyMode $latency_type
+                            ixNet setMultiAttribute $root/traffic/statistics/sequenceChecking -enabled false
                             ixNet commit
                             set view {::ixNet::OBJ-/statistics/view:"Traffic Item Statistics"}
                             set trafficlist {}

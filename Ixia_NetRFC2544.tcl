@@ -42,7 +42,7 @@
 class Rfc2544 {
     inherit NetObject
     
-    constructor {} {}
+    constructor { { hRFC2544 NULL } } {}
 	method reborn { } {}
     method throughput { args} {}
     method frameloss { args } {}
@@ -54,12 +54,17 @@ class Rfc2544 {
 			delete object $this.traffic
 		}
 	}
-	
+	method start {} {}
+    method stop {} {}
+    method getReports { args } {}
+    method configReports { args } {}
+    
     #trafficSelection - inTest
     public variable trafficSelection
     #trafficSelection - background
     public variable trafficBackground
     public variable testtype
+    public variable resultpath
 }
 
 body Rfc2544::reborn { } {
@@ -84,11 +89,31 @@ body Rfc2544::reborn { } {
 	}
 }
 
-body Rfc2544::constructor {} {
+body Rfc2544::constructor { { hRFC2544 NULL } } {
+    global errNumber
     
     set tag "body Rfc2544::ctor [info script]"
     Deputs "----- TAG: $tag -----"
     set testtype "rfcthroughput"
+    
+    if { $hRFC2544 == "NULL" } {
+        set hRFC2544 [GetObjNameFromString $this "NULL"]
+    }
+    Deputs "----- hRFC2544: $hRFC2544 -----"
+    if { $hRFC2544 != "NULL" } {
+        set handle [GetValidHandleObj "rfc2544" $hRFC2544]
+        Deputs "----- handle: $handle -----"
+        if { $handle != "" } {
+            set handleName [ ixNet getA $handle -name ]
+            ixNet setA [ixNet getRoot]/quickTest/globals -enableGenerateReportAfterRun true
+        } else {
+            error "$errNumber(5) handle:$hRFC2544"
+        }
+    } else {
+        set handleName $this
+        set handle ""
+    }
+        
     IxDebugOn
     IxDebugCmdOn
     
@@ -632,9 +657,9 @@ Deputs "Step150"
 
 	if { [ info exists resultdir ] } {
 		global remote_server
-Deputs "remote_server:$remote_server"
+        Deputs "remote_server:$remote_server"
 		set path [ ixNet getA $handle/results -resultPath ]
-Deputs "path:$path"
+        Deputs "path:$path"
 		set colonIndex [ string first ":" $path ]
 		set path [ string replace $path $colonIndex $colonIndex "$" ]
 		if { $remote_server == "localhost" } {
@@ -646,7 +671,7 @@ Deputs "path:$path"
 				exec cmd "/k net use $path $netuse_pw /user:$netuse_user" &
 			}
 		}
-Deputs "path:$path"					
+        Deputs "path:$path"					
 
 		if { [ catch {
 			file copy $path $resultdir
@@ -843,6 +868,122 @@ body Rfc2544::back2back { args } {
     reborn
     eval config $args
 }
+
+body Rfc2544::start { } {
+    set tag "body Rfc2544::start [info script]"
+    Deputs "----- TAG: $tag -----"
+    catch {
+        #ixNet exec apply $handle
+        #ixNet exec startAllProtocols sync
+        #Tester::apply_traffic
+        ixNet exec run $handle
+        ixNet exec waitForTest $handle
+    }
+    return [ GetStandardReturnHeader ]
+}
+
+body Rfc2544::stop { } {
+    set tag "body Rfc2544::start [info script]"
+    Deputs "----- TAG: $tag -----"
+    catch {
+        ixNet exec stop $handle
+    }
+    return [ GetStandardReturnHeader ]
+}
+
+body Rfc2544::getReports { args } {
+    foreach { key value } $args {
+        set key [string tolower $key]
+        switch -exact -- $key {
+            -resultdir {
+                set resultdir $value
+            }
+            -netuse_pw {
+                set netuse_pw $value
+            }
+            -netuse_user {
+                set as $value
+            }
+        }
+    }
+    
+	if { [ info exists resultdir ] } {
+		global remote_server
+        Deputs "remote_server:$remote_server"
+		set path [ ixNet getA $handle/results -resultPath ]
+        Deputs "path:$path"
+		set colonIndex [ string first ":" $path ]
+		set path [ string replace $path $colonIndex $colonIndex "$" ]
+		if { $remote_server == "localhost" } {
+			set path "//127.0.0.1/$path"
+		} else {
+			set path "//${remote_server}/$path"
+			catch {
+                # net use \\10.206.25.116\c$\ixia ixia2014! /user:YL
+				exec cmd "/k net use $path $netuse_pw /user:$netuse_user" &
+			}
+		}
+        Deputs "path:$path"					
+
+		if { [ catch {
+			file copy $path $resultdir
+		} err ] } {
+            Deputs "err:$err"
+		}
+	}
+}
+
+body Rfc2544::configReports { args } {
+    foreach { key value } $args {
+        set key [string tolower $key]
+        switch -exact -- $key {
+            -result_dir {
+                set result_dir $value
+            }
+            -serial_number {
+                set serial_number $value
+            }
+            -version {
+                set version $value
+            }
+            -comments {
+                set comments $value
+            }
+            -use_default_root_path {
+                set use_default_root_path $value
+            }
+            -title {
+                set title $value
+            }
+            -default {
+            
+            }
+        }
+    }
+    
+    set root [ixNet getRoot]
+	if { [ info exists result_dir ] } {
+		ixNet setA $root/quickTest/globals -outputRootPath $result_dir
+        ixNet commit
+	}
+	if { [ info exists serial_number ] } {
+		ixNet setA $root/quickTest/globals -serialNumber $serial_number
+        ixNet commit
+	}
+	if { [ info exists title ] } {
+		ixNet setA $root/quickTest/globals -titlePageComments $title
+        ixNet commit
+	}
+	if { [ info exists version ] } {
+		ixNet setA $root/quickTest/globals -version $version
+        ixNet commit
+	}
+	if { [ info exists comments ] } {
+		ixNet setA $root/quickTest/globals -comments $comments
+        ixNet commit
+	}
+}
+
 
 class Async2544 {
 	inherit Rfc2544

@@ -24,6 +24,8 @@ proc RFC2544_00 {deviceModel deviceID resultFilePath} {
         Rfc2544 @rfc2544("B2B_2Ports")
         #可选的options： -result_dir -serial_number -version -comments -use_default_root_path
         @rfc2544("B2B_2Ports") configReports -title $title -result_dir $resultFilePath
+        # Added sleep time to wait for reseting ports
+        after [expr 60 * 1000]
         @rfc2544("B2B_2Ports") start
         Tester::cleanup
     } b2bResInfo]
@@ -34,7 +36,7 @@ proc RFC2544_00 {deviceModel deviceID resultFilePath} {
     puts $logFile "b2bRes     = $b2bRes"
     puts $logFile "b2bResInfo = $b2bResInfo"
     puts $logFile "B2B test stopped.\n"
-
+    
     set frameLossRes [catch {
         # Frame loss.
         puts $logFile "FrameLoss test started."
@@ -46,6 +48,8 @@ proc RFC2544_00 {deviceModel deviceID resultFilePath} {
         Rfc2544 @rfc2544("FL_2Ports")
         #可选的options： -result_dir -serial_number -version -comments -use_default_root_path
         @rfc2544("FL_2Ports") configReports -title $title -result_dir $resultFilePath
+        # Added sleep time to wait for reseting ports
+        after [expr 60 * 1000]
         @rfc2544("FL_2Ports") start
         Tester::cleanup
     } frameLossResInfo]
@@ -67,6 +71,8 @@ proc RFC2544_00 {deviceModel deviceID resultFilePath} {
         Rfc2544 @rfc2544("TL_2Ports")
         #可选的options： -result_dir -serial_number -version -comments -use_default_root_path
         @rfc2544("TL_2Ports") configReports -title $title -result_dir $resultFilePath
+        # Added sleep time to wait for reseting ports
+        after [expr 60 * 1000]
         @rfc2544("TL_2Ports") start
         Tester::cleanup
     } tputResInfo]

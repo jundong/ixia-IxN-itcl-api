@@ -287,6 +287,8 @@ set trafficlist [list]
 set portnamelist [list]
 set trafficnamelist [list]
 set tportlist [list]
+set remote_server "localhost"
+set remote_serverPort "8009"
 proc loadconfig { filename } {
     global portlist
     global trafficlist
@@ -325,7 +327,7 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
 	global remote_serverPort
 	
 	set loginInfo $location
-puts "Login...$location"	
+    puts "Login...$location"	
 	if { $location == "" } {
 		set port "localhost/8009"
 	} else {

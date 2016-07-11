@@ -21,33 +21,36 @@ class PppoeHost {
     constructor { port } { chain $port } {}
 	method reborn {} {}
 	method config { args } {}
+	method connect { } { start }
+	method disconnect { } { stop }
 	method get_summary_stats {} {}
 	method wait_connect_complete { args } {}
-    method CreatePPPoEPerSessionView {} {
+	method wait_disconnect_complete {} {}
+    	method CreatePPPoEPerSessionView {} {
         set tag "body DhcpHost::CreateDhcpPerSessionView [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
         set root [ixNet getRoot]
         set customView          [ ixNet add $root/statistics view ]
         ixNet setM  $customView -caption "dhcpPerSessionView" -type layer23ProtocolStack -visible true
         ixNet commit
         set customView          [ ixNet remapIds $customView ]
-Deputs "view:$customView"
+	Deputs "view:$customView"
         set availableFilter     [ ixNet getList $customView availableProtocolStackFilter ]
-Deputs "available filter:$availableFilter"
+	Deputs "available filter:$availableFilter"
         set filter              [ ixNet getList $customView layer23ProtocolStackFilter ]
-Deputs "filter:$filter"
-Deputs "handle:$handle"
+	Deputs "filter:$filter"
+	Deputs "handle:$handle"
         set pppoxRange [ixNet getList $handle pppoxRange]
-Deputs "pppoxRange:$pppoxRange"
+	Deputs "pppoxRange:$pppoxRange"
         set rangeName [ ixNet getA $pppoxRange -name ]
-Deputs "range name:$rangeName"
+	Deputs "range name:$rangeName"
         foreach afil $availableFilter {
-Deputs "$afil"
+	    Deputs "$afil"
             if { [ regexp $rangeName $afil ] } {
                 set stackFilter $afil
             }
         }
-Deputs "stack filter:$stackFilter"
+	Deputs "stack filter:$stackFilter"
         ixNet setM $filter -drilldownType perSession -protocolStackFilterId [ list $stackFilter ]
         ixNet commit
         set srtStat [lindex [ixNet getF $customView statistic -caption {Session Name}] 0]
@@ -62,6 +65,13 @@ Deputs "stack filter:$stackFilter"
     }
     
     
+}
+body PppoeHost::wait_disconnect_complete {} {
+    set tag "body PppoeHost::wait_disconnect_complete [info script]"
+    Deputs "----- TAG: $tag -----"
+
+    set timeout 300
+    return [GetStandardReturnHeader]
 }
 
 body PppoeHost::reborn {} {
@@ -116,11 +126,14 @@ body PppoeHost::config { args } {
     set ENcp       [ list ipv4 ipv6 ipv4v6 ]
     set EAuth      [ list none auto chap_md5 pap ]
 
-#param collection
-Deputs "Args:$args "
+	#param collection
+	Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
+			-mru_size {
+				set mru_size $value
+			}
             -count {
                 if { [ string is integer $value ] } {
                     set count $value
@@ -169,6 +182,11 @@ Deputs "Args:$args "
 	if { [ info exists count ] } {
 		ixNet setMultiAttrs $handle/pppoxRange \
 		 -numSessions $count
+	}
+	
+	if { [ info exists mru_size ] } {
+		ixNet setMultiAttrs $handle/pppoxRange \
+		 -mtu $mru_size
 	}
 	
 	if { [ info exists ipcp_encap ] } {
@@ -225,12 +243,9 @@ Deputs "Args:$args "
 			ixNet commit
 		}
 	}
-	
-	
 
 	ixNet commit
 	return [GetStandardReturnHeader]
-
 }
 
 body PppoeHost::get_summary_stats {} {

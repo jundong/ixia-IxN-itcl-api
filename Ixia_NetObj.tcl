@@ -150,30 +150,28 @@ body ProtocolStackObject::config { args } {
         set key [string tolower $key]
         switch -exact -- $key {
 			-mac_addr {
-			set trans [ MacTrans $value ]
-			if { [ IsMacAddress $trans ] } {
-				set mac_addr $trans
-			} else {
-				error "$errNumber(1) key:$key value:$value"
-			}                
-			
+                set trans [ MacTrans $value ]
+                if { [ IsMacAddress $trans ] } {
+                    set mac_addr $trans
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }                
 			}
 			-mac_addr_step {
-			set trans [ MacTrans $value ]
-			if { [ IsMacAddress $trans ] } {
-				set mac_addr_step $trans
-			} else {
-				error "$errNumber(1) key:$key value:$value"
-			}                
-			
+                set trans [ MacTrans $value ]
+                if { [ IsMacAddress $trans ] } {
+                    set mac_addr_step $trans
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }                
 			}
 			-inner_vlan_enable {
-			set trans [ BoolTrans $value ]
-			if { $trans == "1" || $trans == "0" } {
-				set inner_vlan_enable $trans
-			} else {
-				error "$errNumber(1) key:$key value:$value"
-			}
+                set trans [ BoolTrans $value ]
+                if { $trans == "1" || $trans == "0" } {
+                    set inner_vlan_enable $trans
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
 			}
 			-vlan_id2 -
 			-inner_vlan_id {
@@ -182,6 +180,7 @@ body ProtocolStackObject::config { args } {
 				} else {
 					error "$errNumber(1) key:$key value:$value"
 				}
+                set inner_vlan_enable 1
 			}
 			-vlan_id2_step -
 			-inner_vlan_step {
@@ -190,6 +189,7 @@ body ProtocolStackObject::config { args } {
 				} else {
 					error "$errNumber(1) key:$key value:$value"
 				}
+                set inner_vlan_enable 1
 			}
 			-inner_vlan_repeat_count {
 				if { [ string is integer $value ] && ( $value >= 0 ) } {
@@ -198,6 +198,7 @@ body ProtocolStackObject::config { args } {
 					error "$errNumber(1) key:$key value:$value"
 				}
 			}
+            -vlan2_per_port -
 			-vlan_id2_num -
 			-inner_vlan_num {
 				if { [ string is integer $value ] && ( $value >= 0 ) } {
@@ -205,22 +206,23 @@ body ProtocolStackObject::config { args } {
 				} else {
 					error "$errNumber(1) key:$key value:$value"
 				}
+                set inner_vlan_enable 1                
 			}
 			-inner_vlan_priority {
-			if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
-				set inner_vlan_priority $value
-			} else {
-				error "$errNumber(1) key:$key value:$value"
-			}
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
+                    set inner_vlan_priority $value
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
 			}
 			-vlan_presnet -
 			-outer_vlan_enable {
-			set trans [ BoolTrans $value ]
-			if { $trans == "1" || $trans == "0" } {
-				set outer_vlan_enable $trans
-			} else {
-				error "$errNumber(1) key:$key value:$value"
-			}
+                set trans [ BoolTrans $value ]
+                if { $trans == "1" || $trans == "0" } {
+                    set outer_vlan_enable $trans
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
 			}
 			-vlan_id1 -
 			-vlan_id -
@@ -230,6 +232,7 @@ body ProtocolStackObject::config { args } {
 				} else {
 					error "$errNumber(1) key:$key value:$value"
 				}
+                set outer_vlan_enable 1
 			}
 			-vlan_id_step -
 			-vlan_id1_step -
@@ -239,15 +242,18 @@ body ProtocolStackObject::config { args } {
 				} else {
 					error "$errNumber(1) key:$key value:$value"
 				}
+                set outer_vlan_enable 1
 			}
 			-vlan_id1_num -
 			-vlan_num -
+            -vlan1_per_port -
 			-outer_vlan_num {
 				if { [ string is integer $value ] && ( $value >= 0 ) } {
 					set outer_vlan_num $value
 				} else {
 					error "$errNumber(1) key:$key value:$value"
 				}
+                set outer_vlan_enable 1
 			}
 			-outer_vlan_priority {
 			if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
@@ -353,10 +359,9 @@ Deputs "outer_vlan_step:$outer_vlan_step"
     set inner_vlan ""
 	set version [ixNet getVersion]
 	Deputs "The ixNetwork version is: $version"
-
+    set verval [string match 6.0* $version]
     if { [ info exists inner_vlan_enable ] } {
-Deputs "inner vlan enabled..."
-	    set verval [string match 6.0* $version]
+        Deputs "inner vlan enabled..."
 	    if {$verval == 1} {
 		    set inner_vlan [ixNet add $range vlanRange]
 	    } else {
@@ -369,7 +374,6 @@ Deputs "inner vlan enabled..."
 	    } else {
 		    ixNet setA $inner_vlan -enabled $inner_vlan_enable 
 	    }
-		
     }
     
     if { [ info exists inner_vlan_id ] } {

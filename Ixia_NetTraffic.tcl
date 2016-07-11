@@ -999,7 +999,7 @@ body Traffic::config { args  } {
                     set trafficType "ethernetVlan"
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                 } else {
-                Deputs Step120
+                    Deputs Step120
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                 }
             }
@@ -1045,6 +1045,7 @@ body Traffic::config { args  } {
                             set routeBlockHandle [ $dstObj cget -hPort ]/protocols/bgp
                         }
                         set dstHandle [ concat $dstHandle $routeBlockHandle ]
+                        set trafficType [ $dstObj cget -type ]
                     } else {
                         Deputs "dst obj:$dstObj"				
                         Deputs "route block handle:[$dstObj cget -handle]"				
@@ -1052,7 +1053,15 @@ body Traffic::config { args  } {
                     }
                 } elseif { [ $dstObj isa Host ] } {
                     set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
+                    if { [ $dstObj cget -static ] } {
+                        set trafficType "ethernetVlan"
+                    } else {
+                        set trafficType [ $dstObj cget -ip_version ]
+                    }
                 } elseif { [ $dstObj isa MulticastGroup ] } {
+                    if { [ $dstObj cget -protocol ] == "mld" } {
+                        set trafficType "ipv6"
+                    }                 
                     set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
                 } else {
                     set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]

@@ -262,6 +262,8 @@ set releaseVersion 4.66
 #		121. Add support for NGPF
 # Version 4.66
 #		122. Release on May 14th
+# Version 4.66
+#		123. Add SearchMinFrameSizeByLoad on July 11th
 
 proc GetEnvTcl { product } {
    
@@ -269,9 +271,14 @@ proc GetEnvTcl { product } {
    set versionKey     [ registry keys $productKey ]
    set latestKey      [ lindex $versionKey end ]
 
-   if { $latestKey == "Multiversion" } {
-      set latestKey   [ lindex $versionKey [ expr [ llength $versionKey ] - 2 ] ]
-   }
+    if { $latestKey == "Multiversion" } {
+        set latestKey   [ lindex $versionKey [ expr [ llength $versionKey ] - 2 ] ]
+        if { $latestKey == "InstallInfo" } {
+            set latestKey   [ lindex $versionKey [ expr [ llength $versionKey ] - 3 ] ]
+        }
+    } elseif { $latestKey == "InstallInfo" } {
+        set latestKey   [ lindex $versionKey [ expr [ llength $versionKey ] - 2 ] ]
+    }
    set installInfo    [ append productKey \\ $latestKey \\ InstallInfo ]            
    return             [ registry get $installInfo  HOMEDIR ]
 
@@ -282,6 +289,8 @@ set trafficlist [list]
 set portnamelist [list]
 set trafficnamelist [list]
 set tportlist [list]
+set remote_server "localhost"
+set remote_serverPort "8009"
 proc loadconfig { filename } {
     global portlist
     global trafficlist
@@ -320,7 +329,7 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
 	global remote_serverPort
 	
 	set loginInfo $location
-puts "Login...$location"	
+    puts "Login...$location"	
 	if { $location == "" } {
 		set port "localhost/8009"
 	} else {
@@ -396,6 +405,131 @@ proc GetAllPortObj {} {
 	return $portObj
 }
 
+proc SearchMinFrameSizeByLoad { args } {
+    set tag "proc SearchMinFrameSizeByLoad [info script]"
+	Deputs "----- TAG: $tag -----"
+
+    array set frame_load [list ]
+    set upstreams [list]
+    set downstreams [list]
+    set duration [ expr 60 * 1000 ]
+	foreach { key value } $args {
+        set key [string tolower $key]
+        switch -exact -- $key {
+            -frame_len {
+                set frame_size_list $value
+            }
+            -inflation {
+                set inflation $value
+            }
+            -upstream {
+                foreach stream $value {
+                    lappend upstreams [ $stream cget -handle ]
+                }
+            }
+            -downstream {
+                # Customize values
+                foreach stream $value {
+                    lappend downstreams [ $stream cget -handle ]
+                }	            
+            } 
+            -duration {
+                set duration [ expr 1000 * $value ]
+            }                    
+        }
+    }
+    # According to inflation to calculate traffic load
+    foreach frame_size $frame_size_list {
+        set frame_load($frame_size) [expr (($frame_size + 20) * 1.0 / ($frame_size + 20 + $inflation)) * 100]
+    }  
+    
+    set index 0
+    set min_index 0
+    set max_index [ expr [ llength $frame_size_list ] - 1 ]
+    set qulified_index ""
+	set iteration 1
+	set iterationResult false    	
+    while { 1 } {
+        if { $qulified_index == $index } {
+            # Don't need to run same fram size twice
+            break   
+        }
+        
+        set frame_size [ lindex $frame_size_list $index ]
+        set root [ixNet getRoot]
+        set traffic [ixNet getL $root traffic]
+        foreach trafficItem [ixNet getL $traffic trafficItem] {
+            set highLevelStream [ ixNet getL $trafficItem configElement ]
+            set frameSize [ ixNet getL $highLevelStream frameSize ]
+            ixNet setA $frameSize -fixedSize $frame_size
+            ixNet commit 
+            set frameRate [ ixNet getL $highLevelStream frameRate ]
+            set endpointSet [ ixNet getL $trafficItem endpointSet ]
+            set src [ ixNet getA $endpointSet -sources ]
+            foreach upstream $upstreams {
+                if { $upstream == [ string range $src 0 [ expr [ string length $upstream ] - 1 ] ] ||
+                     $src == [ string range $upstream 0 [ expr [ string length $src ] - 1 ] ] } {
+                    ixNet setM $frameRate -rate 100 -type percentLineRate
+                    ixNet commit
+                } else {
+                    ixNet setM $frameRate -rate $frame_load($frame_size) -type percentLineRate
+                    ixNet commit
+                }
+            }
+        }
+        ixNet commit
+        
+        Tester::start_traffic
+        after $duration
+        Tester::stop_traffic
+        
+        if { [ Tester::getAllTxRxFrames ] > 0 } {
+            set iterationResult false
+        } else {
+            set iterationResult true
+        }
+        
+        if { !$iterationResult } {
+            # Failed
+            set min_index $index
+            # Reached to minmum frame size 
+            if { $min_index == $max_index} {
+                Deputs "Iteration #$iteration - Frame Size(Bytes): $frame_size, Min Frame Size: [ lindex $frame_size_list $min_index ], Max Frame Size: [ lindex $frame_size_list $max_index ], Iteration Result: $iterationResult"
+                break
+            }
+        } else {
+            # Passed
+            set qulified_index $index
+            set max_index $index
+            # Reached to maximum frame size
+            if { $min_index == $max_index} {
+                Deputs "Iteration #$iteration - Frame Size(Bytes): $frame_size, Min Frame Size: [ lindex $frame_size_list $min_index ], Max Frame Size: [ lindex $frame_size_list $max_index ], Iteration Result: $iterationResult"
+                break
+            }
+        }
+
+        Deputs "Iteration #$iteration - Frame Size(Bytes): $frame_size, Min Frame Size: [ lindex $frame_size_list $min_index ], Max Frame Size: [ lindex $frame_size_list $max_index ], Iteration Result: $iterationResult"
+        incr iteration
+        
+        set index [ expr ($min_index + $max_index) / 2 ]
+        if { $index == $min_index } {
+            incr index
+            
+            if { $index > $max_index } {
+                set index $max_index
+            }
+        }
+    }
+    
+    set ret [ GetStandardReturnHeader ]
+    if { $qulified_index != "" } {
+        set ret $ret[ GetStandardReturnBody "frame_size" [ lindex $frame_size_list $qulified_index ] ]
+    } else {
+        set ret $ret[ GetStandardReturnBody "frame_size" 0 ]
+    }
+    
+    return $ret
+}
 set currDir [file dirname [info script]]
 puts "Package Directory $currDir"
 puts "load package Ixia_Util..."

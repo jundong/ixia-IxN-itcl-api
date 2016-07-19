@@ -104,10 +104,10 @@ class Port {
     method set_port_dynamic_rate { args } {}
 	method resovle_mac { args } {
 		set tag "body Port::resovle_mac [info script]"
-	Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		global errorInfo
 		global errNumber
-	Deputs "Args:$args "
+        Deputs "Args:$args "
 		foreach { key value } $args {
 			set key [string tolower $key]
 			switch -exact -- $key {
@@ -126,12 +126,12 @@ class Port {
 			}
 		}
 		if { [ info exists neighbor_ip ] } {
-Deputs "get neighbor"
+            Deputs "get neighbor"
 			set neighbor [ ixNet getF $handle discoveredNeighbor -neighborIp $neighbor_ip ]
-Deputs "neighbor:$neighbor"
-Deputs "get neighbor mac"
+            Deputs "neighbor:$neighbor"
+            Deputs "get neighbor mac"
 			set neighbor_mac [ ixNet getA $neighbor -neighborMac ]
-Deputs "neighbor mac:$neighbor_mac"
+            Deputs "neighbor mac:$neighbor_mac"
 		}
 		if { [ IsMacAddress $neighbor_mac ] } {
 			return $neighbor_mac
@@ -145,7 +145,7 @@ Deputs "neighbor mac:$neighbor_mac"
     method set_dot1x {args } {}
   	method resume {} {
 		set tag "body Traffic::resume [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		set info [ ixNet getA $handle -connectionInfo ]
 		regexp {chassis="(\d+.\d+.\d+.\d+)"} $info chas chasAddr
 		regexp {card="(\d+)"} $info card cardId
@@ -259,30 +259,30 @@ Deputs "----- TAG: $tag -----"
 
 body Port::Connect { location { medium NULL } { checkLink 0 } } {
     set tag "body Port::Connect [info script]"
-Deputs "----- TAG: $tag -----"
-# -- add vport
+    Deputs "----- TAG: $tag -----"
+    # -- add vport
     set root    [ ixNet getRoot ]
     set vport   [ ixNet add $root vport ]
     ixNet setA $vport -name $this
 	if { $medium != "NULL" } {
-Deputs "connect medium:$medium"	
+        Deputs "connect medium:$medium"	
 		ixNet setA $vport/l1Config/ethernet -media $medium
 	}
     set vport [ixNet remapIds $vport]
     set handle $vport
-# -- connect to hardware
+    # -- connect to hardware
 	set locationInfo [ split $location "/" ]
 	set chassis     [ lindex $locationInfo 0 ]
 	set ModuleNo    [ lindex $locationInfo 1 ]
 	set PortNo      [ lindex $locationInfo 2 ]
 
 	if { [ string tolower [ ixNet getA $root/statistics -guardrailEnabled ] ] != "true" } {
-Deputs "guardrail: false"
+        Deputs "guardrail: false"
 		catch {
 			ixNet setA $root/statistics -guardrailEnabled True
 			ixNet commit
 		}
-Deputs "guardrail:[ ixNet getA $root/statistics -guardrailEnabled  ]"
+        Deputs "guardrail:[ ixNet getA $root/statistics -guardrailEnabled  ]"
 	}
 
 	if { $checkLink } {
@@ -803,7 +803,7 @@ ixNet commit
 				# -vlanPriority   $outer_vlan_priority
 		# }
     # }
-ixNet commit    
+    ixNet commit    
     
     if { [ info exists type ] } {
 		set flagIntType 0
@@ -826,11 +826,13 @@ ixNet commit
         ixNet setA $handle -type $ix_type
 		if { $flagIntType } {
 			ixNet setA $handle/l1Config/tenGigWan -interfaceType wanSdh
+            ixNet commit
 		}
     }
     
     if { [ info exists media ] } {
         ixNet setA $handle/l1Config/ethernet -media $media
+        ixNet commit
     }
     
     if { [ info exists auto_neg ] } {
@@ -841,17 +843,18 @@ ixNet commit
         }
 		catch {
 			ixNet setA $handle/l1Config/ethernet -autoNegotiate $auto_neg 
-			
+			ixNet commit
 		}
     } 
     if { [ info exists speed ] } {
         set ori_speed [ ixNet getA $handle/l1Config/ethernet -speed ]
-Deputs "ori speed:$ori_speed"
+        Deputs "ori speed:$ori_speed"
 		if { $ori_speed == "null" } {
 			set ori_speed auto
 		}
         if { $speed == 1000 } {
             ixNet setA $handle/l1Config/ethernet -speed speed1000
+            ixNet commit
         } else {
             if { ($ori_speed == "auto") || ($ori_speed == "speed1000") } {
                 set duplex fd
@@ -859,6 +862,7 @@ Deputs "ori speed:$ori_speed"
                 regexp {\d+([fh]d)} $ori_speed match duplex
             }
             ixNet setA $handle/l1Config/ethernet -speed speed$speed$duplex
+            ixNet commit
         }
     }
     if { [ info exists duplex ] } {
@@ -868,10 +872,11 @@ Deputs "ori speed:$ori_speed"
         }
         set speed [ ixNet getA $handle/l1Config/ethernet -speed ]
         if { ( $speed == "speed1000" ) || ( $speed == "auto" ) } {
-Deputs "wrong configuration for duplex with speed1000 or auto speed"
+            Deputs "wrong configuration for duplex with speed1000 or auto speed"
         } else {
             if { [ regexp {(\d+)} $speed match speed ] } {
                 ixNet setA $handle/l1Config/ethernet -speed speed$speed$duplex
+                ixNet commit
             }
         }
     }
@@ -879,9 +884,10 @@ Deputs "wrong configuration for duplex with speed1000 or auto speed"
     if { [ info exists enable_arp ] } {
         set root [ixNet getRoot]
         ixNet setA $root/globals/interfaces -arpOnLinkup $enable_arp
+        ixNet commit
     }
     if { [ info exists flow_control ] } {
-Deputs "flow_control:$flow_control"
+        Deputs "flow_control:$flow_control"
 		ixNet setA $handle/l1Config/[ixNet getA $handle -type] -enabledFlowControl $flow_control
 		ixNet commit
     }
@@ -1337,7 +1343,7 @@ Deputs "----- TAG: $tag -----"
 body Port::get_stats {} {
 
     set tag "body Port::get_stats [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     
 	#{::ixNet::OBJ-/statistics/view:"Port Statistics"}
     set root [ixNet getRoot]
@@ -1345,18 +1351,18 @@ Deputs "----- TAG: $tag -----"
     set rxview {::ixNet::OBJ-/statistics/view:"Data Plane Port Statistics"}
 	set proview {::ixNet::OBJ-/statistics/view:"Global Protocol Statistics"}
     # set view  [ ixNet getF $root/statistics view -caption "Port Statistics" ]
-Deputs "view:$view"
-Deputs "rxview:$rxview"
-Deputs "proview:$proview"
+    Deputs "view:$view"
+    Deputs "rxview:$rxview"
+    Deputs "proview:$proview"
     set captionList             [ ixNet getA $view/page -columnCaptions ]
 	#set rxcaptionList [ ixNet getA $rxview/page -columnCaptions ]
     if { [catch { set rxcaptionList [ ixNet getA $rxview/page -columnCaptions ] } ]  } {
 	    set rxcaptionList [list Port {Rx Frames}]
 	} 
 	set proCaptionList [ ixNet getA $proview/page -columnCaptions ]
-Deputs "caption list:$captionList"
-Deputs "rxcaptionList:$rxcaptionList"
-Deputs "pro caption list:$proCaptionList"
+    Deputs "caption list:$captionList"
+    Deputs "rxcaptionList:$rxcaptionList"
+    Deputs "pro caption list:$proCaptionList"
 	set port_name				[ lsearch -exact $captionList {Stat Name} ]
     set tx_frame_count          [ lsearch -exact $captionList {Frames Tx.} ]
     set total_frame_count       [ lsearch -exact $captionList {Valid Frames Rx.} ]
@@ -1390,19 +1396,18 @@ Deputs "pro caption list:$proCaptionList"
 	}
 	set proStats [ ixNet getA $proview/page -rowValues ]
 	
-Deputs "stats:$stats"
-Deputs "pro stats:$proStats"
+    Deputs "stats:$stats"
+    Deputs "pro stats:$proStats"
 
     set connectionInfo [ ixNet getA $handle -connectionInfo ]
-Deputs "connectionInfo :$connectionInfo"
+    Deputs "connectionInfo :$connectionInfo"
     regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-Deputs "chas:$chassis card:$card port$port"
+    Deputs "chas:$chassis card:$card port$port"
 
     foreach row $stats {
-        
         eval {set row} $row
-Deputs "row:$row"
-Deputs "portname:[ lindex $row $port_name ]"
+        Deputs "row:$row"
+        Deputs "portname:[ lindex $row $port_name ]"
 		if { [ string length $card ] == 1 } {
 			set card "0$card"
 		}

@@ -51,16 +51,15 @@
 #		23. add remove_all_stream proc
 
 class Tester {
-    
     proc constructor {} {}
     proc apply_traffic {} {}
-    proc start_traffic { args } {}
+    proc start_traffic { { restartCaptureJudgement 1 } } {}
     proc stop_traffic {} {}
     proc start_router {} {}
     proc stop_router {} {}
     proc start_capture { args } {}
     proc stop_capture { { wait 3000} } {}
-	proc clear_capture {} {}
+    proc clear_capture {} {}
     proc cleanup { args } {}
     proc synchronize {} {}
     proc save_config { args } {}
@@ -68,11 +67,12 @@ class Tester {
     proc clear_traffic_stats {} {}
     proc get_log { { file default } } {}
     proc getAllTx {} {}
+    proc getAllTxRxFrames {} {}
 }
 
 proc Tester::getAllTx {} {
-    set tag "proc Tester::getAllTx  [info script]"
-    Deputs "----- TAG: $tag -----"
+    	set tag "proc Tester::getAllTx  [info script]"
+	Deputs "----- TAG: $tag -----"
     
 	set allObj [ find objects ]
 	set allTx 0
@@ -90,11 +90,10 @@ Deputs "port tx:$tx"
 }
 
 proc Tester::start_traffic { args } {
-
     set tag "proc Tester::start_traffic [info script]"
     Deputs "----- TAG: $tag -----"
 
-    set restartCaptureJudgement 0
+    set restartCaptureJudgement 1
 	set apply 0
     
 	foreach { key value } $args {
@@ -178,7 +177,7 @@ proc Tester::start_traffic { args } {
 
 proc Tester::stop_traffic {} {
     set tag "proc Tester::stop_traffic [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     
     set root [ixNet getRoot]
 	if { [ catch {
@@ -205,7 +204,7 @@ Deputs "stop timeout:$timeout"
 
 proc Tester::start_router {} {
     set tag "proc Tester::start_router [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     
 #	ixTclNet::StartProtocols
 	ixNet exec startAllProtocols
@@ -382,10 +381,10 @@ Deputs "==SHOW CONTROL CAPTURE CONTENT=="
 }
 
 proc Tester::cleanup { args } {
-    # IxDebugOn
+# IxDebugOn
 
     set tag "proc Tester::cleanup [info script]"
-    Deputs "----- TAG: $tag -----"
+Deputs "----- TAG: $tag -----"
 
     set release_port 0
 	set reboot_port 0
@@ -432,16 +431,16 @@ proc Tester::cleanup { args } {
 		ixNet exec newConfig
 	}
 	set objects [ find objects ]
-    Deputs "objects:$objects"
+Deputs "objects:$objects"
 	foreach obj $objects {
-        Deputs "obj:$obj"
+Deputs "obj:$obj"
 		if { [ catch {
 			if { [ $obj isa NetObject ] } {
-                Deputs Step10
+Deputs Step10
 				if { [ $obj isa Port ] } {
-                    Deputs Step20
+Deputs Step20
 					set location [ $obj cget -location ]
-                    Deputs "location:$location"
+Deputs "location:$location"
 					if { $reboot_port } {
 						set portInfo [ split $location "/" ]
 						set chas [ lindex $portInfo 0 ] 
@@ -454,12 +453,12 @@ proc Tester::cleanup { args } {
 					}
 					if { $new_config } {
 						if { $release_port == 0 } {
-                            Deputs "obj: $obj location:$location"					
+	Deputs "obj: $obj location:$location"					
 							$obj Connect $location
 						}
 					}
 				} else {
-                    Deputs Step30
+Deputs Step30
 					$obj unconfig
 					#delete object $obj
 				}
@@ -467,8 +466,8 @@ proc Tester::cleanup { args } {
 				continue
 			}
 		} err ] } { 
-            Deputs $err
-            continue 
+Deputs $err
+		continue 
 		}
 	}
 	ixNet commit
@@ -478,7 +477,7 @@ proc Tester::cleanup { args } {
 
 proc Tester::apply_traffic {} {
 	set tag "proc Tester::apply_traffic [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	ixTclNet::ApplyTraffic
 
@@ -675,4 +674,27 @@ Deputs "----- TAG: $tag -----"
 		}
 	}
 	return [ GetStandardReturnHeader ]
+}
+
+proc Tester::getAllTxRxFrames {} {
+    	set tag "proc Tester::getAllTxRxFrames  [info script]"
+	Deputs "----- TAG: $tag -----"
+    
+	set allObjs [ find objects ]
+	set allTxFrames 0
+	set allRxFrames 0
+
+	foreach obj $allObjs {
+		if { [ $obj isa Port ] } {
+			Deputs "port obj:$obj"
+			set tx [ GetStatsFromReturn [ $obj get_stats ] tx_frame_count ]
+			Deputs "port tx:$tx"
+			incr allTxFrames $tx
+			
+			set rx [ GetStatsFromReturn [ $obj get_stats ] total_frame_count ]
+			Deputs "port rx:$rx"
+			incr allRxFrames $rx
+		}
+	}
+	return [ expr $allTxFrames - $allRxFrames ]
 }

@@ -408,9 +408,11 @@ proc GetAllPortObj {} {
 proc SearchMinFrameSizeByLoad { args } {
     set tag "proc SearchMinFrameSizeByLoad [info script]"
 	Deputs "----- TAG: $tag -----"
-
+    Deputs "Args:$args "
+    
     array set frame_load [list ]
     set upstreams [list]
+    set streams [list]
     set downstreams [list]
     set duration [ expr 60 * 1000 ]
 	foreach { key value } $args {
@@ -422,12 +424,12 @@ proc SearchMinFrameSizeByLoad { args } {
             -inflation {
                 set inflation $value
             }
-            -upstream {
+            -upstreams {
                 foreach stream $value {
                     lappend upstreams [ $stream cget -handle ]
                 }
             }
-            -downstream {
+            -downstreams {
                 # Customize values
                 foreach stream $value {
                     lappend downstreams [ $stream cget -handle ]
@@ -435,7 +437,10 @@ proc SearchMinFrameSizeByLoad { args } {
             } 
             -duration {
                 set duration [ expr 1000 * $value ]
-            }                    
+            }
+            -resultfile {
+                set resultfile $value
+            }
         }
     }
     # According to inflation to calculate traffic load
@@ -466,24 +471,30 @@ proc SearchMinFrameSizeByLoad { args } {
             set frameRate [ ixNet getL $highLevelStream frameRate ]
             set endpointSet [ ixNet getL $trafficItem endpointSet ]
             set src [ ixNet getA $endpointSet -sources ]
+            
+            ixNet setM $frameRate -rate $frame_load($frame_size) -type percentLineRate
+            ixNet commit
+            
             foreach upstream $upstreams {
                 if { $upstream == [ string range $src 0 [ expr [ string length $upstream ] - 1 ] ] ||
                      $src == [ string range $upstream 0 [ expr [ string length $src ] - 1 ] ] } {
                     ixNet setM $frameRate -rate 100 -type percentLineRate
-                    ixNet commit
-                } else {
-                    ixNet setM $frameRate -rate $frame_load($frame_size) -type percentLineRate
                     ixNet commit
                 }
             }
         }
         ixNet commit
         
-        Tester::start_traffic
-        after $duration
-        Tester::stop_traffic
+        if { [ catch {
+            Tester::start_traffic
+            after $duration
+            Tester::stop_traffic
+        } err ] } {
+            Deputs "Failed to start/stop traffic"
+            break
+        }
         
-        if { [ Tester::getAllTxRxFrames ] > 0 } {
+        if { [ Tester::isLossFrames ] } {
             set iterationResult false
         } else {
             set iterationResult true
@@ -492,6 +503,7 @@ proc SearchMinFrameSizeByLoad { args } {
         if { !$iterationResult } {
             # Failed
             set min_index $index
+            #Tester::saveResults -resultfile $resultfile -frame_size $frame_size
             # Reached to minmum frame size 
             if { $min_index == $max_index} {
                 Deputs "Iteration #$iteration - Frame Size(Bytes): $frame_size, Min Frame Size: [ lindex $frame_size_list $min_index ], Max Frame Size: [ lindex $frame_size_list $max_index ], Iteration Result: $iterationResult"
@@ -501,6 +513,7 @@ proc SearchMinFrameSizeByLoad { args } {
             # Passed
             set qulified_index $index
             set max_index $index
+            Tester::saveResults -resultfile $resultfile -frame_size $frame_size
             # Reached to maximum frame size
             if { $min_index == $max_index} {
                 Deputs "Iteration #$iteration - Frame Size(Bytes): $frame_size, Min Frame Size: [ lindex $frame_size_list $min_index ], Max Frame Size: [ lindex $frame_size_list $max_index ], Iteration Result: $iterationResult"

@@ -127,10 +127,29 @@ body Rfc2544::config { args } {
     set EFillType   [ list constant incr decr prbs random ]
     #set payload_type PRBS wangming
     set fill_type random
-
+	set root [ixNet getRoot]
+    
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
+		    -frame_ordering_mode {
+                if { [string tolower $value] == "rfc2889" } {
+                    ixNet setA $root/traffic -enableStreamOrdering true
+                    ixNet setA $root/traffic -frameOrderingMode RFC2889
+                } elseif { [string tolower $value] == "none" } {
+                    ixNet setA $root/traffic -enableStreamOrdering fasle
+                    ixNet setA $root/traffic -frameOrderingMode none
+                } else {
+                    ixNet setA $root/traffic -enableStreamOrdering true
+                    ixNet setA $root/traffic -frameOrderingMode $value
+                }
+                ixNet commit
+            }
+            -enable_min_frame_size {
+				ixNet setA $root/traffic \
+				-enableMinFrameSize $value
+				ixNet commit
+            }
         	-frame_len {
 				if { [ llength $value ] < 1 } {
 					 error "$errNumber(1) key:$key value:$value"

@@ -2288,7 +2288,7 @@ body Traffic::get_stats { args } {
 
 	set tracking none
 	
-# param collection --
+    # param collection --
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
@@ -2328,9 +2328,9 @@ body Traffic::get_stats { args } {
 		}
 	}
 	
-Deputs "view:$view"
+    Deputs "view:$view"
     set captionList             [ ixNet getA $view/page -columnCaptions ]
-Deputs "caption list:$captionList"
+    Deputs "caption list:$captionList"
     set traNameIndex            [ lsearch -exact $captionList {Traffic Item} ]
     set txFramesIndex           [ lsearch -exact $captionList {Tx Frames} ]
     set rxFramesIndex           [ lsearch -exact $captionList {Rx Frames} ]
@@ -2446,47 +2446,47 @@ Deputs "stats val:$statsVal"
 	   
 	   set statsItem   "out_seq_frame_count"
 	   set statsVal    "NA"
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 	   
 	   set statsItem   "first_arrival_time"
 	   set statsVal    [ lindex $row $firstArrivalIndex ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 	   
 	   set statsItem   "last_arrival_time"
 	   set statsVal    [ lindex $row $lastArrivalIndex ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 	   
 	   set statsItem   "tx_frame_rate"
 	   set statsVal    [ lindex $row $txFrameRateIndex ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 	   
 	   set statsItem   "rx_frame_rate"
 	   set statsVal    [ lindex $row $rxFrameRateIndex ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 	   
 	   set statsItem   "tx_byte_rate"
 	   set statsVal    [ lindex $row $txByteRateIndex ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 	   
 	   set statsItem   "rx_byte_rate"
 	   set statsVal    [ lindex $row $rxByteRateIndex ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 	   
 	   set statsItem   "tx_bit_rate"
 	   set statsVal    [ lindex $row $txBitRateIndex ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 	   
 	   set statsItem   "rx_bit_rate"
 	   set statsVal    [ lindex $row $rxBitRateIndex ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 
 	   set statsItem   "tx_l2_bit_rate"

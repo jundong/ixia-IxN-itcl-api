@@ -10,6 +10,7 @@ Port @tester_to_dta2 172.16.174.134/2/1
 
 @tester_to_dta1 config -dut_ip "20.13.14.1" -intf_ip "20.13.14.10"
 @tester_to_dta2 config -dut_ip "20.13.14.10" -intf_ip "20.13.14.1"
+
 Traffic @tester_to_dta1.traffic(1) @tester_to_dta1
 @tester_to_dta1.traffic(1) config -tx_mode "continuous" \
             -src "@tester_to_dta1" \
@@ -29,9 +30,10 @@ Traffic @tester_to_dta2.traffic(1) @tester_to_dta2
             -frame_ordering_mode "RFC2889"
 
 #Tester::start_traffic
-set retVal [SearchMinFrameSizeByLoad -frame_size_list [list 64 128] \
+set retVal [SearchMinFrameSizeByLoad -frame_len [list 64 65 660 800 900 1000 1280] \
             -upstreams @tester_to_dta1 \
             -downstreams @tester_to_dta2 \
             -inflation 10000 \
-            -duration 20 ]
+            -duration 20 \
+            -resultfile {C:/Ixia/Docs/IxLoad/resultfile.csv}]
 puts "Min Frame Size: [ GetStatsFromReturn $retVal frame_size ]"

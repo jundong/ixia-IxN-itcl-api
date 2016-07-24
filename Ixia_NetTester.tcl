@@ -67,7 +67,8 @@ class Tester {
     proc clear_traffic_stats {} {}
     proc get_log { { file default } } {}
     proc getAllTx {} {}
-    proc getAllTxRxFrames {} {}
+    proc isLossFrames {} {}
+    proc saveResults { args } {}
 }
 
 proc Tester::getAllTx {} {
@@ -676,25 +677,84 @@ Deputs "----- TAG: $tag -----"
 	return [ GetStandardReturnHeader ]
 }
 
-proc Tester::getAllTxRxFrames {} {
-    	set tag "proc Tester::getAllTxRxFrames  [info script]"
+proc Tester::isLossFrames {} {
+    set tag "proc Tester::isLossFrames  [info script]"
 	Deputs "----- TAG: $tag -----"
     
 	set allObjs [ find objects ]
-	set allTxFrames 0
-	set allRxFrames 0
+	set lossFrames 0
 
 	foreach obj $allObjs {
 		if { [ $obj isa Port ] } {
-			Deputs "port obj:$obj"
-			set tx [ GetStatsFromReturn [ $obj get_stats ] tx_frame_count ]
-			Deputs "port tx:$tx"
-			incr allTxFrames $tx
-			
-			set rx [ GetStatsFromReturn [ $obj get_stats ] total_frame_count ]
-			Deputs "port rx:$rx"
-			incr allRxFrames $rx
+			Deputs "Port obj:$obj"
+            set results [ $obj get_stats ]
+			set tx [ GetStatsFromReturn $results tx_frame_count ]
+			set rx [ GetStatsFromReturn $results rx_frame_count ]
+            set frames [expr $tx - $rx]
+            set tmpFrames $lossFrames
+            set lossFrames [expr $lossFrames + $frames]
+            if { $frames >= 0 && $tmpFrames >= 0 && $lossFrames < 0 } {
+                Deputs "Oops!!! Overflow happens during test!"
+                return true
+            }
+            Deputs "Port: [ixNet getA [$obj cget -handle] -name], Tx Frame Count: $tx, Rx Frame Count: $rx, Balance Frames: $lossFrames"
 		}
 	}
-	return [ expr $allTxFrames - $allRxFrames ]
+    Deputs "Total Loss Frames: $lossFrames"
+    if { $lossFrames > 0 } {
+        return true
+    }
+	return false
+}
+
+proc Tester::saveResults { args } {
+    set tag "proc Tester::saveResults [info script]"
+    Deputs "----- TAG: $tag -----"
+    
+	Deputs "Args:$args "
+	foreach { key value } $args {
+	    set key [string tolower $key]
+	    switch -exact -- $key {
+			-resultfile {
+				set resultfile $value
+			}
+			-frame_size {
+				set frame_size $value
+			}
+        }
+    }
+    
+    if { [ file exists $resultfile ] } {
+        file delete $resultfile
+    }
+    
+    set lossFrames 0
+    set allObjs [ find objects ]
+    foreach obj $allObjs {
+        if { [ $obj isa Traffic ] } {
+            set traffic_name [ ixNet getA [ $obj cget -handle ] -name ]
+            Deputs "Traffic obj: $traffic_name"
+            set retResults [ $obj get_stats ]
+            set captions "Traffic Item, Frame Size, Tx Frames, Rx Frames, Store-Forward Avg Latency (ns), Store-Forward Min Latency (ns), Store-Forward Max Latency (ns), First TimeStamp, Last TimeStamp"
+            set values "$traffic_name,$frame_size,[GetStatsFromReturn $retResults tx_frame_count],[GetStatsFromReturn $retResults rx_frame_count],[GetStatsFromReturn $retResults avg_latency],[GetStatsFromReturn $retResults min_latency],[GetStatsFromReturn $retResults max_latency],[GetStatsFromReturn $retResults first_arrival_time],[GetStatsFromReturn $retResults last_arrival_time]"
+            
+            set lossFrames [expr $lossFrames + ([GetStatsFromReturn $retResults tx_frame_count] - [GetStatsFromReturn $retResults rx_frame_count])]
+            if { [ file exists $resultfile ] } { 
+                set fid [open $resultfile a]
+            } else {
+                set fid [open $resultfile w]
+                puts $fid $captions
+            }
+            puts $fid $values
+            close $fid
+        }
+    }
+	
+    if { [ file exists $resultfile ] } { 
+        set fid [open $resultfile a]
+        puts $fid "Total Frame Loss"
+        puts $fid $lossFrames
+        close $fid
+    }
+    return [ GetStandardReturnHeader ]
 }

@@ -11,27 +11,29 @@ Port @tester_to_dta2 172.16.174.134/2/1
 #Port @tester_to_dta3 NULL NULL ::ixNet::OBJ-/vport:3
 #Port @tester_to_dta4 NULL NULL ::ixNet::OBJ-/vport:4
 
-@tester_to_dta1 config -dut_ip "30.30.30.1" -intf_ip "30.30.30.2"
-@tester_to_dta2 config -dut_ip "30.30.30.2" -intf_ip "30.30.30.1"
-
-Ipv4Hdr @tester.pdu.ipv4(1)
-@tester.pdu.ipv4(1) config -modify 1 \
-                           -precedence 0 \
-                           -precedence_mode incr \
-                           -precedence_num 8 \
-                           -precedence_step 1
-                           
+#@tester_to_dta1 config -dut_ip "30.30.30.1" -intf_ip "30.30.30.2"
+#@tester_to_dta2 config -dut_ip "30.30.30.2" -intf_ip "30.30.30.1"
+                         
 Traffic @tester_to_dta1.traffic(1) @tester_to_dta1
+Ipv4Hdr @tester.pdu.ipv4(1)
+@tester.pdu.ipv4(1) config @tester.pdu.ipv4(1) config -src "25.1.1.1" -dst "26.1.1.1"
+  
+VlanHdr @tester.pdu.vlan(1)
+@tester.pdu.vlan(1) config -pri1 "1" -id1 "200"
 
+#EtherHdr @tester.pdu.eth(1)
+#@tester.pdu.eth(1) config -src "00:00:00:03:02:01" -dst "00:00:01:00:00:01"
+
+#-pdu "@tester.pdu.eth(1) @tester.pdu.vlan(1) @tester.pdu.ipv4(1)"
 @tester_to_dta1.traffic(1) config \
    -src "@tester_to_dta1" \
-   -pdu "@tester.pdu.ipv4(1)" \
+   -pdu "@tester.pdu.vlan(1) @tester.pdu.ipv4(1)" \
    -dst "@tester_to_dta2" \
-   -precedence_tracking 1 \
    -tx_mode "continuous" \
    -frame_len "164" \
    -stream_load "13" \
-   -load_unit "percent"
+   -load_unit "percent" \
+   -traffic_type "raw"
 
 Tester::start_traffic
 

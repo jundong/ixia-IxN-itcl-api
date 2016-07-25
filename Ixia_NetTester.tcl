@@ -683,10 +683,11 @@ proc Tester::isLossFrames {} {
     
 	set allObjs [ find objects ]
 	set lossFrames 0
-
+    
 	foreach obj $allObjs {
-		if { [ $obj isa Port ] } {
-			Deputs "Port obj:$obj"
+		if { [ $obj isa Traffic ] } {
+            set traffic_name [ ixNet getA [ $obj cget -handle ] -name ]
+            Deputs "Traffic obj: $traffic_name"
             set results [ $obj get_stats ]
 			set tx [ GetStatsFromReturn $results tx_frame_count ]
 			set rx [ GetStatsFromReturn $results rx_frame_count ]

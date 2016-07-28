@@ -5,8 +5,8 @@ package req IxiaNet
 Login localhost/8009
 
 # 占用端口
-Port port1 172.16.174.133/1/1
-Port port2 172.16.174.133/2/1
+Port port1 172.16.174.134/1/1
+Port port2 172.16.174.134/2/1
 #Port port1 NULL NULL ::ixNet::OBJ-/vport:1
 #Port port2 NULL NULL ::ixNet::OBJ-/vport:2
 #配置端口
@@ -44,4 +44,5 @@ qt throughput \
 	-dst_endpoint $hostList \
 	-traffic_mesh "fullmesh" \
 	-resultdir "C:/Tmp" 
-	
+
+puts [ixNet getA [qt cget -handle] -name]	

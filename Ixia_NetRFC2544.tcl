@@ -57,7 +57,7 @@ class Rfc2544 {
 	
     #trafficSelection - inTest
     public variable trafficSelection
-    #trafficSelection - background
+    #trafficBackground - background
     public variable trafficBackground
     public variable testtype
 }

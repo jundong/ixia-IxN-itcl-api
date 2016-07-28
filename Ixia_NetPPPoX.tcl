@@ -26,9 +26,9 @@ class PppoeHost {
 	method get_summary_stats {} {}
 	method wait_connect_complete { args } {}
 	method wait_disconnect_complete {} {}
-    	method CreatePPPoEPerSessionView {} {
+    method CreatePPPoEPerSessionView {} {
         set tag "body DhcpHost::CreateDhcpPerSessionView [info script]"
-	Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
         set root [ixNet getRoot]
         set customView          [ ixNet add $root/statistics view ]
         ixNet setM  $customView -caption "dhcpPerSessionView" -type layer23ProtocolStack -visible true

@@ -841,6 +841,5 @@ if { [file exist "c:/windows/temp/ixlogfile"] } {
 		set logfile_name "c:/temp/ixlogfile/$timeVal.txt"
 	}
 }
-
 IxDebugOn
 IxDebugCmdOn

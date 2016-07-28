@@ -51,6 +51,7 @@
 #		23. add remove_all_stream proc
 
 class Tester {
+
     proc constructor {} {}
     proc apply_traffic {} {}
     proc start_traffic { { restartCaptureJudgement 1 } } {}
@@ -72,7 +73,7 @@ class Tester {
 }
 
 proc Tester::getAllTx {} {
-    	set tag "proc Tester::getAllTx  [info script]"
+    set tag "proc Tester::getAllTx  [info script]"
 	Deputs "----- TAG: $tag -----"
     
 	set allObj [ find objects ]

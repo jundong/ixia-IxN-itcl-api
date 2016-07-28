@@ -256,11 +256,11 @@ body ProtocolStackObject::config { args } {
                 set outer_vlan_enable 1
 			}
 			-outer_vlan_priority {
-			if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
-				set outer_vlan_priority $value
-			} else {
-				error "$errNumber(1) key:$key value:$value"
-			}
+				if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
+					set outer_vlan_priority $value
+				} else {
+					error "$errNumber(1) key:$key value:$value"
+				}
 			}    	
 			-outer_vlan_repeat_count {
 				if { [ string is integer $value ] && ( $value >= 0 ) } {

@@ -3,8 +3,10 @@ package req IxiaNet
 
 Login
 IxDebugOn
-Port @tester_to_dta1 172.16.174.134/1/1
-Port @tester_to_dta2 172.16.174.134/2/1
+#Port @tester_to_dta1 172.16.174.134/1/1
+#Port @tester_to_dta2 172.16.174.134/2/1
+Port @tester_to_dta1 10.210.100.12/5/1
+Port @tester_to_dta2 10.210.100.12/5/2
 
 #Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
 #Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
@@ -21,13 +23,13 @@ Ipv4Hdr @tester.pdu.ipv4(1)
 VlanHdr @tester.pdu.vlan(1)
 @tester.pdu.vlan(1) config -pri1 "1" -id1 "200"
 
-#EtherHdr @tester.pdu.eth(1)
-#@tester.pdu.eth(1) config -src "00:00:00:03:02:01" -dst "00:00:01:00:00:01"
+EtherHdr @tester.pdu.eth(1)
+@tester.pdu.eth(1) config -src "00:00:00:03:02:01" -dst "00:00:01:00:00:01"
 
 #-pdu "@tester.pdu.eth(1) @tester.pdu.vlan(1) @tester.pdu.ipv4(1)"
 @tester_to_dta1.traffic(1) config \
    -src "@tester_to_dta1" \
-   -pdu "@tester.pdu.vlan(1) @tester.pdu.ipv4(1)" \
+   -pdu "@tester.pdu.eth(1) @tester.pdu.vlan(1) @tester.pdu.ipv4(1)" \
    -dst "@tester_to_dta2" \
    -tx_mode "continuous" \
    -frame_len "164" \

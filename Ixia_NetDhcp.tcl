@@ -106,7 +106,7 @@ class DhcpHost {
 		    
 	    array set rangeStats [list]
 	    if { $onStack == "null" } {
-Deputs "new dhcp endpoint"
+			Deputs "new dhcp endpoint"
 			chain 
 			set sg_ethernet $stack
 			#-- add dhcp endpoint stack
@@ -116,7 +116,7 @@ Deputs "new dhcp endpoint"
 			set sg_dhcpEndpoint [lindex [ixNet remapIds $sg_dhcpEndpoint] 0]
 			set hDhcp $sg_dhcpEndpoint
 		} else {
-Deputs "based on existing stack:$onStack"		
+			Deputs "based on existing stack:$onStack"		
 			set hDhcp $onStack
 		}
 	
@@ -517,7 +517,7 @@ Deputs "----- TAG: $tag -----"
 }
 body DhcpHost::wait_request_complete { args } {
     set tag "body DhcpHost::wait_request_complete [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
 	set timeout 300
 
@@ -547,26 +547,27 @@ Deputs "----- TAG: $tag -----"
 		set root [ixNet getRoot]
 		set view $statsView
 		# set view  [ ixNet getF $root/statistics view -caption "Port Statistics" ]
-	Deputs "view:$view"
+		Deputs "view:$view"
 		set captionList             [ ixNet getA $view/page -columnCaptions ]
-	Deputs "caption list:$captionList"
+		Deputs "caption list:$captionList"
 		set port_name				[ lsearch -exact $captionList {Stat Name} ]
 		set initStatsIndex          [ lsearch -exact $captionList {Sessions Initiated} ]
 		set succStatsIndex          [ lsearch -exact $captionList {Sessions Succeeded} ]
+		set ackRcvIndex          	[ lsearch -exact $captionList {ACKs Received} ]
 		
 		set stats [ ixNet getA $view/page -rowValues ]
-	Deputs "stats:$stats"
+		Deputs "stats:$stats"
 
 		set connectionInfo [ ixNet getA $hPort -connectionInfo ]
-	Deputs "connectionInfo :$connectionInfo"
+		Deputs "connectionInfo :$connectionInfo"
 		regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-	Deputs "chas:$chassis card:$card port$port"
+		Deputs "chas:$chassis card:$card port$port"
 
 		foreach row $stats {
 			
 			eval {set row} $row
-	Deputs "row:$row"
-	Deputs "portname:[ lindex $row $port_name ]"
+			Deputs "row:$row"
+			Deputs "portname:[ lindex $row $port_name ]"
 			if { [ string length $card ] == 1 } {
 				set card "0$card"
 			}
@@ -579,11 +580,13 @@ Deputs "----- TAG: $tag -----"
 
 			set initStats    [ lindex $row $initStatsIndex ]
 			set succStats    [ lindex $row $succStatsIndex ]
+			set ackRcvStats  [ lindex $row $ackRcvIndex ]
+			
 			break
 		}
 
-Deputs "initStats:$initStats == succStats:$succStats ?"		
-		if { $succStats != "" && $succStats >= $initStats && $initStats > 0 } {
+		Deputs "initStats:$initStats == succStats:$succStats == ackRcvStats:$ackRcvStats ?"		
+		if { $succStats != "" && $succStats >= $initStats && $initStats > 0 && $ackRcvStats >= $succStats } {
 			break	
 		}
 		
@@ -595,7 +598,7 @@ Deputs "initStats:$initStats == succStats:$succStats ?"
 }
 body DhcpHost::wait_release_complete { args } {
     set tag "body DhcpHost::wait_release_complete [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
 	set timeout 10
 
@@ -631,7 +634,7 @@ Deputs "----- TAG: $tag -----"
 			ixNet commit 
 			
 			set stats [ ixNet getA $view/page -rowValues ]
-Deputs "stats:$stats"
+			Deputs "stats:$stats"
 			
 			foreach row $stats {
 
@@ -639,7 +642,7 @@ Deputs "stats:$stats"
 				
 				set statsItem   "ipv4_addr"
 				set statsVal    [ lindex $row $ipIndex ]
-Deputs "stats val:$statsVal"
+				Deputs "stats val:$statsVal"
 				if { $statsVal != "0.0.0.0" } {
 					ixNet remove $view
 					ixNet commit
@@ -647,25 +650,24 @@ Deputs "stats val:$statsVal"
 				}
 			}
 				
-Deputs "ret:$ret"
+			Deputs "ret:$ret"
 		}
 		
 		after 1000
 		ixNet exec refresh $view
 	}
 	
-	
 	ixNet remove $view
 	ixNet commit
     return  [ GetStandardReturnHeader ]
-
 }
+
 body DhcpHost::get_summary_stats {} {
     set tag "body DhcpHost::get_summary_stats [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
     set root [ixNet getRoot]
-Deputs "root $root"
+	Deputs "root $root"
     set view [ lindex [ ixNet getF $root/statistics view -caption "dhcpPerRangeView" ] 0 ]
     if { $view == "" } {
 		if { [ catch {
@@ -677,57 +679,57 @@ Deputs "root $root"
     
     set captionList         [ ixNet getA $view/page -columnCaptions ]
     set rangeIndex          [ lsearch -exact $captionList {Range Name} ]
-Deputs "index:$rangeIndex"
+	Deputs "index:$rangeIndex"
     set discoverSentIndex   [ lsearch -exact $captionList {Discovers Sent} ]
-Deputs "index:$discoverSentIndex"
+	Deputs "index:$discoverSentIndex"
 	if { $discoverSentIndex < 0 } {
 		set discoverSentIndex   [ lsearch -exact $captionList {Solicits Sent} ]
-Deputs "index:$discoverSentIndex"
+		Deputs "index:$discoverSentIndex"
 	}
     set offerRecIndex       [ lsearch -exact $captionList {Offers Received} ]
-Deputs "index:$offerRecIndex"
+	Deputs "index:$offerRecIndex"
 	if { $offerRecIndex < 0 } {
 		set offerRecIndex       [ lsearch -exact $captionList {Replies Received} ]
-Deputs "index:$offerRecIndex"
+		Deputs "index:$offerRecIndex"
 	}
     set reqSentIndex        [ lsearch -exact $captionList {Requests Sent} ]
-Deputs "index:$reqSentIndex"
+	Deputs "index:$reqSentIndex"
     set ackRecIndex         [ lsearch -exact $captionList {ACKs Received} ]
-Deputs "index:$ackRecIndex"
+	Deputs "index:$ackRecIndex"
 	if { $ackRecIndex < 0 } {
 		set ackRecIndex       [ lsearch -exact $captionList {Advertisements Received} ]
-Deputs "index:$ackRecIndex"
+		Deputs "index:$ackRecIndex"
 	}
     set nackRecIndex        [ lsearch -exact $captionList {NACKs Received} ]
-Deputs "index:$nackRecIndex"
+	Deputs "index:$nackRecIndex"
 	if { $nackRecIndex < 0 } {
 		set nackRecIndex       [ lsearch -exact $captionList {Advertisements Ignored} ]
-Deputs "index:$nackRecIndex"
+	Deputs "index:$nackRecIndex"
 	}
     set releaseSentIndex    [ lsearch -exact $captionList {Releases Sent} ]
-Deputs "index:$releaseSentIndex"
+	Deputs "index:$releaseSentIndex"
     set declineSentIndex    [ lsearch -exact $captionList {Declines Sent} ]
-Deputs "index:$declineSentIndex"
+	Deputs "index:$declineSentIndex"
     set renewSentIndex    [ lsearch -exact $captionList {Renews Sent} ]
-Deputs "index:$renewSentIndex"
+	Deputs "index:$renewSentIndex"
     set retriedSentIndex    [ lsearch -exact $captionList {Rebinds Sent} ]
-Deputs "index:$retriedSentIndex"
+	Deputs "index:$retriedSentIndex"
     
-Deputs "handle:$handle"
+	Deputs "handle:$handle"
     set dhcpRange [ixNet getList $handle dhcpRange]
-Deputs "dhcpRange:$dhcpRange"
+	Deputs "dhcpRange:$dhcpRange"
     set rangeName [ ixNet getA $dhcpRange -name ]
-Deputs "range name:$rangeName"
+	Deputs "range name:$rangeName"
 
     set stats [ ixNet getA $view/page -rowValues ]
-Deputs "stats:$stats"
+	Deputs "stats:$stats"
     set rangeFound 0
     foreach row $stats {
         eval {set row} $row
-Deputs "row:$row"
-Deputs "range index:$rangeIndex"
+		Deputs "row:$row"
+		Deputs "range index:$rangeIndex"
         set rowRangeName [ lindex $row $rangeIndex ]
-Deputs "row range name:$rowRangeName"
+		Deputs "row range name:$rowRangeName"
         if { [ regexp $rowRangeName $rangeName ] } {
             set rangeFound 1
             break
@@ -739,7 +741,7 @@ Deputs "row range name:$rowRangeName"
     if { $rangeFound } {
         set statsItem   "attempt_rate"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "bind_rate"
@@ -748,7 +750,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    [ expr [ lindex $row $offerRecIndex ] / $requestDuration ]
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		
         set statsItem   "current_attempt_count"
@@ -757,7 +759,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "current_bound_count"
@@ -766,7 +768,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "current_idle_count"
@@ -775,7 +777,7 @@ Deputs "stats val:$statsVal"
 		} else {
             set statsVal    [ expr [ lindex $row $discoverSentIndex ] - [ lindex $row $offerRecIndex ] ]
 	    }
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "rx_ack_count"
@@ -784,7 +786,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "rx_nak_count"
@@ -793,7 +795,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "rx_offer_count"
@@ -802,7 +804,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "total_attempt_count"
@@ -811,7 +813,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "total_bound_count"
@@ -820,14 +822,14 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		#--temp variable to save current stats
 		set rangeStats(offerReceived) $statsVal
         
         set statsItem   "total_failed_count"
         set statsVal    [ expr [ lindex $row $discoverSentIndex ] - [ lindex $row $offerRecIndex ] ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "total_renewed_count"
@@ -836,7 +838,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		
         set statsItem   "total_retried_count"
@@ -845,7 +847,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 
         set statsItem   "tx_discover_count"
@@ -854,7 +856,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		#--temp variable to save current stats
 		set rangeStats(discoverSent) $statsVal
@@ -865,7 +867,7 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		#--temp variable to save current stats
 		set rangeStats(releaseSent) $statsVal
@@ -876,14 +878,14 @@ Deputs "stats val:$statsVal"
 		} else {
 			set statsVal    "NA"
 		}
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		#--temp variable to save current stats
 		set rangeStats(requestSent) $statsVal
         
     }
 
-Deputs "ret:$ret"
+	Deputs "ret:$ret"
 	ixNet remove $view
 	ixNet commit
 	
@@ -1249,180 +1251,175 @@ body DhcpHost::unset_igmp_over_dhcp {} {
 	}
 }
 body DhcpHost::get_port_summary_stats { view } {
-
     set tag "body DhcpHost::get_port_summary_stats [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
     set captionList         	[ ixNet getA $view/page -columnCaptions ]
     set nameIndex          		[ lsearch -exact $captionList {Stat Name} ]
-Deputs "index:$nameIndex"
+	Deputs "index:$nameIndex"
     set ackRcvIndex          	[ lsearch -exact $captionList {ACKs Received} ]
-Deputs "index:$ackRcvIndex"
+	Deputs "index:$ackRcvIndex"
     set addDiscIndex          	[ lsearch -exact $captionList {Addresses Discovered} ]
-Deputs "index:$addDiscIndex"
+	Deputs "index:$addDiscIndex"
     set declineSntIndex          	[ lsearch -exact $captionList {Declines Sent} ]
-Deputs "index:$declineSntIndex"
+	Deputs "index:$declineSntIndex"
     set discSntIndex          	[ lsearch -exact $captionList {Discovers Sent} ]
-Deputs "index:$discSntIndex"
+	Deputs "index:$discSntIndex"
     set nakRcvIndex          	[ lsearch -exact $captionList {NACKs Received} ]
-Deputs "index:$nakRcvIndex"
+	Deputs "index:$nakRcvIndex"
     set offerRcvIndex          	[ lsearch -exact $captionList {Offers Received} ]
-Deputs "index:$offerRcvIndex"
+	Deputs "index:$offerRcvIndex"
     set releaseSntIndex          	[ lsearch -exact $captionList {Releases Sent} ]
-Deputs "index:$releaseSntIndex"
+	Deputs "index:$releaseSntIndex"
     set reqSntIndex          	[ lsearch -exact $captionList {Requests Sent} ]
-Deputs "index:$reqSntIndex"
+	Deputs "index:$reqSntIndex"
     set sessFailIndex          	[ lsearch -exact $captionList {Sessions Failed} ]
-Deputs "index:$sessFailIndex"
+	Deputs "index:$sessFailIndex"
     set sessInitIndex          	[ lsearch -exact $captionList {Sessions Initiated} ]
-Deputs "index:$sessInitIndex"
+	Deputs "index:$sessInitIndex"
     set sessSuccIndex          	[ lsearch -exact $captionList {Sessions Succeeded} ]
-Deputs "index:$sessSuccIndex"
+	Deputs "index:$sessSuccIndex"
     set succRateIndex          	[ lsearch -exact $captionList {Setup Success Rate} ]
-Deputs "index:$succRateIndex"
+	Deputs "index:$succRateIndex"
 
     set ret [ GetStandardReturnHeader ]
 	
     set stats [ ixNet getA $view/page -rowValues ]
-Deputs "stats:$stats"
+	Deputs "stats:$stats"
 
 	set connectionInfo [ ixNet getA [$portObj cget -handle] -connectionInfo ]
-Deputs "connectionInfo :$connectionInfo"
+	Deputs "connectionInfo :$connectionInfo"
 	regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-Deputs "chas:$chassis card:$card port$port"
+	Deputs "chas:$chassis card:$card port$port"
 	if { [ string length $card ] == 1 } { set card "0$card" }
 	if { [ string length $port ] == 1 } { set port "0$port" }
 	set statsName "${chassis}/Card${card}/Port${port}"
-Deputs "statsName:$statsName"
+	Deputs "statsName:$statsName"
 
-    foreach row $stats {
-        
+    foreach row $stats {      
         eval {set row} $row
-Deputs "row:$row"
+		Deputs "row:$row"
 
         set statsVal    [ lindex $row $nameIndex ]
 		if { $statsVal != $statsName } {
-Deputs "stats skipped: $statsVal != $statsName"
+			Deputs "stats skipped: $statsVal != $statsName"
 			continue
 		}
 
         set statsItem   "tx_discover_count"
         set statsVal    [ lindex $row $discSntIndex ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
           
         set statsItem   "rx_discover_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
               
         set statsItem   "tx_offer_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "rx_offer_count"
         set statsVal    [ lindex $row $offerRcvIndex ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "tx_request_count"
         set statsVal    [ lindex $row $reqSntIndex ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		
         set statsItem   "rx_request_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		
         set statsItem   "tx_decline_count"
         set statsVal    [ lindex $row $declineSntIndex ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		
         set statsItem   "rx_decline_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "tx_ack_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 		
         set statsItem   "rx_ack_count"
         set statsVal    [ lindex $row $ackRcvIndex ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "tx_nak_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "rx_nak_count"
         set statsVal    [ lindex $row $nakRcvIndex ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "tx_release_count"
         set statsVal    [ lindex $row $releaseSntIndex ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "rx_release_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "tx_all_packet_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "rx_all_packet_count"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "port_session_count"
         set statsVal    [ lindex $row $sessInitIndex ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "port_session_up_count"
         set statsVal    [ lindex $row $sessSuccIndex ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
         
         set statsItem   "port_min_setup_time"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 
         set statsItem   "port_max_setup_time"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 
         set statsItem   "port_avg_setup_time"
         set statsVal    "NA"
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 
         set statsItem   "port_setup_rate"
         set statsVal    [ lindex $row $succRateIndex ]
-Deputs "stats val:$statsVal"
+		Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 
-Deputs "ret:$ret"
-
+		Deputs "ret:$ret"
     }
         
-    return $ret	
-
-		
+    return $ret		
 }
 
 
@@ -1434,7 +1431,7 @@ class Dhcpv4Host {
 	method get_port_summary_stats {} {}
 	method reborn { { onStack null } } {
 		set tag "body Dhcpv4Host::reborn [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 
 		chain $onStack
 		ixNet setA $handle/dhcpRange -ipType IPv4
@@ -1505,10 +1502,10 @@ Deputs "Args:$args "
 }
 body Dhcpv4Host::get_port_summary_stats {} {
     set tag "body Dhcpv4Host::get_port_summary_stats [info script]"
-Deputs "----- TAG: $tag -----"
-#IxDebugOn
+	Deputs "----- TAG: $tag -----"
+	#IxDebugOn
 	set view ::ixNet::OBJ-/statistics/view:\"DHCPv4\"
-Deputs "view:$view"	
+	Deputs "view:$view"	
 	return [ chain $view ]
 		
 }

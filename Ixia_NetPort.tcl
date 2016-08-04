@@ -200,6 +200,7 @@ Deputs "Strange port:$strangePort"
 			Login $loginInfo
 		}
 	}
+	set handle ""
 
 Deputs Step10
     if { $hw_id != "NULL" } {
@@ -262,15 +263,19 @@ body Port::Connect { location { medium NULL } { checkLink 0 } } {
     Deputs "----- TAG: $tag -----"
     # -- add vport
     set root    [ ixNet getRoot ]
-    set vport   [ ixNet add $root vport ]
-    ixNet setA $vport -name $this
-	if { $medium != "NULL" } {
-        Deputs "connect medium:$medium"	
-		ixNet setA $vport/l1Config/ethernet -media $medium
+	
+    if {$handle == ""} {
+        set vport   [ ixNet add $root vport ]
+        ixNet setA $vport -name $this
+	    if { $medium != "NULL" } {
+			Deputs "connect medium:$medium"	
+			ixNet setA $handle/l1Config/ethernet -media $medium
+		}
+	    set vport [ixNet remapIds $vport]
+        set handle $vport
 	}
-    set vport [ixNet remapIds $vport]
-    set handle $vport
-    # -- connect to hardware
+
+	# -- connect to hardware
 	set locationInfo [ split $location "/" ]
 	set chassis     [ lindex $locationInfo 0 ]
 	set ModuleNo    [ lindex $locationInfo 1 ]
@@ -294,8 +299,8 @@ body Port::Connect { location { medium NULL } { checkLink 0 } } {
 	}
 	set handle [ixNet remapIds $handle]
 Deputs "handle:$handle"	
-	ixNet setA $vport -transmitIgnoreLinkStatus True
-       ixNet commit
+	ixNet setA $handle -transmitIgnoreLinkStatus True
+       ixNet commit       
  
 	return $handle
 }
@@ -414,6 +419,7 @@ body Port::config { args } {
     set mask 24
     set ipv6_mask 64
     set intf_num 1
+    set ip_version "ipv4"
 	
     set flow_control 0
 	set sig_end 1
@@ -1135,6 +1141,13 @@ Deputs "Args:$args "
                     error "$errNumber(1) key:$key value:$value"
                 }
 			}
+			-max_outstanding_session {
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value <= 100000 ) } {
+                    set max_outstanding_session $value
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+			}
 		}
 	}
 	
@@ -1164,6 +1177,9 @@ Deputs "Args:$args "
 	}
 	if { [ info exists release_rate_step ] } {
 		ixNet setA $globalSetting -teardownRateIncrement $release_rate_step
+	}
+	if { [ info exists max_outstanding_session ] } {
+		ixNet setA $globalSetting -maxOutstandingRequests $max_outstanding_session
 	}
 	
 	ixNet commit

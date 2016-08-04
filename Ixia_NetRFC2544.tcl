@@ -714,14 +714,17 @@ Deputs "run jitter test on traffic: $trafficSelection"
 								while {[gets $rfile line] != -1 } {
 								    set desfile [open $resultdir/$resultfile a]
 								    set statsinfo  [ split $line "," ]
+                                    Deputs $statsinfo
 									set fsize      [ lindex $statsinfo 1 ]
 									Deputs $fsize
 									if { [string is integer $fsize] } {
+
 									#wangming
 										set txrate     [ lindex $statsinfo 3 ]
 										#wangming
 										Deputs "wangming"
 										Deputs $txrate										
+
 										set itemtxrate [expr $txrate/$trafficnum]
 										foreach fstream $trafficlist {
 										   set celement [ixNet getL $fstream configElement  ]
@@ -770,10 +773,15 @@ Deputs "run jitter test on traffic: $trafficSelection"
 											set rowaveLatency   [ lindex $row $aveLatencyIndex ]
 											set rowminLatency   [ lindex $row $minLatencyIndex ]
 											set rowmaxLatency   [ lindex $row $maxLatencyIndex ]
-											set rowaveLatency   [ lindex $row $aveLatencyIndex ]
+											
 											set rowavejitter    [ lindex $row $avejitterIndex ]
 											set rowminjitter    [ lindex $row $minjitterIndex ]
 											set rowmaxjitter    [ lindex $row $maxjitterIndex ]
+                                            
+                                            Deputs "rowaveLatency:$rowaveLatency; rowavejitter:$rowavejitter "
+                                            if {$rowavejitter =="" || $rowaveLatency == ""} {
+                                                error "rowaveLatency:$rowaveLatency; rowavejitter:$rowavejitter, some stats are empty "
+                                            }
 											
 											  Deputs "rowaveLatency:$rowaveLatency; rowavejitter:$rowavejitter "
                                                                                        if {$rowavejitter =="" || $rowaveLatency == ""} {

@@ -479,6 +479,11 @@ proc SearchMinFrameSizeByLoad { args } {
                 if { $upstream == [ string range $src 0 [ expr [ string length $upstream ] - 1 ] ] ||
                      $src == [ string range $upstream 0 [ expr [ string length $src ] - 1 ] ] } {
                     ixNet setM $frameRate -rate 100 -type percentLineRate
+                    if { [ expr $frame_size - $inflation ] >= 64 } {
+                        ixNet setA $frameSize -fixedSize [ expr $frame_size - $inflation ]
+                    } else {
+                        ixNet setA $frameSize -fixedSize 64
+                    }
                     ixNet commit
                 }
             }

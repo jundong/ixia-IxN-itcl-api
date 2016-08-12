@@ -678,13 +678,9 @@ body Traffic::config { args  } {
                 set enable_min_frame_size $value
             }
             -src {
-
-
                 set src $value
             }
             -dst {
-
-
                 set dst $value
             }
 
@@ -711,7 +707,6 @@ body Traffic::config { args  } {
                 }
             }
 
-
             -tx_num {
                 if { [ string is integer $value ] } {
                     set tx_num $value
@@ -721,14 +716,11 @@ body Traffic::config { args  } {
                 }
             }
 
-
             -frame_len_type {
                 set value [ string tolower $value ]
                 if { [ lsearch -exact $ELenType $value ] >= 0 } {
-
                     set frame_len_type $value
                 } else {
-
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
@@ -932,8 +924,6 @@ body Traffic::config { args  } {
                 error "$errNumber(3) key:$key value:$value"
             }
         }
-
-
     }
     
     ixNet setA $root/traffic \
@@ -946,12 +936,9 @@ body Traffic::config { args  } {
             set locObj  ""
             foreach vport [ ixNet getList $root vport ] {
                 if { [ catch {
-
                     set assignedTo [ixNet getA $vport -assignedTo] } ] } {
                     continue
                 } else {
-
-
                     set assignedInfo [ split $assignedTo ":" ]
                     if { ( $chas == [ lindex $assignedInfo 0 ] ) && \
                         ( $card == [ lindex $assignedInfo 1 ] ) && \
@@ -960,18 +947,13 @@ body Traffic::config { args  } {
                     }
                 }
             }
-
-
-
             set hPort $locObj
             if { $locObj == "" } {
                 error "$errNumber(1) key:location value:$location (No match port found in port reserved)"
             }
-
         } else {
             error "$errNumber(1) key:location value:$location (Format incorrect. Chas/Card/Port)"
         }
-
     }    
     
     #-- quick stream and advanced stream
@@ -1014,7 +996,6 @@ body Traffic::config { args  } {
             ixNet setA $srcIpField -singleValue $src
             ixNet setA $dstIpField -singleValue $dst
             ixNet commit            
-
          } else {
             Deputs "objects:[find objects]"
             set srcHandle [ list ]
@@ -1028,12 +1009,10 @@ body Traffic::config { args  } {
                     set srcObj $portObj
                     # error "$errNumber(1) key:src value:$src (Not an object)"                
                 }
-
                 if { ( [ $srcObj isa Port ] == 0 ) && ( [ $srcObj isa EmulationObject ] == 0 ) && ( [ $srcObj isa Host ] == 0 ) } {
                     Deputs "illegal object...$src"
                     error "$errNumber(1) key:src value:$src (Not a port or emulation object)"                
                 }
-
                 if { [ $srcObj isa Port ] } {
                     Deputs Step110
                     set srcHandle [ concat $srcHandle "[ $srcObj cget -handle ]/protocols" ]
@@ -1044,10 +1023,8 @@ body Traffic::config { args  } {
                         set hBgp [ ixNet getP $routeBlockHandle ]
                         Deputs "bgp route block:$hBgp"
                         if { [ catch {
-
                             set rangeCnt [ llength [ ixNet getL $hBgp routeRange ] ]
                         } ] } {
-
                             set rangeCnt [ llength [ ixNet getL $hBgp vpnRouteRange ] ]
                         }
 
@@ -1060,37 +1037,29 @@ body Traffic::config { args  } {
                             $startIndex $endIndex $p.0 ]
                             Deputs "route block handle:$routeBlockHandle"		
                         } else {
-
                             set routeBlockHandle [ $srcObj cget -hPort ]/protocols/bgp
                         }
-
                         set srcHandle [ concat $srcHandle $routeBlockHandle ]
                     } else {
-
                         set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                     }
-
                     set trafficType [ $srcObj cget -type ]
                 } elseif { [ $srcObj isa Host ] } {
                     if { [ $srcObj cget -static ] } {
                         set trafficType "ethernetVlan"
                     } else {
-
                         set trafficType [ $srcObj cget -ip_version ]
                     }
-
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                 } elseif { [ $srcObj isa MulticastGroup ] } {
                     if { [ $srcObj cget -protocol ] == "mld" } {
                         set trafficType "ipv6"
                     } 
-
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                 } elseif { [ $srcObj isa VcLsp ] } {
                     set trafficType "ethernetVlan"
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                 } else {
-
                     Deputs Step120
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                 }
@@ -1228,7 +1197,6 @@ body Traffic::config { args  } {
             Deputs "ep:$endpointSet"
             Deputs Step190
         }
-
         set flag_modify_adv 1
 	} else {
 		# if { ( [ info exists highLevelStream ] == 0 ) || ( [ llength $highLevelStream ] == 0 ) } {
@@ -1265,20 +1233,13 @@ body Traffic::config { args  } {
                             error "$errNumber(1) key: pdu value: $head (Not a Header)"                
                         }
                     } else {
-
-
                         error "$errNumber(1) key: pdu value: $head (Not an IxiaNet Object)"                
                     }
                 } else {
-
-
                     set flagPduObj 0
                     break
                 }
             }
-
-
-
             if { $flagPduObj } {
                 set index 0
 
@@ -1286,7 +1247,6 @@ body Traffic::config { args  } {
                 if { $flag_modify_adv } {
                     set stackLevel [ expr [ llength [ ixNet getList $hStream stack ] ] - 1 ]
                 } else {
-
                     set stackLevel 1
                 }
 
@@ -1310,9 +1270,6 @@ body Traffic::config { args  } {
                         }
                     }
                     incr pindex
-
-
-
                     Deputs "Type $type "
                     set proStack [ GetProtocolTemp $protocol ]
                     Deputs "protocol stack: $proStack"
@@ -1321,22 +1278,17 @@ body Traffic::config { args  } {
                     set stack  [ lindex [ ixNet getList $hStream stack ] 0 ]
                     #Deputs "type:$type"
                     set needMod 1
-
                     switch -exact -- $type {
                         SET {
-
                             Deputs "stream:$hStream"
                             set stackList [ ixNet getList $hStream stack ]
                             Deputs "Stack list:$stackList"
                             while { 1 } {
-
                                 set stackList [ ixNet getList $hStream stack ]
                                 Deputs "Stack list after removal:$stackList"
                                 if { [ llength $stackList ] == 2 } {
                                     break
                                 }
-
-
                                 ixNet exec remove [ lindex $stackList [ expr [ llength $stackList ] - 2  ] ]
                             }
 
@@ -1346,8 +1298,6 @@ body Traffic::config { args  } {
                             set stack  [ lindex [ ixNet getList $hStream stack ] 0 ]
                         }
                         APP {
-
-
                             Deputs "stream:$hStream"
                             set stackList [ ixNet getList $hStream stack ]
                             Deputs "Stack list:$stackList"
@@ -1363,8 +1313,6 @@ body Traffic::config { args  } {
                             #set stack ${hStream}/stack:\"[ string tolower $protocol ]-${stackLevel}\"
                           }
                         APPLIST {
-
-
                             Deputs "name:$name"
                             set objList [ $name cget -objList ]
                             eval set objList [ set objList ]
@@ -1373,7 +1321,6 @@ body Traffic::config { args  } {
                             set listStackLink [ list ]
 
                             foreach single $objList {
-
                                 Deputs "stream:$hStream"
                                 set stackList [ ixNet getList $hStream stack ]
                                 Deputs "Stack list:$stackList"
@@ -1391,10 +1338,6 @@ body Traffic::config { args  } {
                         }
                         MOD {
                             set index 0
-
-
-
-
                             Deputs "protocol:$protocol"
                             foreach pro [ ixNet getList $hStream stack ] {
                                 Deputs "pro:$pro"
@@ -1416,7 +1359,6 @@ body Traffic::config { args  } {
                     }
                     ixNet commit
                     catch {
-
                        set stack [ ixNet remapIds $stack ]
                     }
 
@@ -1498,8 +1440,6 @@ body Traffic::config { args  } {
                                    if { $opt == "" } { continue }
                                    if { $opt } {
                                         Deputs Step46								
-
-
                                         ixNet setA $obj -activeFieldChoice True
                                         ixNet commit
                                         continue
@@ -1507,12 +1447,6 @@ body Traffic::config { args  } {
                                 } else {
                                     continue
                                 }
-
-
-
-
-
-
                                 if { [ info exists auto ] } {
                                     Deputs Step47
 
@@ -1524,22 +1458,11 @@ body Traffic::config { args  } {
                                     } else {
                                         Deputs Step49
                                         Deputs "obj:$obj"
-
-
-
-
-
-
-
                                         ixNet setA $obj -auto False
                                     }
                                 } else {
                                     continue
                                 }
-
-
-
-
                                 if { [ info exists mesh ] } {
                                     if { $mesh == "" } { continue }
                                     if { $mesh } {
@@ -1550,39 +1473,24 @@ body Traffic::config { args  } {
                                         ixNet commit
                                         continue
                                     } else {
-
-
-
                                         ixNet setA $obj -fullMesh False
                                         ixNet commit
                                     }
                                 }
-
-
-
                                 if { [ info exists mode ] == 0 || [ info exists field ] == 0 ||\
                                     [ info exists conf ] == 0 } {
                                     Deputs "continue"
                                     continue
                                 }
-
-
-
-
                                 Deputs "Mode:$mode"
                                 switch -exact $mode {
                                     Fixed {
-
                                         Deputs "Fixed:$protocol\t$field\t$conf"
                                         ixNet setMultiAttrs $obj \
                                             -valueType singleValue \
                                             -singleValue $conf
                                     }
                                     List {
-
-
-
-
                                         Deputs "List:$protocol\t$field\t$conf"
                                         ixNet setMultiAttrs $obj \
                                             -valueType valueList \
@@ -1591,21 +1499,11 @@ body Traffic::config { args  } {
                                     Segment {
                                     }
                                     Reserved {
-
-
-
-
-
-
                                         Deputs "Reserved...continue"
                                         continue
                                     }
                                     Incrementing -
                                     Decrementing {
-
-
-
-
                                         set mode [string range $mode 0 8]
                                         set mode [string tolower $mode]
                                         Deputs "Mode:$mode\tProtocol:$protocol\tConfig:$conf"
@@ -1620,12 +1518,6 @@ body Traffic::config { args  } {
                                             -startValue $start
                                     }
                                     Commit {
-
-
-
-
-
-
                                         ixNet setMultiAttrs $obj \
                                             -valueType singleValue \
                                             -singleValue $conf
@@ -1633,21 +1525,9 @@ body Traffic::config { args  } {
                                     }
                                  }
                             }
-               
                             incr index
                         }
                     } else {
-
-
-
-
-
-
-
-
-
-
-
                         set fieldModes [ $name cget -fieldModes ]
                         set fields [ $name cget -fields ]
                         set fieldConfigs [ $name cget -fieldConfigs ]
@@ -1663,7 +1543,6 @@ body Traffic::config { args  } {
                             set obj [ GetField $stack $field ]
                             Deputs "********Field object: $obj"
             
-
                             if { [ info exists opt ] } {
                                 if { $opt == "" } { continue }
                                 if { $opt } {
@@ -1675,46 +1554,27 @@ body Traffic::config { args  } {
                             } else {
                                 continue
                             }
-
-
-
-
-
-
                             if { [ info exists auto ] } {
                                 Deputs Step47
 
                                 if { $auto == "" } { continue }
                                 if { $auto } {
                                     Deputs Step48
-
-
                                     ixNet setA $obj -auto True
                                     ixNet commit
                                     continue
                                 } else {
                                     Deputs Step49
                                     Deputs "obj:$obj"
-
-
-
-
-
                                     ixNet setA $obj -auto False
                                     ixNet commit
                                }
                             } else {
                                 continue
                             }
-
-
-
-
-
                             if { [ info exists mesh ] } {
                                 if { $mesh == "" } { continue }
                                 if { $mesh } {
-
                                     Deputs "Mesh the field:$obj"
                                     Deputs "fullMesh:[ixNet getA $obj -fullMesh ]"			
                                     ixNet setA $obj -fullMesh True
@@ -1723,20 +1583,14 @@ body Traffic::config { args  } {
                                     Deputs "fullMesh:[ixNet getA $obj -fullMesh ]"
                                 }
                             }
-
-
                             if { [ info exists mode ] == 0 || [ info exists field ] == 0 ||\
                                [ info exists conf ] == 0 } {
                                 Deputs "continue"
                                 continue
                             }
-
-
-
                             Deputs "Mode:$mode"
                             switch -exact $mode {
                                 Fixed {
-
                                     Deputs "Fixed:$protocol\t$field\t$conf"
                                     ixNet setMultiAttrs $obj \
                                         -valueType singleValue \
@@ -1744,20 +1598,12 @@ body Traffic::config { args  } {
                                     ixNet commit
                                 }
                                 List {
-
-
-
-
                                     Deputs "List:$protocol\t$field\t$conf [ llength $conf ]"
                                     if { [ llength $conf ] == 1 } {
-
                                         eval ixNet setMultiAttrs $obj \
                                             -valueType valueList \
                                             -valueList $conf
                                     } else {
-
-
-
                                         ixNet setMultiAttrs $obj \
                                             -valueType valueList \
                                             -valueList $conf
@@ -1767,23 +1613,11 @@ body Traffic::config { args  } {
                                 Segment {
                                 }
                                 Reserved {
-
-
-
-
-
-
-
-
                                     Deputs "Reserved...continue"
                                     continue
                                 }
                                 Incrementing -
                                 Decrementing {
-
-
-
-
                                     set mode [string range $mode 0 8]
                                     set mode [string tolower $mode]
                                     Deputs "Mode:$mode\tProtocol:$protocol\tConfig:$conf"
@@ -1799,12 +1633,6 @@ body Traffic::config { args  } {
                                     ixNet commit
                                 }
                                 Commit {
-
-
-
-
-
-
                                     ixNet setMultiAttrs $obj \
                                        -valueType singleValue \
                                        -singleValue $conf
@@ -1825,24 +1653,13 @@ body Traffic::config { args  } {
                             SetStackLink $listStackLink "mpls" $linkToType 
                         }
                     }
-
-
-
-
-
-
-
-
                     # IxDebugOff
                 }
             } else {
-
-
                 set pdu [ List2Str $pdu ]
                 if { [ IsHex $pdu ] == 0 } {
                    error "$errNumber(2) key: pdu(pdu is not hex or object)"
                 } else {
-
                     #-- Create quick stream
                     Deputs "Traffic type:custom stream IPv4 raw pdu"
                     #-- redundency
@@ -1905,9 +1722,6 @@ body Traffic::config { args  } {
                     Deputs Step70
                 }
             }
-
-
-
 		}
    } else {
         Deputs Step120	
@@ -1935,13 +1749,9 @@ body Traffic::config { args  } {
         if { $tx_mode == "iteration" } {
             set tx_mode fixedIterationCount
         }
-        
-
-
         foreach configElement $highLevelStream {
             ixNet setA $configElement/transmissionControl -type $tx_mode
         }
-
 		ixNet commit
     }
     
@@ -1961,7 +1771,6 @@ body Traffic::config { args  } {
 		foreach configElement $highLevelStream {
 			ixNet setA $configElement/frameSize -type $frame_len_type
 		}
-
     }
     
     if { [ info exists frame_len ] } {
@@ -1974,10 +1783,8 @@ body Traffic::config { args  } {
     Deputs Step190
     if { [ info exists min_frame_len ] } {
 		foreach configElement $highLevelStream {
-
 			ixNet setA $configElement/frameSize -incrementFrom $min_frame_len
 		}
-
     }
     
     if { [ info exists max_frame_len ] } {
@@ -1985,8 +1792,6 @@ body Traffic::config { args  } {
 			ixNet setA $configElement/frameSize -incrementTo $max_frame_len
 		}
     }
-
-
     
     if { [ info exists frame_len_step ] } {
 		foreach configElement $highLevelStream {
@@ -2013,27 +1818,19 @@ body Traffic::config { args  } {
                 set fill_type custom
             }
             incr {
-
-
                 set fill_type incrementByte
             }
             decr {
-
-
                 set fill_type decrementByte
             }
             prbs {
-
-
                 set fill_type CRPAT
             }
         }
-
-
+        
 		foreach configElement $highLevelStream {
 			ixNet setA $configElement/framePayload -type $fill_type
 		}
-
     }
     
     if { [ info exists payload_type ] } {
@@ -2067,9 +1864,6 @@ body Traffic::config { args  } {
                 ixNet setA $configElement/framePayload -customRepeat true
             }
         }
-
-
-
     } 
     
     if { [ info exists payload ] } {
@@ -2110,8 +1904,6 @@ body Traffic::config { args  } {
 				}
 			}
 		}
-
-
     }
     Deputs Step230
     if { [ info exists inter_frame_gap ] } {
@@ -2124,22 +1916,17 @@ body Traffic::config { args  } {
 		if { [ string is integer $inter_frame_gap ] } {
             Deputs Step250	
 			foreach configElement $highLevelStream {
-
 				ixNet setA $configElement/transmissionControl -minGapBytes $inter_frame_gap       
 			}		
-
-
 		}
     }
-    
     
     if {[info exists burst_gap ]} {
         ixNet setA $configElement/transmissionControl  \
             -frameCount $burst_packet_count \
 			-interBurstGap $burst_gap \
 			-interBurstGapUnits $burst_gap_units \
-			-enableInterBurstGap $enable_burst_gap
-        
+			-enableInterBurstGap $enable_burst_gap    
     }
     
     if {[info exists burst_packet_count ]} {
@@ -2193,7 +1980,6 @@ body Traffic::config { args  } {
 		set endpointSetList [ixNet getL $handle endpointSet]
         Deputs "ep set:$endpointSetList"		
 		foreach ele 	[ ixNet getList $handle configElement ]  {
-
 			set epId [ ixNet getA $ele -endpointSetId ]
             Deputs "epId:$epId"			
 			set endpointSet [ lindex $endpointSetList [expr $epId -1] ]

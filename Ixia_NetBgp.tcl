@@ -188,8 +188,8 @@ Deputs "Args:$args "
 	}
 	
 	if { [ info exists ipv4_addr ] } {
-Deputs "ipv4: [ixNet getL $interface ipv4]"	
-Deputs "interface:$interface"
+        Deputs "ipv4: [ixNet getL $interface ipv4]"	
+        Deputs "interface:$interface"
 		ixNet setA $interface/ipv4 -ip $ipv4_addr
 	}
 	if { [ info exists ipv4_gw ] } {

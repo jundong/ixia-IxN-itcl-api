@@ -34,23 +34,23 @@ class PppoeHost {
         ixNet setM  $customView -caption "dhcpPerSessionView" -type layer23ProtocolStack -visible true
         ixNet commit
         set customView          [ ixNet remapIds $customView ]
-	Deputs "view:$customView"
+        Deputs "view:$customView"
         set availableFilter     [ ixNet getList $customView availableProtocolStackFilter ]
-	Deputs "available filter:$availableFilter"
+        Deputs "available filter:$availableFilter"
         set filter              [ ixNet getList $customView layer23ProtocolStackFilter ]
-	Deputs "filter:$filter"
-	Deputs "handle:$handle"
+        Deputs "filter:$filter"
+        Deputs "handle:$handle"
         set pppoxRange [ixNet getList $handle pppoxRange]
-	Deputs "pppoxRange:$pppoxRange"
+        Deputs "pppoxRange:$pppoxRange"
         set rangeName [ ixNet getA $pppoxRange -name ]
-	Deputs "range name:$rangeName"
+        Deputs "range name:$rangeName"
         foreach afil $availableFilter {
 	    Deputs "$afil"
             if { [ regexp $rangeName $afil ] } {
                 set stackFilter $afil
             }
         }
-	Deputs "stack filter:$stackFilter"
+        Deputs "stack filter:$stackFilter"
         ixNet setM $filter -drilldownType perSession -protocolStackFilterId [ list $stackFilter ]
         ixNet commit
         set srtStat [lindex [ixNet getF $customView statistic -caption {Session Name}] 0]

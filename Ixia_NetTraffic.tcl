@@ -839,6 +839,7 @@ body Traffic::config { args  } {
                     }
                 }
             }
+            -rx_port -
             -rcv_ports -
             -rcv_port {
                 set rcv_ports $value

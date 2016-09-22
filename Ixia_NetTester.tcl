@@ -117,6 +117,7 @@ proc Tester::start_traffic { args } {
 		set root [ixNet getRoot]
 		
 		set restartCapture 0
+        set suspendList [list]
 		if { $restartCaptureJudgement } {
 			set portList [ ixNet getL $root vport ]
 			foreach hPort $portList {
@@ -130,7 +131,6 @@ proc Tester::start_traffic { args } {
 		if { $restartCapture } {
 			catch { 
 				stop_capture 1000
-				set suspendList [list]
 				foreach item [ ixNet getL $root/traffic trafficItem ] {
 					lappend suspendList [ ixNet getA $item -suspend ]
 					ixNet exec generate $item
@@ -139,16 +139,17 @@ proc Tester::start_traffic { args } {
 				start_capture 
 			}
 		} else {
-			set suspendList [list]
 			foreach item [ ixNet getL $root/traffic trafficItem ] {
 				lappend suspendList [ ixNet getA $item -suspend ]
 				ixNet exec generate $item
 			}
 			ixNet exec apply $root/traffic	
 		}
-		foreach suspend $suspendList item [ ixNet getL $root/traffic trafficItem ] {
-			ixNet setA $item -suspend $suspend
-		}
+        if { [ llength $suspendList ] > 0 } {
+            foreach suspend $suspendList item [ ixNet getL $root/traffic trafficItem ] {
+                ixNet setA $item -suspend $suspend
+            }
+        }
 		ixNet commit
 		ixNet exec start $root/traffic
 		set timeout 30
@@ -159,7 +160,7 @@ proc Tester::start_traffic { args } {
 		}
 		set state [ ixNet getA $root/traffic -state ] 
 		if { $state != "started" } {
-	Deputs "start state:$state"
+            Deputs "start state:$state"
 			if { [string match startedWaiting* $state ] } {
 				set stopflag 1
 			} elseif {[string match stopped* $state ] && ($stopflag == 1)} {
@@ -310,7 +311,7 @@ Deputs "Port rx mode on $hPort : [ ixNet getA $hPort -rxMode ]"
 		
 	ixNet exec closeAllTabs
 
-Deputs "start capture..."
+    Deputs "start capture..."
 	ixNet exec startCapture
 	after 3000
 	

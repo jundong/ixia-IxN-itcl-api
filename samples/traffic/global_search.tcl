@@ -31,8 +31,7 @@ Traffic @tester_to_dta2.traffic(1) @tester_to_dta2
 
 #Tester::start_traffic
 set retVal [SearchMinFrameSizeByLoad -frame_len [list 64 65 660 800 900 1000 1280 5400 9600] \
-            -upstreams @tester_to_dta1 \
-            -downstreams @tester_to_dta2 \
+            -streams [ list @tester_to_dta1.traffic(1) @tester_to_dta2.traffic(1) ] \
             -inflation 10000 \
             -duration 20 \
             -resultfile {C:/Ixia/Docs/IxLoad/resultfile.csv}]

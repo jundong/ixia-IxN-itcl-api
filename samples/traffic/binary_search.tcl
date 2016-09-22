@@ -3,10 +3,10 @@ package req IxiaNet
 
 Login
 IxDebugOn
-#Port @tester_to_dta1 172.16.174.131/1/1
-#Port @tester_to_dta2 172.16.174.131/2/1
-Port @tester_to_dta1 10.210.100.12/5/3
-Port @tester_to_dta2 10.210.100.12/5/4
+Port @tester_to_dta1 172.16.174.134/1/1
+Port @tester_to_dta2 172.16.174.134/2/1
+#Port @tester_to_dta1 10.210.100.12/5/3
+#Port @tester_to_dta2 10.210.100.12/5/4
 
 @tester_to_dta1 config -dut_ip "20.13.14.1" -intf_ip "20.13.14.10"
 @tester_to_dta2 config -dut_ip "20.13.14.10" -intf_ip "20.13.14.1"

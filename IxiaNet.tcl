@@ -434,7 +434,12 @@ proc SearchMinFrameSizeByLoad { args } {
                 foreach stream $value {
                     lappend downstreams [ $stream cget -handle ]
                 }	            
-            } 
+            }
+            -streams {
+                foreach stream $value {
+                    lappend streams [ $stream cget -handle ]
+                }	
+            }
             -duration {
                 set duration [ expr 1000 * $value ]
             }
@@ -461,30 +466,44 @@ proc SearchMinFrameSizeByLoad { args } {
         }
         
         set frame_size [ lindex $frame_size_list $index ]
-        set root [ixNet getRoot]
-        set traffic [ixNet getL $root traffic]
-        foreach trafficItem [ixNet getL $traffic trafficItem] {
-            set highLevelStream [ ixNet getL $trafficItem configElement ]
-            set frameSize [ ixNet getL $highLevelStream frameSize ]
-            ixNet setA $frameSize -fixedSize $frame_size
-            ixNet commit 
-            set frameRate [ ixNet getL $highLevelStream frameRate ]
-            set endpointSet [ ixNet getL $trafficItem endpointSet ]
-            set src [ ixNet getA $endpointSet -sources ]
-            
-            ixNet setM $frameRate -rate $frame_load($frame_size) -type percentLineRate
-            ixNet commit
-            
-            foreach upstream $upstreams {
-                if { $upstream == [ string range $src 0 [ expr [ string length $upstream ] - 1 ] ] ||
-                     $src == [ string range $upstream 0 [ expr [ string length $src ] - 1 ] ] } {
-                    ixNet setM $frameRate -rate 100 -type percentLineRate
-                    if { [ expr $frame_size - $inflation ] >= 64 } {
-                        ixNet setA $frameSize -fixedSize [ expr $frame_size - $inflation ]
-                    } else {
-                        ixNet setA $frameSize -fixedSize 64
+        
+        if { [llength $streams ] > 0 } {
+            foreach stream $streams {
+                set highLevelStream [ ixNet getL $stream configElement ]
+                set frameSize [ ixNet getL $highLevelStream frameSize ]
+                ixNet setA $frameSize -fixedSize $frame_size
+                ixNet commit 
+                set frameRate [ ixNet getL $highLevelStream frameRate ]
+                
+                ixNet setM $frameRate -rate $frame_load($frame_size) -type percentLineRate
+                ixNet commit
+            }
+        } else {
+            set root [ixNet getRoot]
+            set traffic [ixNet getL $root traffic]
+            foreach trafficItem [ixNet getL $traffic trafficItem] {
+                set highLevelStream [ ixNet getL $trafficItem configElement ]
+                set frameSize [ ixNet getL $highLevelStream frameSize ]
+                ixNet setA $frameSize -fixedSize $frame_size
+                ixNet commit 
+                set frameRate [ ixNet getL $highLevelStream frameRate ]
+                set endpointSet [ ixNet getL $trafficItem endpointSet ]
+                set src [ ixNet getA $endpointSet -sources ]
+                
+                ixNet setM $frameRate -rate $frame_load($frame_size) -type percentLineRate
+                ixNet commit
+                
+                foreach upstream $upstreams {
+                    if { $upstream == [ string range $src 0 [ expr [ string length $upstream ] - 1 ] ] ||
+                         $src == [ string range $upstream 0 [ expr [ string length $src ] - 1 ] ] } {
+                        ixNet setM $frameRate -rate 100 -type percentLineRate
+                        if { [ expr $frame_size - $inflation ] >= 64 } {
+                            ixNet setA $frameSize -fixedSize [ expr $frame_size - $inflation ]
+                        } else {
+                            ixNet setA $frameSize -fixedSize 64
+                        }
+                        ixNet commit
                     }
-                    ixNet commit
                 }
             }
         }

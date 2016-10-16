@@ -884,3 +884,16 @@ proc GetResultFromReturn { stats } {
 		return 0
 	}
 }
+
+proc GetFileFromDir { dir name } {
+    set old_dir [ pwd ]
+    cd $dir
+	foreach f [glob nocomplain "*.*"] {
+		if { [regexp ".*$name.*" $f ] } {
+            cd $old_dir
+			return $f
+		}
+	}
+    cd $old_dir
+    return ""
+}

@@ -60,6 +60,7 @@ class Tester {
     proc stop_router {} {}
     proc start_capture { args } {}
     proc stop_capture { { wait 3000} } {}
+    proc save_capture { args } {}
     proc clear_capture {} {}
     proc cleanup { args } {}
     proc synchronize {} {}
@@ -111,7 +112,7 @@ proc Tester::start_traffic { args } {
     }
 	
 	if { $apply } {
-		apply_traffic
+		Tester::apply_traffic
 	} else {
 	
 		set root [ixNet getRoot]
@@ -129,21 +130,23 @@ proc Tester::start_traffic { args } {
 		}
 		
 		if { $restartCapture } {
-			catch { 
-				stop_capture 1000
+			catch {
+				#Tester::stop_capture 1000
+                ixNet exec stopCapture
 				foreach item [ ixNet getL $root/traffic trafficItem ] {
 					lappend suspendList [ ixNet getA $item -suspend ]
 					ixNet exec generate $item
 				}
 				ixNet exec apply $root/traffic
-				start_capture 
+				#Tester::start_capture
+                ixNet exec startCapture
 			}
 		} else {
 			foreach item [ ixNet getL $root/traffic trafficItem ] {
 				lappend suspendList [ ixNet getA $item -suspend ]
 				ixNet exec generate $item
 			}
-			ixNet exec apply $root/traffic	
+			ixNet exec apply $root/traffic
 		}
         if { [ llength $suspendList ] > 0 } {
             foreach suspend $suspendList item [ ixNet getL $root/traffic trafficItem ] {
@@ -256,19 +259,22 @@ Deputs "----- TAG: $tag -----"
 
 proc Tester::start_capture { args } {
     set tag "proc Tester::start_capture [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
+    set close_captures ""
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
             -ports {
                 set portList $value
             }
+            -close_captures {
+                set close_captures $value
+            }
         }
     }
 
 	if { [ info exists portList ] == 0 } {
-	
 		set root [ixNet getRoot]
 		set portList [ ixNet getL $root vport ]
 	} else {
@@ -280,19 +286,19 @@ Deputs "----- TAG: $tag -----"
 		}
 		set portList $hPortList
 	}
-Deputs "capture port handle list:$portList"
+    Deputs "capture port handle list:$portList"
 
 	foreach hPort $portList {
 		ixNet setA $hPort/capture  -hardwareEnabled True
 		ixNet commit
 		
-Deputs "Port rx mode on $hPort : [ ixNet getA $hPort -rxMode ]"	
+        Deputs "Port rx mode on $hPort : [ ixNet getA $hPort -rxMode ]"	
 		if { [ ixNet getA $hPort -rxMode ] == "captureAndMeasure" } {
 			continue
 		}
 		ixNet setA $hPort -rxMode capture
 		ixNet commit
-Deputs "Port rx mode on $hPort : [ ixNet getA $hPort -rxMode ]"	
+        Deputs "Port rx mode on $hPort : [ ixNet getA $hPort -rxMode ]"	
 
 		while { [ixNet getA $hPort -state] != "up" } {
 			after 1000
@@ -308,8 +314,12 @@ Deputs "Port rx mode on $hPort : [ ixNet getA $hPort -rxMode ]"
 			$obj configure -content [list]
 		}
 	}
-		
-	ixNet exec closeAllTabs
+    
+    if { $close_captures == "" } {
+        ixNet exec closeAllTabs
+    } else {
+        ixNet exec closeAllTabs $close_captures
+    }
 
     Deputs "start capture..."
 	ixNet exec startCapture
@@ -320,13 +330,13 @@ Deputs "Port rx mode on $hPort : [ ixNet getA $hPort -rxMode ]"
 
 proc Tester::stop_capture { { wait 3000 } } {
     set tag "proc Tester::stop_capture [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
     ixNet exec stopCapture
 	set root [ixNet getRoot]
 	set portList [ ixNet getL $root vport ]
 	foreach hPort $portList {
-Deputs "hPort:$hPort"
+        Deputs "hPort:$hPort"
 		# ixNet setA $hPort/capture/filter	-captureFilterDA anyAddr
 		# ixNet setA $hPort/capture/filter	-captureFilterSA anyAddr
 		# ixNet setA $hPort/capture/filter	-captureFilterPattern anyPattern
@@ -341,9 +351,51 @@ Deputs "hPort:$hPort"
     return [ GetStandardReturnHeader ]
 }
 
+
+#--
+# Save Capture
+#--
+# Parameters: |key, value|
+#       - capture_dir: Directory which we'll put the capture files
+#       - suffix: Suffix name appended to capture file name
+# Return:
+#        0 if got success
+#        raise error if failed 
+#-- 
+proc Tester::save_capture { args } {
+    set tag "proc Tester::stop_capture [info script]"
+    Deputs "----- TAG: $tag -----"
+    
+    set capture_dir [ pwd ]
+    set suffix ""
+    foreach { key value } $args {
+        set key [string tolower $key]
+        switch -exact -- $key {
+            -capture_dir {
+                set capture_dir $value
+            }
+            -suffix {
+                set suffix $value
+            }
+        }
+    }
+    
+    if { ![ file exists $capture_dir ] } {
+        file mkdir $capture_dir
+    }
+    
+    if { $suffix == "" } {
+        ixNet exec saveCapture $capture_dir
+    } else {
+        ixNet exec saveCapture $capture_dir $suffix
+    }
+    
+    return [ GetStandardReturnHeader ]
+}
+
 proc Tester::clear_capture {} {
     set tag "proc Tester::clear_capture [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 	ixNet exec closeAllTabs
     return [ GetStandardReturnHeader ]
 }
@@ -481,9 +533,16 @@ Deputs $err
 proc Tester::apply_traffic {} {
 	set tag "proc Tester::apply_traffic [info script]"
     Deputs "----- TAG: $tag -----"
-
 	ixTclNet::ApplyTraffic
-
+    
+	set root [ixNet getRoot]
+	set portList [ ixNet getL $root vport ]
+    foreach hPort $portList {
+        if { [ ixNet getA $hPort/capture -hardwareEnabled ] } {
+            ixNet exec startCapture
+            break
+        }
+    }
     return [ GetStandardReturnHeader ]
 }
 
@@ -670,7 +729,7 @@ Deputs "----- TAG: $tag -----"
 
 proc Tester::remove_all_stream {} {
    set tag "proc Tester::remove_all_stream [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 	foreach obj [ find objects ] {
 		if { [ $obj isa Traffic ] } {
 			$obj unconfig

@@ -205,19 +205,30 @@ Deputs "pkt count:$pktCnt"
     
 	method start {} {
 		set tag "body Capture::start [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		if { $handle == "" } { reborn }
+        
+        if { ![ ixNet getA $hPort/capture -hardwareEnabled ] } {
+            ixNet setA $hPort/capture  -hardwareEnabled True
+            ixNet commit
+        }
+		if { [ ixNet getA $hPort -rxMode ] != "captureAndMeasure" && [ ixNet getA $hPort -rxMode ] != "capture" } {
+            ixNet setA $hPort -rxMode capture
+            ixNet commit
+		}
+        
 		ixNet exec start $handle
 		set content  [list]
 		return [ GetStandardReturnHeader ]
 	}
 	method stop {} {
 		set tag "body Capture::stop [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		if { $handle == "" } { reborn }
 		ixNet exec stop $handle
 		return [ GetStandardReturnHeader ]
 	}
+    method save { args } {}
 	method enable {} {
 		set tag "body Capture::enable [info script]"
 Deputs "----- TAG: $tag -----"
@@ -234,9 +245,9 @@ Deputs "----- TAG: $tag -----"
 		ixNet commit
 		return [ GetStandardReturnHeader ]
 	}
-	method start_capture { args } {}
-	method stop_capture { } {}
-	method save_capture { args } {}
+	method start_hal_capture { args } {}
+	method stop_hal_capture { } {}
+	method save_hal_capture { args } {}
 	method update_info { } {}
     
 	public variable portObj
@@ -256,9 +267,9 @@ body Capture::config { args } {
     global errNumber
     
     set tag "body Capture::config [info script]"
-Deputs "----- TAG: $tag -----"
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    #param collection
+    Deputs "Args:$args "
 	
 	if { $handle == "" } { reborn }
 
@@ -785,7 +796,7 @@ Deputs "content:$content"
 #        0 if got success
 #        raise error if failed 
 #--  
-body Capture::start_capture { args } {
+body Capture::start_hal_capture { args } {
 	set tag "proc start_capture [info script]"
 	Deputs "----- TAG: $tag -----"
 	
@@ -805,9 +816,7 @@ body Capture::start_capture { args } {
 	set timeout 0
 	while { 1 } {
 		# -- check capture status every 2 sec
-        puts "aaaa"
 		if { [ ixStartCapture portList ] == 0 } {
-            puts "xxxxxx"
 			break
 		}
 
@@ -831,7 +840,7 @@ body Capture::start_capture { args } {
 #        0 if got success
 #        raise error if failed 
 #--  
-body Capture::stop_capture { } {
+body Capture::stop_hal_capture { } {
 	set tag "proc stop_capture [info script]"
 	Deputs "----- TAG: $tag -----"
 	
@@ -858,7 +867,7 @@ body Capture::stop_capture { } {
 #        0 if got success
 #        raise error if failed 
 #--  
-body Capture::save_capture { args } {
+body Capture::save_hal_capture { args } {
 	set tag "proc save_capture [info script]"
 	Deputs "----- TAG: $tag -----"
 	
@@ -922,14 +931,15 @@ body Capture::save_capture { args } {
 			error "Could not save capture"
 		} else {
 			if { [ catch {
-				#exec cmd "/k net use * /del /y" &
+				#exec cmd "/k net use \\$chassisIp\Temp /del /y" &
 				if { [ info exists user ] && [ info exists password ] } {
 					catch { exec cmd "/k net use \\$chassisIp\Temp $password /user:$user" & }
 				} else {
 					catch { exec cmd "/k net use \\$chassisIp\Temp" & }
 				}
 				
-				file copy -force "\\\\$chassisIp\\Temp\\${prefix}_${chassisId}_${cardIndex}_${portIndex}.enc" $result_dir
+                puts "file copy -force \\\\$chassisIp\\Temp\\${prefix}_${chassisId}_${cardIndex}_${portIndex}.enc $result_dir"
+				eval "file copy -force \\\\$chassisIp\\Temp\\${prefix}_${chassisId}_${cardIndex}_${portIndex}.enc $result_dir"
 				set enc [ file join $result_dir ${prefix}_${chassisId}_${cardIndex}_${portIndex}.enc ]
 				if { $pcap2xml } {
 					set xml [ file join $result_dir ${prefix}_${chassisId}_${cardIndex}_${portIndex}.xml ]
@@ -942,7 +952,7 @@ body Capture::save_capture { args } {
                 
                 if { [ info exists filters] } {
 					set txt [ file join $result_dir ${prefix}_${chassisId}_${cardIndex}_${portIndex}.txt ]
-					exec tshark.exe -r $enc -T fields $filters > $txt
+					eval "exec tshark.exe -r $enc -T fields $filters > $txt"
                 }
 			} err ] } {
 				Deputs "Failed to transfer capture file: $err"
@@ -993,3 +1003,87 @@ body Capture::update_info { } {
     }
 }
 
+#--
+# Save capture
+#--
+# Parameters: |key, value|
+#       - result_dir: Directory which we'll put the capture files
+#       - suffix: Suffix name appended to capture file name
+#       - pcap2xml: If we set xml, we'll convert pcap file to xml under capture_dir.  
+#       - keep_pcap: Keep cap file in local PC
+#       - filters: Filters to get packates matched the condition, eg. -Y ip.version==4 -e ip.version
+# Return:
+#        0 if got success
+#        raise error if failed 
+#--  
+body Capture::save { args } {
+	set tag "proc save $args [info script]"
+	Deputs "----- TAG: $tag -----"
+	
+	# Param collection --
+	set capture_dir [ pwd ]
+	set pcap2xml false
+	set keep_pcap true
+	set suffix ""
+	foreach { key value } $args {
+		set key [string tolower $key]
+		Deputs "config $key---$value"
+		switch -exact -- $key {
+			-result_dir {
+				set capture_dir $value
+			}
+			-suffix {
+				set prefix $value
+			}
+			-pcap2xml {
+				set pcap2xml $value
+			}
+			-keep_pcap {
+				set keep_pcap $value
+			}
+            -filters {
+                set filters $value
+            }
+		}
+	}
+	
+    if { [ catch {
+        Tester::save_capture -capture_dir $capture_dir -suffix $suffix
+        
+        set captureFullPath ""
+        set portName [ ixNet getA $hPort -name ]
+        if { [ string range $portName 0 1 ] == "::" } {
+            set captureFileName [ string range $portName 2 end ]
+        }
+        set waitCaptureToSave 60000
+        while { $waitCaptureToSave > 0 } {
+            set captureFullPath [ GetFileFromDir $capture_dir $captureFileName ]
+            if { $captureFullPath != "" } {
+                if { ![ file exists $captureFullPath ] } {
+                    set captureFullPath [ file join $capture_dir $captureFullPath ]
+                }
+                break
+            }
+            incr waitCaptureToSave -2000
+        }
+
+        if { $captureFullPath == "" } {
+            error "No capture file found!!!"
+        }
+        if { $pcap2xml } {
+            set xml $captureFullPath.xml
+            exec tshark.exe -r $captureFullPath -T pdml > $xml
+        }
+        
+        if { [ info exists filters] } {
+            set txt $captureFullPath.txt
+            eval "exec tshark.exe -r $captureFullPath -T fields $filters > $txt"
+        }
+        
+        if { !$keep_pcap } {
+            file delete -force $captureFullPath
+        }
+    } err ] } {
+        error "Failed to analyze capture file: $err"
+    }
+}

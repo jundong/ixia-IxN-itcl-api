@@ -3,8 +3,10 @@ lappend auto_path [file dirname [file dirname [file dirname [info script]]]]
 package req IxiaNet
 Login
 IxDebugOff
-Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
-Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
+#Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
+#Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
+Port @tester_to_dta1 172.16.174.134/1/1
+Port @tester_to_dta2 172.16.174.134/2/1
 
 @tester_to_dta1 config -dut_ip "20.13.14.1" -intf_ip "20.13.14.2"
 @tester_to_dta2 config -dut_ip "21.13.14.1" -intf_ip "21.13.14.2"

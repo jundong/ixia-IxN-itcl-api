@@ -14,14 +14,12 @@ Port @tester_to_dta2 172.16.174.134/2/1
 Traffic @tester_to_dta1.traffic(1) @tester_to_dta1
 @tester_to_dta1.traffic(1) config -tx_mode "custom" -src "@tester_to_dta1 @tester_to_dta2" -dst "@tester_to_dta1 @tester_to_dta2" -traffic_pattern "mesh" -burst_packet_count "1" -min_gap_bytes "128" -enable_burst_gap "true" -burst_gap "11" -burst_gap_units "bytes"
 Capture @capture_port1 @tester_to_dta1
-@capture_port1 update_info
+
+@capture_port1 start
 
 Tester::start_traffic
-
-@capture_port1 start_capture
-
-after 2000
+after 30000
 Tester::stop_traffic
-@capture_port1 stop_capture
-@capture_port1 save_capture -result_dir {C:\Tmp} -user ixia -password ixia123 -filters -Y ip.version==4 -e ip.version
-@tester_to_dta1.traffic(1) get_stats
+
+@capture_port1 stop
+@capture_port1 save -result_dir {C:\Tmp} -filters "-Y ip.version==4 -e ip.version"

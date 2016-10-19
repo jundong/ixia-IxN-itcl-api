@@ -589,7 +589,7 @@ Deputs "Step120"
 		-binarySearchType $binary_mode \
 		-forceRegenerate $regenerate \
 		-rfc2889ordering val2889Ordering \
-		-enableMinFrameSize True \
+		-enableMinFrameSize True 
 		#wangming
 		#-reportSequenceError False
 	ixNet setA $handle/learnFrames \

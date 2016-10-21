@@ -1,7 +1,7 @@
 
 # Copyright (c) Ixia technologies 2010-2011, Inc.
 
-# Release Version 2.16
+# Release Version 2.17
 #===============================================================================
 # Change made
 # Version 1.0 
@@ -87,6 +87,8 @@
 #		43. add Port.set_port_dynamic_rate
 # Version 2.16.4.59
 #		44. remove param validation in port.config
+# Version 2.17.4.60
+#		44. add port.Reconnect
 
 class Port {
     inherit NetObject
@@ -176,6 +178,7 @@ class Port {
     
     method GetRealPort { chas card port } {}
     method Connect { location { medium NULL } { checkLink 0 } } {}
+    method Reconnect { location { medium NULL } { checkLink 0 } } {}
     method CheckStrangePort {} {}
     
     public variable location
@@ -200,6 +203,7 @@ Deputs "Strange port:$strangePort"
 			Login $loginInfo
 		}
 	}
+	set handle ""
 
 Deputs Step10
     if { $hw_id != "NULL" } {
@@ -265,12 +269,13 @@ body Port::Connect { location { medium NULL } { checkLink 0 } } {
     set vport   [ ixNet add $root vport ]
     ixNet setA $vport -name $this
 	if { $medium != "NULL" } {
-        Deputs "connect medium:$medium"	
+Deputs "connect medium:$medium"	
 		ixNet setA $vport/l1Config/ethernet -media $medium
 	}
     set vport [ixNet remapIds $vport]
     set handle $vport
-    # -- connect to hardware
+
+	# -- connect to hardware
 	set locationInfo [ split $location "/" ]
 	set chassis     [ lindex $locationInfo 0 ]
 	set ModuleNo    [ lindex $locationInfo 1 ]
@@ -294,7 +299,42 @@ body Port::Connect { location { medium NULL } { checkLink 0 } } {
 	}
 	set handle [ixNet remapIds $handle]
 Deputs "handle:$handle"	
-	ixNet setA $vport -transmitIgnoreLinkStatus True
+	ixNet setA $handle -transmitIgnoreLinkStatus True
+       ixNet commit       
+ 
+	return $handle
+}
+
+body Port::Reconnect { location { medium NULL } { checkLink 0 } } {
+    set tag "body Port::Reconnect [info script]"
+Deputs "----- TAG: $tag -----"
+# -- add vport
+    set root    [ ixNet getRoot ]   
+# -- connect to hardware
+	set locationInfo [ split $location "/" ]
+	set chassis     [ lindex $locationInfo 0 ]
+	set ModuleNo    [ lindex $locationInfo 1 ]
+	set PortNo      [ lindex $locationInfo 2 ]
+
+	if { [ string tolower [ ixNet getA $root/statistics -guardrailEnabled ] ] != "true" } {
+Deputs "guardrail: false"
+		catch {
+			ixNet setA $root/statistics -guardrailEnabled True
+			ixNet commit
+		}
+Deputs "guardrail:[ ixNet getA $root/statistics -guardrailEnabled  ]"
+	}
+
+	if { $checkLink } {
+		#fix license issue
+		ixTclNet::AssignPorts [ list [ list $chassis $ModuleNo $PortNo ] ] {} $handle true
+	} else {
+		ixNet setA $handle -connectedTo [ GetRealPort $chassis $ModuleNo $PortNo ] 
+		ixNet commit
+	}
+	set handle [ixNet remapIds $handle]
+Deputs "handle:$handle"	
+	ixNet setA $handle -transmitIgnoreLinkStatus True
        ixNet commit
  
 	return $handle
@@ -414,6 +454,7 @@ body Port::config { args } {
     set mask 24
     set ipv6_mask 64
     set intf_num 1
+    set ip_version "ipv4"
 	
     set flow_control 0
 	set sig_end 1
@@ -1152,6 +1193,13 @@ Deputs "Args:$args "
                     error "$errNumber(1) key:$key value:$value"
                 }
 			}
+			-max_outstanding_session {
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value <= 100000 ) } {
+                    set max_outstanding_session $value
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+			}
 		}
 	}
 	
@@ -1181,6 +1229,9 @@ Deputs "Args:$args "
 	}
 	if { [ info exists release_rate_step ] } {
 		ixNet setA $globalSetting -teardownRateIncrement $release_rate_step
+	}
+	if { [ info exists max_outstanding_session ] } {
+		ixNet setA $globalSetting -maxOutstandingRequests $max_outstanding_session
 	}
 	
 	ixNet commit

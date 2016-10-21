@@ -38,6 +38,8 @@
 # Version 1.11.4.60
 #		15. add net use to connect with IxNetwork Tcl Server
 #       16. change server to remote_server
+# Version 1.12.4.66
+#		17. add pdfreortdir pdfreportfile to generate pdf report
 
 class Rfc2544 {
     inherit NetObject
@@ -265,6 +267,12 @@ Deputs "frame len under test:$frame_len"
 			}
 			-resultfile {
                 	set resultfile $value
+        	}
+            -pdfreportdir {
+				set pdfreportdir $value
+			}
+			-pdfreportfile {
+                	set pdfreportfile $value
         	}
 			-resultlvl {
 Deputs "set result level:$value"			
@@ -600,7 +608,7 @@ Deputs "Step120"
 		-binarySearchType $binary_mode \
 		-forceRegenerate $regenerate \
 		-rfc2889ordering val2889Ordering \
-		-enableMinFrameSize True \
+		-enableMinFrameSize True 
 		#wangming
 		#-reportSequenceError False
 	ixNet setA $handle/learnFrames \
@@ -637,6 +645,13 @@ Deputs "Step150"
 	}
 	
     ixNet commit
+    
+    #enable pdf report generate
+    if { [info exists pdfreportdir] && [info exists pdfreportfile ]} {
+        ixNet setA ::ixNet::OBJ-/quickTest/globals  \
+             -enableGenerateReportAfterRun true
+        ixNet commit
+    }
 	
 	Tester::apply_traffic
 	
@@ -645,6 +660,7 @@ Deputs "Step150"
 		ixNet exec run $handle
 		ixNet exec waitForTest $handle
 	}
+       
 
 
 	if { [ info exists resultdir ] } {
@@ -733,14 +749,17 @@ Deputs "run jitter test on traffic: $trafficSelection"
 								while {[gets $rfile line] != -1 } {
 								    set desfile [open $resultdir/$resultfile a]
 								    set statsinfo  [ split $line "," ]
+                                    Deputs $statsinfo
 									set fsize      [ lindex $statsinfo 1 ]
 									Deputs $fsize
 									if { [string is integer $fsize] } {
+
 									#wangming
 										set txrate     [ lindex $statsinfo 3 ]
 										#wangming
 										Deputs "wangming"
 										Deputs $txrate										
+
 										set itemtxrate [expr $txrate/$trafficnum]
 										foreach fstream $trafficlist {
 										   set celement [ixNet getL $fstream configElement  ]
@@ -789,10 +808,15 @@ Deputs "run jitter test on traffic: $trafficSelection"
 											set rowaveLatency   [ lindex $row $aveLatencyIndex ]
 											set rowminLatency   [ lindex $row $minLatencyIndex ]
 											set rowmaxLatency   [ lindex $row $maxLatencyIndex ]
-											set rowaveLatency   [ lindex $row $aveLatencyIndex ]
+											
 											set rowavejitter    [ lindex $row $avejitterIndex ]
 											set rowminjitter    [ lindex $row $minjitterIndex ]
 											set rowmaxjitter    [ lindex $row $maxjitterIndex ]
+                                            
+                                            Deputs "rowaveLatency:$rowaveLatency; rowavejitter:$rowavejitter "
+                                            if {$rowavejitter =="" || $rowaveLatency == ""} {
+                                                error "rowaveLatency:$rowaveLatency; rowavejitter:$rowavejitter, some stats are empty "
+                                            }
 											
 											  Deputs "rowaveLatency:$rowaveLatency; rowavejitter:$rowavejitter "
                                                                                        if {$rowavejitter =="" || $rowaveLatency == ""} {
@@ -859,6 +883,35 @@ Deputs "copy results..."
 			    }
 		}	
 	}
+    
+    if { [info exists pdfreportdir] && [info exists pdfreportfile ]} {
+        global remote_server
+Deputs "remote_server:$remote_server"
+		set path [ ixNet getA $handle/results -resultPath ]
+Deputs "path:$path"
+		set colonIndex [ string first ":" $path ]
+		set path [ string replace $path $colonIndex $colonIndex "$" ]
+		if { $remote_server == "localhost" } {
+			set path "//127.0.0.1/$path"
+		} else {
+			set path "//${remote_server}/$path"
+			catch {
+			# net use \\10.206.25.116\c$\ixia ixia2014! /user:YL
+				exec cmd "/k net use $path $netuse_pw /user:$netuse_user" &
+			}
+		}
+Deputs "path:$path"
+
+        if { [file exists $path/TestReport.pdf ]} {
+            file copy $path/TestReport.pdf $pdfreportdir/$pdfreportfile
+        } else {
+            set err "No testReport.pdf created in $path"
+            return [GetErrorReturnHeader $err]
+            
+        }
+        
+        
+    }
 	
     return [GetStandardReturnHeader]
 

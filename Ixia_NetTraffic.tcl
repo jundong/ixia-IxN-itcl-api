@@ -894,6 +894,7 @@ body Traffic::config { args  } {
                     }
                 }
             }
+            -rx_port -
             -rcv_ports -
             -rcv_port {
                 set rcv_ports $value
@@ -1220,508 +1221,501 @@ body Traffic::config { args  } {
 			CreateRawStream $enable_sig
 		}
 		foreach hStream $highLevelStream {
-            set flagPduObj  1
-            Deputs "pdu:$pdu"
-            foreach head $pdu {
-                Deputs "head:$head"
-                set head [ GetObject $head ]
-                Deputs "head obj:$head"
-                if { $head != "" } {
-                    #-- pdu objects
-                    if { [ $head isa NetObject ] } {
-                        if { [ $head isa Header ] == 0 } {
-                            error "$errNumber(1) key: pdu value: $head (Not a Header)"                
-                        }
-                    } else {
-                        error "$errNumber(1) key: pdu value: $head (Not an IxiaNet Object)"                
-                    }
-                } else {
-                    set flagPduObj 0
-                    break
-                }
-            }
-            if { $flagPduObj } {
-                set index 0
+		   set flagPduObj  1
+	Deputs "pdu:$pdu"
+		   foreach head $pdu {
+	Deputs "head:$head"
+			  set head [ GetObject $head ]
+	Deputs "head obj:$head"
+			  if { $head != "" } {
+				 #-- pdu objects
+				 if { [ $head isa NetObject ] } {
+					if { [ $head isa Header ] == 0 } {
+						error "$errNumber(1) key: pdu value: $head (Not a Header)"                
+					}
+				 } else {
+					error "$errNumber(1) key: pdu value: $head (Not an IxiaNet Object)"                
+				 }
+			  } else {
+				 set flagPduObj 0
+				 break
+			  }
+		   }
+		   if { $flagPduObj } {
+			  set index 0
+              set pindex 0
+				if { $flag_modify_adv } {
+					set stackLevel [ expr [ llength [ ixNet getList $hStream stack ] ] - 1 ]
+				} else {
+					set stackLevel 1
+				}
+	Deputs "stack level:$stackLevel"			
+			  foreach name $pdu {
+				 set name [ GetObject $name ]
+	# Read type protocol message
+	Deputs Step10
+				 set protocol [ $name cget -protocol ]
+	Deputs "Pro: $protocol "
+	Deputs Step14
+				 set type [ string toupper [ $name cget -type ] ]
+				 if { $pindex == 0 } {
+				    $name ChangeType SET
+					set type [ string toupper [ $name cget -type ] ]
+				 }
+				 if { $type == "SET"  } {
+					if { $pindex == 0 } {					  
+						Deputs "first ethernet set..."
+					 } else {
+						$name ChangeType APP
+                        set type [ string toupper [ $name cget -type ] ]
+					 }
+				 }
+                 incr pindex
+	Deputs "Type $type "
+				 set proStack [ GetProtocolTemp $protocol ]
+	Deputs "protocol stack: $proStack"
+	# Set or Append pdu protocols
+	Deputs Step20
+				 set stack  [ lindex [ ixNet getList $hStream stack ] 0 ]
+	#Deputs "type:$type"
+				 set needMod 1
+				 switch -exact -- $type {
+					SET {
+	Deputs "stream:$hStream"
+						set stackList [ ixNet getList $hStream stack ]
+	Deputs "Stack list:$stackList"
+						while { 1 } {
+						   set stackList [ ixNet getList $hStream stack ]
+	Deputs "Stack list after removal:$stackList"
+						   if { [ llength $stackList ] == 2 } {
+							  break
+						   }
+						   ixNet exec remove [ lindex $stackList [ expr [ llength $stackList ] - 2  ] ]
+						}
+	Deputs "Stack ready to add:$stackList"
+						ixNet exec append [ lindex $stackList 0 ] $proStack
+						ixNet exec remove [ lindex $stackList 0 ]
+						set stack  [ lindex [ ixNet getList $hStream stack ] 0 ]
+					}
+					APP {
+	Deputs "stream:$hStream"
+						set stackList [ ixNet getList $hStream stack ]
+	Deputs "Stack list:$stackList"
+						set appendHeader [ lindex $stackList [expr $stackLevel - 1] ]
+	Deputs "appendHeader:$appendHeader"
+	Deputs "stack to be added: $proStack"
+						ixNet exec append $appendHeader $proStack
+						set stack [lindex [ ixNet getList $hStream stack ] $stackLevel]
+	Deputs "stack:$stack"
+						incr stackLevel
+	Deputs "stackLevel:$stackLevel"
+						#set stack ${hStream}/stack:\"[ string tolower $protocol ]-${stackLevel}\"
+					}
+					APPLIST {
+	Deputs "name:$name"
+						set objList [ $name cget -objList ]
+						eval set objList [ set objList ]
+	Deputs "objList:$objList"                 
+						set listStack [ list ]
+						#unused var listStackLink?
+						set listStackLink [ list ]
+						foreach single $objList {					
+	Deputs "stream:$hStream"
+							  set stackList [ ixNet getList $hStream stack ]
+	Deputs "Stack list:$stackList"
+						   set appendHeader [ lindex $stackList [expr $stackLevel - 1] ]
+	Deputs "appendHeader:$appendHeader"
+	Deputs "stack to be added: $proStack"
+						   ixNet exec append $appendHeader $proStack
+						   set stack [lindex [ ixNet getList $hStream stack ] $stackLevel]
+	Deputs "stack:$stack"
+								lappend  listStack $stack
+						   incr stackLevel
+	Deputs "stackLevel:$stackLevel"
+							}
+					}
+					MOD {
+						set index 0
+	Deputs "protocol:$protocol"
+						foreach pro [ ixNet getList $hStream stack ] {
+	Deputs "pro:$pro"
+						   if { [ regexp -nocase $protocol $pro ] } {
+							  if { [ regexp -nocase "${pro}\[a-z\]+" $stack ] == 0 } {
+								if { $pdu_index > 1 } {
+									incr pdu_index -1
+									continue
+								}
+								break
+							  }
+						   }
+						   incr index
+						}
+						set stack $pro
+					}
+					default { }
+				 }
+				 ixNet commit
+				 catch {
+					set stack [ ixNet remapIds $stack ]
+				 }
+	Deputs "Stack:$stack"
+				 set appendHeader $stack
+	Deputs "Stack list:[ ixNet getList $hStream stack ]"
 
-                set pindex 0
-                if { $flag_modify_adv } {
-                    set stackLevel [ expr [ llength [ ixNet getList $hStream stack ] ] - 1 ]
-                } else {
-                    set stackLevel 1
-                }
+	Deputs Step43
+				 # Modify fields
+				 # -- modify eth src mac
+				 if { [ $name isa EtherHdr ] } {
+					 if { [ $name cget -noMac ] } {
+						if { $default_mac != "" } {
+				 Deputs "config default mac..."
+							$name config -src $default_mac
+						}
+					 }
+				 }
+				 # -- modify ip src ip
+				 if { [ $name isa Ipv4Hdr ] } {
+					 if { [ $name cget -noIp ] } {
+						if { $default_ip != "" } {
+				 Deputs "config default ip..."
+							$name config -src $default_ip
+						}
+					 }
+				 }
+				 # -- modify arp src mac and src ip
+				 # IxDebugOn
+				 if { [ $name isa ArpHdr ] } {
+			  Deputs "arp header"
+					  if { [ $name cget -noMac ] } {
+			  Deputs "config default mac..."
+						  $name config -sender_mac_addr $default_mac 
+					  }
+					  if { [ $name cget -noIp ] } {
+				 Deputs "config default ip..."
+						 $name config -sender_ipv4_addr $default_ip
+					 }
+				 }
+				 # IxDebugOff
 
-                Deputs "stack level:$stackLevel"			
-                foreach name $pdu {
-                    set name [ GetObject $name ]
-                    # Read type protocol message
-                    Deputs Step10
-                    set protocol [ $name cget -protocol ]
-                    Deputs "Pro: $protocol "
-                    Deputs Step14
-                    set type [ string toupper [ $name cget -type ] ]
-                    if { $type == "SET"  } {
-                        if { $pindex == 0 } {
+				 if { $needMod == 0 } {
+	Deputs Step45
+					incr index
+					continue
+				 }
 
-                            Deputs "first ethernet set..."
-                        } else {
+	# IxDebugOn
+				 if { $type == "APPLIST" } {
+	Deputs "name:$name"
+					set objList [ $name cget -objList ]
+					set linkToType [ $name cget -linkToType ]
+					eval set objList [ set objList ]
+	Deputs "objList:$objList"   
+	
+					foreach single $objList stack $listStack {
+	Deputs "single header name: $single"                
+						set single [ GetObject $single ]
+	Deputs "single header obj: $single"                    
+						set fieldModes [ $single cget -fieldModes ]
+						set fields [ $single cget -fields ]
+						set fieldConfigs [ $single cget -fieldConfigs ]
+						set optional [ $single cget -optionals ]
+						set autos [ $single cget -autos ]
+						set meshes [ $single cget -meshes ]
+	# Deputs "PDU:\n\tModes:$fieldModes\n\tFields:$fields\n\tConfigs:$fieldConfigs\n\tOptional:$optional\n\tAutos:$autos"
+						foreach mode $fieldModes field $fields conf $fieldConfigs\
+						opt $optional auto $autos mesh $meshes {
+	Deputs "mode $fieldModes field $fields conf $fieldConfigs opt $optional auto $autos"
+	# Deputs "stack:$stack"
+	# Deputs "field:$field"
+						   set obj [ GetField $stack $field ]
+	Deputs "Field object: $obj"
+	# Deputs "optional $opt"
+						   if { [ info exists opt ] } {
+							  if { $opt == "" } { continue }
+							  if { $opt } {
+	Deputs Step46								
+								 ixNet setA $obj -activeFieldChoice True
+								 ixNet commit
+								 continue
+							  }
+						   } else {
+							  continue
+						   }
+						   if { [ info exists auto ] } {
+	Deputs Step47
+							  if { $auto == "" } { continue }
+							  if { $auto } {
+	Deputs Step48
+								 ixNet setA $obj -auto True
+								 continue
+							  } else {
+	Deputs Step49
+	Deputs "obj:$obj"
+								 ixNet setA $obj -auto False
+							  }
+						   } else {
+							  continue
+						   }
+							if { [ info exists mesh ] } {
+								if { $mesh == "" } { continue }
+								if { $mesh } {
+Deputs "Mesh the field:$obj"								
+									ixNet setA $obj -fullMesh True
+									ixNet commit
+									continue
+								} else {
+									ixNet setA $obj -fullMesh False
+									ixNet commit
+								}
+							}
+						   if { [ info exists mode ] == 0 || [ info exists field ] == 0 ||\
+							  [ info exists conf ] == 0 } {
+	Deputs "continue"
+							  continue
+						   }
+	Deputs "Mode:$mode"
+						   switch -exact $mode {
+							  Fixed {
+	Deputs "Fixed:$protocol\t$field\t$conf"
+								 ixNet setMultiAttrs $obj \
+									-valueType singleValue \
+									-singleValue $conf
+							  }
+							  List {
+	Deputs "List:$protocol\t$field\t$conf"
+								 ixNet setMultiAttrs $obj \
+									-valueType valueList \
+									-valueList $conf
+							  }
+							  Segment {
+							  }
+							  Random {
+							    Deputs "Random...continue"
+							    ixNet setA $obj \
+									-valueType nonRepeatableRandom 
+								ixNet commit
+							  }
+							  Reserved {
+	Deputs "Reserved...continue"
+								 continue
+							  }
+							  Incrementing -
+							  Decrementing {
+								 set mode [string range $mode 0 8]
+								 set mode [string tolower $mode]
+	Deputs "Mode:$mode\tProtocol:$protocol\tConfig:$conf"
+								 set start [ eval lindex $conf 1]
+								 set count [ eval lindex $conf 2]
+								 set step  [ eval lindex $conf 3]
+	Deputs "start:$start count:$count step:$step mode:$mode"
+								 ixNet setMultiAttrs $obj \
+									-valueType $mode \
+									-countValue $count \
+									-stepValue $step \
+									-startValue $start
+							  }
+							  Commit {
+								 ixNet setMultiAttrs $obj \
+									-valueType singleValue \
+									-singleValue $conf
+								 ixNet commit
+							  }
+						   }
+						}
+		   
+						incr index
+						
+					}
+				 } else {
+					set fieldModes [ $name cget -fieldModes ]
+					set fields [ $name cget -fields ]
+					set fieldConfigs [ $name cget -fieldConfigs ]
+					set optional [ $name cget -optionals ]
+					set autos [ $name cget -autos ]
+					set meshes [ $name cget -meshes ]
+	Deputs "PDU:\n\tModes:$fieldModes\n\tFields:$fields\n\tConfigs:$fieldConfigs\n\tOptional:$optional\n\tAutos:$autos\n\tMeshes:$meshes"
+					foreach mode $fieldModes field $fields conf $fieldConfigs\
+					opt $optional auto $autos mesh $meshes {
+	Deputs "stack:$stack"
+	Deputs "field:$field"
+	Deputs "mesh:$mesh"
+						set obj [ GetField $stack $field ]
+	Deputs "Field object: $obj"
+		
+						if { [ info exists opt ] } {
+							if { $opt == "" } { continue }
+							if { $opt } {
+								ixNet setA $obj -activeFieldChoice True
+								ixNet commit
+								continue
+							}
+						} else {
+							continue
+						}
+						if { [ info exists auto ] } {
+	Deputs Step47
+							if { $auto == "" } { continue }
+							if { $auto } {
+	Deputs Step48
+								ixNet setA $obj -auto True
+								ixNet commit
+								continue
+							} else {
+	Deputs Step49
+	Deputs "obj:$obj"
+							  ixNet setA $obj -auto False
+							  ixNet commit
+						   }
+						} else {
+						   continue
+						}
+						if { [ info exists mesh ] } {
+							if { $mesh == "" } { continue }
+							if { $mesh } {
+Deputs "Mesh the field:$obj"
+Deputs "fullMesh:[ixNet getA $obj -fullMesh ]"			
+								ixNet setA $obj -fullMesh True
+								ixNet commit
+Deputs "fullMesh:[ixNet getA $obj -fullMesh ]"
+							}
+						}
+						if { [ info exists mode ] == 0 || [ info exists field ] == 0 ||\
+						   [ info exists conf ] == 0 } {
+	Deputs "continue"
+						   continue
+						}
+	Deputs "Mode:$mode"
+						switch -exact $mode {
+						   Fixed {
+	Deputs "Fixed:$protocol\t$field\t$conf"
+								ixNet setMultiAttrs $obj \
+									-valueType singleValue \
+									-singleValue $conf
+								ixNet commit
+						   }
+						   List {
+	Deputs "List:$protocol\t$field\t$conf [ llength $conf ]"
+								if { [ llength $conf ] == 1 } {
+									eval ixNet setMultiAttrs $obj \
+										-valueType valueList \
+										-valueList $conf
+								} else {
+									ixNet setMultiAttrs $obj \
+										-valueType valueList \
+										-valueList $conf
+								}
+								ixNet commit
+						   }
+						   Segment {
+						   }
+						   Random {
+							    Deputs "Random...continue"
+							    ixNet setA $obj \
+									-valueType nonRepeatableRandom 
+								ixNet commit
+							}
+						   Reserved {
+	Deputs "Reserved...continue"
+							  continue
+						   }
+						   Incrementing -
+						   Decrementing {
+							  set mode [string range $mode 0 8]
+							  set mode [string tolower $mode]
+	Deputs "Mode:$mode\tProtocol:$protocol\tConfig:$conf"
+							  set start [ eval lindex $conf 1]
+							  set count [ eval lindex $conf 2]
+							  set step  [ eval lindex $conf 3]
+	Deputs "start:$start count:$count step:$step"
+							  ixNet setMultiAttrs $obj \
+								 -valueType $mode \
+								 -countValue $count \
+								 -stepValue $step \
+								 -startValue $start
+								 ixNet commit
+						   }
+						   Commit {
+							  ixNet setMultiAttrs $obj \
+								 -valueType singleValue \
+								 -singleValue $conf
+							  ixNet commit
+						   }
+						}
+					}		
+					incr index
+				 }
 
-                            $name ChangeType APP
-                            set type [ string toupper [ $name cget -type ] ]
-                        }
-                    }
-                    incr pindex
-                    Deputs "Type $type "
-                    set proStack [ GetProtocolTemp $protocol ]
-                    Deputs "protocol stack: $proStack"
-                    # Set or Append pdu protocols
-                    Deputs Step20
-                    set stack  [ lindex [ ixNet getList $hStream stack ] 0 ]
-                    #Deputs "type:$type"
-                    set needMod 1
-                    switch -exact -- $type {
-                        SET {
-                            Deputs "stream:$hStream"
-                            set stackList [ ixNet getList $hStream stack ]
-                            Deputs "Stack list:$stackList"
-                            while { 1 } {
-                                set stackList [ ixNet getList $hStream stack ]
-                                Deputs "Stack list after removal:$stackList"
-                                if { [ llength $stackList ] == 2 } {
-                                    break
-                                }
-                                ixNet exec remove [ lindex $stackList [ expr [ llength $stackList ] - 2  ] ]
-                            }
-
-                            Deputs "Stack ready to add:$stackList"
-                            ixNet exec append [ lindex $stackList 0 ] $proStack
-                            ixNet exec remove [ lindex $stackList 0 ]
-                            set stack  [ lindex [ ixNet getList $hStream stack ] 0 ]
-                        }
-                        APP {
-                            Deputs "stream:$hStream"
-                            set stackList [ ixNet getList $hStream stack ]
-                            Deputs "Stack list:$stackList"
-                            set appendHeader [ lindex $stackList [expr $stackLevel - 1] ]
-                            Deputs "appendHeader:$appendHeader"
-                            Deputs "stack to be added: $proStack"
-                            ixNet exec append $appendHeader $proStack
-                            set stack [lindex [ ixNet getList $hStream stack ] $stackLevel]
-                            Deputs "stack:$stack"
-                            incr stackLevel
-
-                            Deputs "stackLevel:$stackLevel"
-                            #set stack ${hStream}/stack:\"[ string tolower $protocol ]-${stackLevel}\"
-                          }
-                        APPLIST {
-                            Deputs "name:$name"
-                            set objList [ $name cget -objList ]
-                            eval set objList [ set objList ]
-                            Deputs "objList:$objList"                 
-                            set listStack [ list ]
-                            set listStackLink [ list ]
-
-                            foreach single $objList {
-                                Deputs "stream:$hStream"
-                                set stackList [ ixNet getList $hStream stack ]
-                                Deputs "Stack list:$stackList"
-                                set appendHeader [ lindex $stackList [expr $stackLevel - 1] ]
-                                Deputs "appendHeader:$appendHeader"
-                                Deputs "stack to be added: $proStack"
-                                ixNet exec append $appendHeader $proStack
-                                set stack [lindex [ ixNet getList $hStream stack ] $stackLevel]
-                                Deputs "stack:$stack"
-                                lappend  listStack $stack
-                                incr stackLevel
-
-                                Deputs "stackLevel:$stackLevel"
-                            }
-                        }
-                        MOD {
-                            set index 0
-                            Deputs "protocol:$protocol"
-                            foreach pro [ ixNet getList $hStream stack ] {
-                                Deputs "pro:$pro"
-
-                                if { [ regexp -nocase $protocol $pro ] } {
-                                    if { [ regexp -nocase "${pro}\[a-z\]+" $stack ] == 0 } {
-                                        if { $pdu_index > 1 } {
-                                            incr pdu_index -1
-                                            continue
-                                        }
-                                        break
-                                    }
-                                }
-                                incr index
-                            }
-                            set stack $pro
-                        }
-                        default { }
-                    }
-                    ixNet commit
-                    catch {
-                       set stack [ ixNet remapIds $stack ]
-                    }
-
-                    Deputs "Stack:$stack"
-                    set appendHeader $stack
-                    Deputs "Stack list:[ ixNet getList $hStream stack ]"
-  
-                    Deputs Step43
-                    # Modify fields
-                    # -- modify eth src mac
-                    if { [ $name isa EtherHdr ] } {
-                        if { [ $name cget -noMac ] } {
-                            if { $default_mac != "" } {
-                                Deputs "config default mac..."
-                                $name config -src $default_mac
-                            }
-                        }
-                    }
-                    # -- modify ip src ip
-                    if { [ $name isa Ipv4Hdr ] } {
-                        if { [ $name cget -noIp ] } {
-                            if { $default_ip != "" } {
-                                Deputs "config default ip..."
-                                $name config -src $default_ip
-                            }
-                        }
-                    }
-                    # -- modify arp src mac and src ip
-                    # IxDebugOn
-                    if { [ $name isa ArpHdr ] } {
-                        Deputs "arp header"
-                        if { [ $name cget -noMac ] } {
-                            Deputs "config default mac..."
-                            $name config -sender_mac_addr $default_mac 
-                        }
-                        if { [ $name cget -noIp ] } {
-                            Deputs "config default ip..."
-                            $name config -sender_ipv4_addr $default_ip
-                       }
-                    }
-                    # IxDebugOff
-   
-                    if { $needMod == 0 } {
-                        Deputs Step45
-                        incr index
-                        continue
-                    }
-
-                    # IxDebugOn
-                    if { $type == "APPLIST" } {
-                        Deputs "name:$name"
-                        set objList [ $name cget -objList ]
-                        set linkToType [ $name cget -linkToType ]
-                        eval set objList [ set objList ]
-                        Deputs "objList:$objList"
-                        
-                        foreach single $objList stack $listStack {
-                            Deputs "single header name: $single"                
-                            set single [ GetObject $single ]
-                            Deputs "single header obj: $single"                    
-                            set fieldModes [ $single cget -fieldModes ]
-                            set fields [ $single cget -fields ]
-                            set fieldConfigs [ $single cget -fieldConfigs ]
-                            set optional [ $single cget -optionals ]
-                            set autos [ $single cget -autos ]
-                            set meshes [ $single cget -meshes ]
-                            # Deputs "PDU:\n\tModes:$fieldModes\n\tFields:$fields\n\tConfigs:$fieldConfigs\n\tOptional:$optional\n\tAutos:$autos"
-                            foreach mode $fieldModes field $fields conf $fieldConfigs\
-                            opt $optional auto $autos mesh $meshes {
-                                Deputs "mode $fieldModes field $fields conf $fieldConfigs opt $optional auto $autos"
-                                # Deputs "stack:$stack"
-                                # Deputs "field:$field"
-                                set obj [ GetField $stack $field ]
-                                Deputs "Field object: $obj"
-
-                                # Deputs "optional $opt"
-                                if { [ info exists opt ] } {
-
-                                   if { $opt == "" } { continue }
-                                   if { $opt } {
-                                        Deputs Step46								
-                                        ixNet setA $obj -activeFieldChoice True
-                                        ixNet commit
-                                        continue
-                                   }
-                                } else {
-                                    continue
-                                }
-                                if { [ info exists auto ] } {
-                                    Deputs Step47
-
-                                    if { $auto == "" } { continue }
-                                    if { $auto } {
-                                        Deputs Step48
-                                        ixNet setA $obj -auto True
-                                        continue
-                                    } else {
-                                        Deputs Step49
-                                        Deputs "obj:$obj"
-                                        ixNet setA $obj -auto False
-                                    }
-                                } else {
-                                    continue
-                                }
-                                if { [ info exists mesh ] } {
-                                    if { $mesh == "" } { continue }
-                                    if { $mesh } {
-                                        Deputs "Mesh the field:$obj"								
-
-
-                                        ixNet setA $obj -fullMesh True
-                                        ixNet commit
-                                        continue
-                                    } else {
-                                        ixNet setA $obj -fullMesh False
-                                        ixNet commit
-                                    }
-                                }
-                                if { [ info exists mode ] == 0 || [ info exists field ] == 0 ||\
-                                    [ info exists conf ] == 0 } {
-                                    Deputs "continue"
-                                    continue
-                                }
-                                Deputs "Mode:$mode"
-                                switch -exact $mode {
-                                    Fixed {
-                                        Deputs "Fixed:$protocol\t$field\t$conf"
-                                        ixNet setMultiAttrs $obj \
-                                            -valueType singleValue \
-                                            -singleValue $conf
-                                    }
-                                    List {
-                                        Deputs "List:$protocol\t$field\t$conf"
-                                        ixNet setMultiAttrs $obj \
-                                            -valueType valueList \
-                                            -valueList $conf
-                                    }
-                                    Segment {
-                                    }
-                                    Reserved {
-                                        Deputs "Reserved...continue"
-                                        continue
-                                    }
-                                    Incrementing -
-                                    Decrementing {
-                                        set mode [string range $mode 0 8]
-                                        set mode [string tolower $mode]
-                                        Deputs "Mode:$mode\tProtocol:$protocol\tConfig:$conf"
-                                        set start [ eval lindex $conf 1]
-                                        set count [ eval lindex $conf 2]
-                                        set step  [ eval lindex $conf 3]
-                                        Deputs "start:$start count:$count step:$step mode:$mode obj:$obj"
-                                        ixNet setMultiAttrs $obj \
-                                            -valueType $mode \
-                                            -countValue $count \
-                                            -stepValue $step \
-                                            -startValue $start
-                                    }
-                                    Commit {
-                                        ixNet setMultiAttrs $obj \
-                                            -valueType singleValue \
-                                            -singleValue $conf
-                                        ixNet commit
-                                    }
-                                 }
-                            }
-                            incr index
-                        }
-                    } else {
-                        set fieldModes [ $name cget -fieldModes ]
-                        set fields [ $name cget -fields ]
-                        set fieldConfigs [ $name cget -fieldConfigs ]
-                        set optional [ $name cget -optionals ]
-                        set autos [ $name cget -autos ]
-                        set meshes [ $name cget -meshes ]
-                        Deputs "PDU:\n\tModes:$fieldModes\n\tFields:$fields\n\tConfigs:$fieldConfigs\n\tOptional:$optional\n\tAutos:$autos\n\tMeshes:$meshes"
-                        foreach mode $fieldModes field $fields conf $fieldConfigs\
-                        opt $optional auto $autos mesh $meshes {
-                            Deputs "stack:$stack"
-                            Deputs "field:$field"
-                            Deputs "mesh:$mesh"
-                            set obj [ GetField $stack $field ]
-                            Deputs "********Field object: $obj"
-            
-                            if { [ info exists opt ] } {
-                                if { $opt == "" } { continue }
-                                if { $opt } {
-
-                                    ixNet setA $obj -activeFieldChoice True
-                                    ixNet commit
-                                    continue
-                                }
-                            } else {
-                                continue
-                            }
-                            if { [ info exists auto ] } {
-                                Deputs Step47
-
-                                if { $auto == "" } { continue }
-                                if { $auto } {
-                                    Deputs Step48
-                                    ixNet setA $obj -auto True
-                                    ixNet commit
-                                    continue
-                                } else {
-                                    Deputs Step49
-                                    Deputs "obj:$obj"
-                                    ixNet setA $obj -auto False
-                                    ixNet commit
-                               }
-                            } else {
-                                continue
-                            }
-                            if { [ info exists mesh ] } {
-                                if { $mesh == "" } { continue }
-                                if { $mesh } {
-                                    Deputs "Mesh the field:$obj"
-                                    Deputs "fullMesh:[ixNet getA $obj -fullMesh ]"			
-                                    ixNet setA $obj -fullMesh True
-                                    ixNet commit
-
-                                    Deputs "fullMesh:[ixNet getA $obj -fullMesh ]"
-                                }
-                            }
-                            if { [ info exists mode ] == 0 || [ info exists field ] == 0 ||\
-                               [ info exists conf ] == 0 } {
-                                Deputs "continue"
-                                continue
-                            }
-                            Deputs "Mode:$mode"
-                            switch -exact $mode {
-                                Fixed {
-                                    Deputs "Fixed:$protocol\t$field\t$conf"
-                                    ixNet setMultiAttrs $obj \
-                                        -valueType singleValue \
-                                        -singleValue $conf
-                                    ixNet commit
-                                }
-                                List {
-                                    Deputs "List:$protocol\t$field\t$conf [ llength $conf ]"
-                                    if { [ llength $conf ] == 1 } {
-                                        eval ixNet setMultiAttrs $obj \
-                                            -valueType valueList \
-                                            -valueList $conf
-                                    } else {
-                                        ixNet setMultiAttrs $obj \
-                                            -valueType valueList \
-                                            -valueList $conf
-                                    }
-                                    ixNet commit
-                                }
-                                Segment {
-                                }
-                                Reserved {
-                                    Deputs "Reserved...continue"
-                                    continue
-                                }
-                                Incrementing -
-                                Decrementing {
-                                    set mode [string range $mode 0 8]
-                                    set mode [string tolower $mode]
-                                    Deputs "Mode:$mode\tProtocol:$protocol\tConfig:$conf"
-                                    set start [ eval lindex $conf 1]
-                                    set count [ eval lindex $conf 2]
-                                    set step  [ eval lindex $conf 3]
-                                    Deputs "start:$start count:$count step:$step obj:$obj"
-                                    ixNet setMultiAttrs $obj \
-                                       -valueType $mode \
-                                       -countValue $count \
-                                       -stepValue $step \
-                                       -startValue $start
-                                    ixNet commit
-                                }
-                                Commit {
-                                    ixNet setMultiAttrs $obj \
-                                       -valueType singleValue \
-                                       -singleValue $conf
-                                    ixNet commit
-                                }
-                            }
-                        }
-                        incr index
-                    }
-                    catch {
-                        set listStackLink [ ixNet getList $hStream stackLink ]
-                        Deputs "@@@@@@@@@@5Stack Link list:$listStackLink"
-                        
-                        # Handle stackLink options
-                        if { [ $name isa VlanHdr ] } {
-                            SetStackLink $listStackLink "vlan" $linkToType
-                        } elseif { [ $name isa MplsHdr ] } {
-                            SetStackLink $listStackLink "mpls" $linkToType 
-                        }
-                    }
-                    # IxDebugOff
-                }
-            } else {
-                set pdu [ List2Str $pdu ]
-                if { [ IsHex $pdu ] == 0 } {
-                   error "$errNumber(2) key: pdu(pdu is not hex or object)"
-                } else {
-                    #-- Create quick stream
-                    Deputs "Traffic type:custom stream IPv4 raw pdu"
-                    #-- redundency
-                    #CreateRawStream 
-                    #-- append custom stack
-                    #default stack list will be ethernet and fcs
-                    Deputs Step50
-                    foreach stream $highLevelStream {
-                        set stackList [ ixNet getList $stream stack ]
-                        Deputs "Stack list:$stackList"
-                        ixNet exec append [ lindex $stackList 0 ] [ GetProtocolTemp custom ]
-                        #-- remove the ethernet header will remove fcs as well
-                        Deputs "remove stack..."
-                        ixNet exec remove [ lindex $stackList 0 ]
-                        # # # #-- split the ethernet value
-                        # # # set mac [ string range $pdu 0 11 ]
-                        # # # set da "[ string range $mac 0 1 ]:[ string range $mac 2 3 ]:[ string range $mac 4 5 ]:[ string range $mac 6 7 ]:[ string range $mac 8 9 ]:[ string range $mac 10 11 ]"
-                        # # # set mac [ string range $pdu 12 23 ]
-                        # # # set sa "[ string range $mac 0 1 ]:[ string range $mac 2 3 ]:[ string range $mac 4 5 ]:[ string range $mac 6 7 ]:[ string range $mac 8 9 ]:[ string range $mac 10 11 ]"
-                        # # # # set sa [ string range $pdu 12 23 ]
-                        # # # set et [ string range $pdu 24 27 ]
-                        # # # set pdu [ string range $pdu 28 end ]
-                        set pduLen [expr [string length $pdu] * 4]
-                        Deputs "pdu len:$pduLen"
-                        # # # #-- modify the eth stack field
-                        # # # set ethStack [ lindex [ ixNet getList $stream stack ] 0 ]
-                        # # # set fieldList [ ixNet getL $ethStack field ]
-                        # # # Deputs "field list:$fieldList"
-                        # # # Deputs "da:$da sa:$sa et:$et"
-                        # # # ixNet setA [lindex $fieldList 0] -singleValue 0x$da
-                        # # # ixNet setA [lindex $fieldList 1] -singleValue 0x$sa
-                        # # # ixNet setA [lindex $fieldList 2] -auto false
-                        # # # ixNet setA [lindex $fieldList 2] -singleValue 0x$et
-                        # # # ixNet commit
-
-                        #-- modify the custom stack field
-                        set customStack [ lindex [ ixNet getList $stream stack ] 0 ]
-                        # set customStack [ lindex [ ixNet getList $stream stack ] 1 ]
-                        Deputs "custom stack:$customStack"
-                        set fieldList [ ixNet getList $customStack field ]
-                        Deputs "pdu len:$pduLen pdu:$pdu"
-                        ixNet setA [ lindex $fieldList 0 ] -singleValue $pduLen
-                        ixNet commit
-
-                        if { [ regexp -nocase {^0x} $value ] } {
-                            Deputs Step51
-
-                            ixNet setA [ lindex $fieldList 1 ] -singleValue $pdu
-                        } else {
-                            Deputs Step53
-
-
-                            ixNet setA [ lindex $fieldList 1 ] -singleValue 0x$pdu
-                        }
-                    }
-
-
-                    Deputs Step60
-                    ixNet commit
-                    Deputs Step70
-                }
-            }
+				set listStackLink [ ixNet getList $hStream stackLink ]
+				Deputs "@@@@@@@@@@5Stack Link list:$listStackLink"
+				
+				# Handle stackLink options
+				if { [ $name isa VlanHdr ] } {
+					SetStackLink $listStackLink "vlan" $linkToType
+				} elseif { [ $name isa MplsHdr ] } {
+					SetStackLink $listStackLink "mpls" $linkToType 
+				}
+				 # IxDebugOff
+				}
+		   } else {
+				set pdu [ List2Str $pdu ]
+			  if { [ IsHex $pdu ] == 0 } {
+				 error "$errNumber(2) key: pdu(pdu is not hex or object)"
+			  } else {
+				 #-- Create quick stream
+	Deputs "Traffic type:custom stream IPv4 raw pdu"
+			  #-- redundency
+				 #CreateRawStream 
+				 #-- append custom stack
+				 #default stack list will be ethernet and fcs
+	Deputs Step50
+			foreach stream $highLevelStream {
+				 set stackList [ ixNet getList $stream stack ]
+	Deputs "Stack list:$stackList"
+				 ixNet exec append [ lindex $stackList 0 ] [ GetProtocolTemp custom ]
+				 #-- remove the ethernet header will remove fcs as well
+	Deputs "remove stack..."
+				 ixNet exec remove [ lindex $stackList 0 ]
+					# # # #-- split the ethernet value
+					# # # set mac [ string range $pdu 0 11 ]
+					# # # set da "[ string range $mac 0 1 ]:[ string range $mac 2 3 ]:[ string range $mac 4 5 ]:[ string range $mac 6 7 ]:[ string range $mac 8 9 ]:[ string range $mac 10 11 ]"
+					# # # set mac [ string range $pdu 12 23 ]
+					# # # set sa "[ string range $mac 0 1 ]:[ string range $mac 2 3 ]:[ string range $mac 4 5 ]:[ string range $mac 6 7 ]:[ string range $mac 8 9 ]:[ string range $mac 10 11 ]"
+					# # # # set sa [ string range $pdu 12 23 ]
+					# # # set et [ string range $pdu 24 27 ]
+					# # # set pdu [ string range $pdu 28 end ]
+				 set pduLen [expr [string length $pdu] * 4]
+	Deputs "pdu len:$pduLen"
+					# # # #-- modify the eth stack field
+					# # # set ethStack [ lindex [ ixNet getList $stream stack ] 0 ]
+					# # # set fieldList [ ixNet getL $ethStack field ]
+	# # # Deputs "field list:$fieldList"
+	# # # Deputs "da:$da sa:$sa et:$et"
+					# # # ixNet setA [lindex $fieldList 0] -singleValue 0x$da
+					# # # ixNet setA [lindex $fieldList 1] -singleValue 0x$sa
+					# # # ixNet setA [lindex $fieldList 2] -auto false
+					# # # ixNet setA [lindex $fieldList 2] -singleValue 0x$et
+					# # # ixNet commit
+				 #-- modify the custom stack field
+				 set customStack [ lindex [ ixNet getList $stream stack ] 0 ]
+				 # set customStack [ lindex [ ixNet getList $stream stack ] 1 ]
+	Deputs "custom stack:$customStack"
+				 set fieldList [ ixNet getList $customStack field ]
+	Deputs "pdu len:$pduLen pdu:$pdu"
+				 ixNet setA [ lindex $fieldList 0 ] -singleValue $pduLen
+			  ixNet commit
+				if { [ regexp -nocase {^0x} $value ] } {
+	Deputs Step51
+					 ixNet setA [ lindex $fieldList 1 ] -singleValue $pdu
+				} else {
+	Deputs Step53
+					 ixNet setA [ lindex $fieldList 1 ] -singleValue 0x$pdu
+				}
+			}
+	Deputs Step60
+				 ixNet commit
+	Deputs Step70
+			  }
+		   }
 		}
    } else {
         Deputs Step120	
@@ -4008,6 +4002,7 @@ body Ipv4Hdr::config { args } {
 			-src {
 				if { [ llength $value ] > 1000 } {
 					set sa $value
+					set  noIp	0
 				} else {
 					foreach addr $value {
 						 if { ![ IsIPv4Address $addr ] } {
@@ -4019,6 +4014,7 @@ body Ipv4Hdr::config { args } {
 						}
 					}
 					set sa $value
+					set  noIp	0
 				}
                 set noIp 0
 			}
@@ -4296,43 +4292,36 @@ Deputs "qosval:$qosval"
     #-----Config IP Address-----
     Deputs Step100
     if { [ info exists sa ] } {
-        Deputs Step110
-        if { [ info exists samode ] } {
-           switch -exact $samode {
-             Fixed -
-             List {
-
-
-                 AddFieldMode $samode
-                 AddField srcIp
-                 AddFieldConfig $sa
-              }
-
-              Decrementing -
-              Incrementing {
-                 if { [ info exists sarepeat ] && [ info exists saStep ] } {
-                     Deputs "sarepeat:$sarepeat"					
-                     Deputs "saStep:$saStep"
-                     Deputs "saStep Ip validation...[ IsIPv4Address $saStep ]..."
-                     if { [ IsIPv4Address $saStep ] == "0" } {
-                        set saoffset [ expr 32 - $saoffset ]
-                         Deputs "saoffset:$saoffset"							
-                        set saStep [GetIpStep $saoffset $saStep]
-                     }
-
-                     Deputs "saStep:$saStep"
-                     AddFieldMode $samode
-                     AddField srcIp
-                     AddFieldConfig [ list $saoffset $sa $sarepeat $saStep ]
-                 } else {
-
-                     error "$errNumber(2) key:src_num/src_step"
-                 }
-              }
-           }
-
-
-
+Deputs Step110
+	   if { [ info exists samode ] } {
+		  switch -exact $samode {
+			 Fixed -
+			 Random -
+			List {
+				AddFieldMode $samode
+				AddField srcIp
+				AddFieldConfig $sa
+			 }
+			 Decrementing -
+			 Incrementing {
+				if { [ info exists sarepeat ] && [ info exists saStep ] } {
+Deputs "sarepeat:$sarepeat"					
+Deputs "saStep:$saStep"
+Deputs "saStep Ip validation...[ IsIPv4Address $saStep ]..."
+				    if { [ IsIPv4Address $saStep ] == "0" } {
+					   set saoffset [ expr 32 - $saoffset ]
+Deputs "saoffset:$saoffset"							
+					   set saStep [GetIpStep $saoffset $saStep]
+				    }
+Deputs "saStep:$saStep"
+				    AddFieldMode $samode
+				    AddField srcIp
+				    AddFieldConfig [ list $saoffset $sa $sarepeat $saStep ]
+				} else {
+				    error "$errNumber(2) key:src_num/src_step"
+				}
+			 }
+		  }
 	   } 
     }
     Deputs Step200
@@ -4340,6 +4329,7 @@ Deputs "qosval:$qosval"
 	   if { [ info exists damode ] } {
 		  switch -exact $damode {
 			 Fixed -
+			 Random -
 			List {
 				AddFieldMode $damode
 				AddField dstIp
@@ -6092,6 +6082,15 @@ Deputs "Pro: $pro"
     }
     SetProtocol custom
 	if { [ info exists pattern ] } {
+	    set len [ string length $pattern ]
+		if { $len >1 } {
+		    set temP ""
+		    foreach Element $pattern {
+			    set temP ${temP}${Element}
+			}
+			set pattern $temP
+		}
+	    
 		if { [ string first 0x $pattern  ] >= 0 } {
 			string replace $pattern 0 1
 		}

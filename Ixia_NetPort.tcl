@@ -500,6 +500,14 @@ Deputs "Args:$args "
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
+            -fec_enable {
+                set trans [ BoolTrans $value ]
+                if { $trans == "1" || $trans == "0" } {
+                    set fec_enable $trans
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
             -media {
                 set value [ string tolower $value ]
                 if { [ lsearch -exact $EMedia $value ] >= 0 } {
@@ -806,7 +814,6 @@ ixNet commit
     ixNet commit    
     
     if { [ info exists type ] } {
-		set flagIntType 0
         switch $type  {
             eth {
                 set ix_type ethernet
@@ -820,14 +827,24 @@ ixNet commit
             }
             10g_wan {
                 set ix_type tenGigWan
-				set flagIntType 1
+            }
+            100g_lan {
+               set ix_type tenFortyHundredGigLan 
             }
         }
         ixNet setA $handle -type $ix_type
-		if { $flagIntType } {
+		if { $ix_type == "tenGigWan" } {
 			ixNet setA $handle/l1Config/tenGigWan -interfaceType wanSdh
-            ixNet commit
 		}
+        ixNet commit
+    }
+    
+    if { [ info exists fec_enable ] } {
+        catch {
+            ixNet setA $handle/l1Config/tenFortyHundredGigLan -enableRsFec $fec_enable
+            ixNet setA $handle/l1Config/tenFortyHundredGigLan -ieeeL1Defaults $fec_enable
+            ixNet commit
+        }
     }
     
     if { [ info exists media ] } {

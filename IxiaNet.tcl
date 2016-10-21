@@ -374,13 +374,13 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
                 loadconfig $filename
 				after 15000
                 
-                foreach pname $portnamelist pobj $portlist {
-                    Port $pname NULL NULL $pobj
-                }
-                
-                foreach tname $trafficnamelist tobj $trafficlist tport $portnamelist {
-                    Traffic $tname $tport $tobj
-                }
+                #foreach pname $portnamelist pobj $portlist {
+                #    Port $pname NULL NULL $pobj
+                #}
+                #
+                #foreach tname $trafficnamelist tobj $trafficlist tport $portnamelist {
+                #    Traffic $tname $tport $tobj
+                #}
 				
 				return
                 

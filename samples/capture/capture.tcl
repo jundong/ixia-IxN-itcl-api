@@ -21,5 +21,5 @@ Tester::start_traffic
 after 30000
 Tester::stop_traffic
 
-@capture_port1 stop
+@capture_port1 stop.:<
 @capture_port1 save -result_dir {C:\Tmp} -filters "-Y ip.version==4 -e ip.version"

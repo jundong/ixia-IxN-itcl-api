@@ -399,10 +399,10 @@ Deputs "portList:$portList"
             break
         }
     }
-Deputs "findPort:$findPort"
+    Deputs "findPort:$findPort"
     if { $findPort } {
-Deputs "real port:	$chassis/card:$card/port:$port"
-		ixNet exec clearOwnership $chassis/card:$card/port:$port
+        Deputs "real port:	$chassis/card:$card/port:$port"
+		#ixNet exec clearOwnership $chassis/card:$card/port:$port
         return $chassis/card:$card/port:$port
     } else {
         return [ixNet getNull]

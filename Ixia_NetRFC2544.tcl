@@ -121,7 +121,8 @@ body Rfc2544::config { args } {
 	set no_run 0
 	set resultLevel 1
     set regenerate "false"
-	
+	set force false
+    
 	set frame_len_step 64
 	set frame_len_max  1518
 	set binary_mode perPort
@@ -273,6 +274,14 @@ Deputs "frame len under test:$frame_len"
 			}
 			-pdfreportfile {
                 	set pdfreportfile $value
+        	}
+        	-force {
+				set trans [ BoolTrans $value ]
+				if { $trans == "1" || $trans == "0" } {
+					set force $value
+				} else {
+					error "$errNumber(1) key:$key value:$value"
+				}
         	}
 			-resultlvl {
 Deputs "set result level:$value"			
@@ -682,7 +691,11 @@ Deputs "path:$path"
 Deputs "path:$path"					
 
 		if { [ catch {
-			file copy $path $resultdir
+            if { !$force } {
+                file copy $path $resultdir
+            } else {
+                file copy -force $path $resultdir
+            }
 		} err ] } {
 Deputs "err:$err"
 		}

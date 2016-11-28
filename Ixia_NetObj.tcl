@@ -423,7 +423,6 @@ Deputs "outer_vlan_step:$outer_vlan_step"
 }
 
 class RouterEmulationObject {
-	
 	inherit EmulationObject
 	#-- handle/interface
 	public variable interface
@@ -437,21 +436,21 @@ class RouterEmulationObject {
 	
 	method start {} {
 		set tag "body RouterEmulationObject::start [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		ixNet exec start $hPort/protocols/$protocol
 		return [ GetStandardReturnHeader ]
 	}
 	
 	method stop {} {
 		set tag "body BgpSession::start [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		ixNet exec stop $hPort/protocols/$protocol
 		return [ GetStandardReturnHeader ]
 	}
 	
 	method flapping_route { args } {
 		set tag "body RouterEmulationObject::flapping_route [info script]"
-	Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		
 		global loginInfo
 		set a2w 10
@@ -503,17 +502,17 @@ Deputs "----- TAG: $tag -----"
 				lappend hFlapList $hFlap
 			}
 			
-Deputs "hFlapList:$hFlapList"
+            Deputs "hFlapList:$hFlapList"
 			set id [ thread::create { 
 				proc runFlap { hFlapList } {
 					while { 1 } {
-puts "withdraw..."					
+                        puts "withdraw..."					
 						foreach handle $hFlapList {
 							ixNet setA $handle -enabled False
 						}
 						ixNet commit
 						after $w2a
-puts "advertise..."
+                        puts "advertise..."
 						foreach handle $hFlapList {
 							ixNet setA $handle -enabled True
 						}
@@ -530,7 +529,7 @@ puts "advertise..."
 				}
 				thread::wait
 			} ]		
-Deputs "[ thread::names ]"			
+            Deputs "[ thread::names ]"			
 			lappend flappingProcessId $id
 			
 			global currDir
@@ -538,32 +537,32 @@ Deputs "[ thread::names ]"
 			global serverPort
 			global ixN_tcl_v
 			
-Deputs "version: $ixN_tcl_v"			
-Deputs "server port:$serverPort"			
-Deputs "server:$server"			
+            Deputs "version: $ixN_tcl_v"			
+            Deputs "server port:$serverPort"			
+            Deputs "server:$server"			
 
 			set tclLib [file dirname [info script]]/IxNetwork
-Deputs "tcl lib:$tclLib"
+            Deputs "tcl lib:$tclLib"
 
 			set result \
 			[ thread::send $id \
 			[ list lappend auto_path $tclLib ] ]
-Deputs "result:$result"
+            Deputs "result:$result"
 			
 			set result \
 			[ thread::send $id \
 			[ list source "$currDir/ixianet.tcl" ] ]
-Deputs "result:$result"
+            Deputs "result:$result"
 			
 			set result \
 			[ thread::send $id \
 			[ list init $server $serverPort $ixN_tcl_v ] ]
-Deputs "result:$result"
+            Deputs "result:$result"
 
 			set result \
 			[ thread::send -async $id \
 			[ list runFlap $hFlapList ] ]
-Deputs "result:$result"
+            Deputs "result:$result"
 
 		}	
 		return [ GetStandardReturnHeader ]
@@ -571,7 +570,7 @@ Deputs "result:$result"
 	}
 	method flappingRouteForTimes { $routeBlockList $a2w $w2a $times } {
 		set tag "body RouterEmulationObject::flappingRouteAsync [info script]"
-	Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		
 		for { set index 0 } { $index < $times } { incr index } {
 			foreach rb $routeBlockList {
@@ -590,7 +589,7 @@ Deputs "result:$result"
 	}
 	method stop_flapping_route {} {
 		set tag "body RouterEmulationObject::flapping_route [info script]"
-	Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
     	foreach pid $flappingProcessId {
 			thread::release $pid
 		}

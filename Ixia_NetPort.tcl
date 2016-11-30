@@ -190,14 +190,14 @@ class Port {
 
 body Port::constructor { { hw_id NULL } { medium NULL } { hPort NULL } } {
     set tag "body Port::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-# -- Check for Multiuser Login
+    # -- Check for Multiuser Login
 	set portObjList [ GetAllPortObj ]
 	if { [ llength $portObjList ] == 0 } {
-Deputs "All port obj:[GetAllPortObj]"
+        Deputs "All port obj:[GetAllPortObj]"
 		set strangePort [ CheckStrangePort ]
-Deputs "Strange port:$strangePort"		
+        Deputs "Strange port:$strangePort"		
 		if { $strangePort == 0 } {
 			global loginInfo
 			Login $loginInfo
@@ -205,10 +205,10 @@ Deputs "Strange port:$strangePort"
 	}
 	set handle ""
 
-Deputs Step10
+    Deputs Step10
     if { $hw_id != "NULL" } {
-Deputs "hw_id:$hw_id"	
-# -- check hardware
+        Deputs "hw_id:$hw_id"	
+        # -- check hardware
 		set locationInfo [ split $hw_id "/" ]
 		set chassis     [ lindex $locationInfo 0 ]
 		set ModuleNo    [ lindex $locationInfo 1 ]
@@ -216,7 +216,7 @@ Deputs "hw_id:$hw_id"
 		if { [ GetRealPort $chassis $ModuleNo $PortNo ] == [ ixNet getNull ] } {
 			error "Port hardware not found: $hw_id"
 		}
-Deputs Step20	
+        Deputs Step20	
 		catch {
 			if { $medium != "NULL" } {
 				set handle [ Connect $hw_id $medium 1 ]
@@ -225,7 +225,7 @@ Deputs Step20
 			}
 		}
 		set location $hw_id
-Deputs "location:$location" 
+        Deputs "location:$location" 
     } else {
         if { $hPort != "NULL" } {
 			set chassis ""
@@ -234,13 +234,20 @@ Deputs "location:$location"
 
 			set handle $hPort
 			set connectionInfo [ ixNet getA $handle -connectionInfo ]
-		Deputs "connectionInfo :$connectionInfo"
+            Deputs "connectionInfo :$connectionInfo"
 			regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-		Deputs "chas:$chassis card:$card port$port"
+            Deputs "chas:$chassis card:$card port$port"
 			set location ${chassis}/${card}/${port}
 			ixNet setA $handle -name $this
 			ixNet commit
-		}   
+		} else {
+            Deputs "offline create"
+            set root [ixNet getRoot]
+            set handle [ixNet add $root vport]
+            ixNet setA $handle -name $this
+            ixNet commit
+            set handle [ixNet remapIds $handle]
+        }  
     }
 	set intf_mac 	 ""
 	set intf_ipv4	 ""

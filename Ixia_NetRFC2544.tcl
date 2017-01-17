@@ -129,6 +129,7 @@ body Rfc2544::config { args } {
     set EPayloadType [ list CYCBYTE INCRBYTE DECRBYTE PRBS USERDEFINE ]
     set EFillType   [ list constant incr decr prbs random ]
     #set payload_type PRBS wangming
+	set enable_min_frame_size True
     set fill_type random
 	set root [ixNet getRoot]
     
@@ -149,6 +150,7 @@ body Rfc2544::config { args } {
                 ixNet commit
             }
             -enable_min_frame_size {
+				set enable_min_frame_size $value
 				ixNet setA $root/traffic \
 				-enableMinFrameSize $value
 				ixNet commit
@@ -617,7 +619,7 @@ Deputs "Step120"
 		-binarySearchType $binary_mode \
 		-forceRegenerate $regenerate \
 		-rfc2889ordering val2889Ordering \
-		-enableMinFrameSize True 
+		-enableMinFrameSize $enable_min_frame_size 
 		#wangming
 		#-reportSequenceError False
 	ixNet setA $handle/learnFrames \

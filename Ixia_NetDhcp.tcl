@@ -3252,7 +3252,228 @@ Deputs "----- TAG: $tag -----"
 	}
     return [GetStandardReturnHeader]
 }
+class IpHost {
+    inherit ProtocolStackObject
+	public variable hIp
+    
+    constructor { port } { chain $port } {}
+    method reborn {} {
+	    set tag "body IpHost::reborn [info script]"
+	    Deputs "----- TAG: $tag -----"
+		    
+	    chain 
+	    	    	
+	    set sg_ethernet $stack
+	    #-- add ipoe endpoint stack
+	    set sg_ipEndpoint [ixNet add $sg_ethernet ipEndpoint]
+	    ixNet setA $sg_ipEndpoint -name $this
+	    ixNet commit
+	    set sg_ipEndpoint [lindex [ixNet remapIds $sg_ipEndpoint] 0]
+	    set hIp $sg_ipEndpoint
+	
+	    #-- add range
+	    set sg_range [ixNet add $sg_ipEndpoint range]
+	    ixNet setMultiAttrs $sg_range/macRange \
+	     -enabled True 
+	
+	    ixNet setMultiAttrs $sg_range/vlanRange \
+	     -enabled False \
+	
+	    ixNet setMultiAttrs $sg_range/ipRange \
+	     -enabled True \
+	     -count 1
+	
+	    ixNet commit
+	    set sg_range [ixNet remapIds $sg_range]
+	    set handle $sg_range
+		ixNet commit
+		
+		set sg_Options [ixNet add $hPort/protocolStack options]
+		ixNet setMultiAttrs $sg_Options\
+            -routerSolicitationDelay 1 \
+            -routerSolicitationInterval 3 \
+            -routerSolicitations 2 \
+            -retransTime 1000 \
+            -dadTransmits 1 \
+            -dadEnabled True \
+            -ipv4RetransTime 3000 \
+            -ipv4McastSolicit 4
+			
+		ixNet commit
+    }
+	
+	method config { args } {}
+	method start {} {}
+    method stop {} {}
+	method abort {} {}
+}
+body IpHost::config { args } {
+    global errorInfo
+    global errNumber
+    set tag "body IpHost::config [info script]"
+    Deputs "----- TAG: $tag -----"
+    #disable the interface
+    eval { chain } $args
+	set EgwIncrMode [list perSubnet perInterface]
+    #param collection
+    Deputs "Args:$args "
+    ixNet setA $handle/ipRange -ipType IPv4
+    ixNet commit
+    foreach { key value } $args {
+        set key [string tolower $key]
+        switch -exact -- $key {
+            -count {
+                if { [ string is integer $value ] } {
+                    ixNet setA $handle/ipRange -count $value
+                    ixNet commit
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
+            -dup_addr_detection {
+			    if {$value == "yes"} {
+                    ixNet setA $hPort/protocolStack/options \
+                        -dadEnabled "True"
+                    ixNet commit 
+				} else {
+                    ixNet setA $hPort/protocolStack/options \
+                        -dadEnabled "False"
+                    ixNet commit 
+				}
+            }
+            -dup_addr_detect_transmits {
+				ixNet setA $hPort/protocolStack/options \
+                    -dadTransmits $value
+                ixNet commit
+            }
+			-retrans_timer {
+				ixNet setA $hPort/protocolStack/options \
+                    -retransTime $value
+                ixNet commit
+			}
+			-router_solicitation_retrans_timer {
+			    if {[ string is integer $value ] } {
+				    set timer_value [expr $value/1000]
+                    ixNet setA $hPort/protocolStack/options \
+                        -routerSolicitationInterval $timer_value
+                    ixNet commit
+				} else {
+				     error "$errNumber(1) key:$key value:$value"
+				}
+			}
+			-router_solicitation_retries {
+                ixNet setA $hPort/protocolStack/options \
+                    -routerSolicitations $value
+                ixNet commit
+			}
+			-ipv4_addr {
+				ixNet setA $handle/ipRange -ipAddress $value
+                ixNet commit
+            }
+            -ipv4_addr_step {
+				ixNet setA $handle/ipRange -incrementBy $value
+                ixNet commit
+            }
+			-ipv4_mask -
+			-ipv4_prefix_len {
+				ixNet setA $handle/ipRange -prefix $value
+                ixNet commit
+			}
+			-ipv4_gw_addr {
+				ixNet setA $handle/ipRange -gatewayAddress $value
+                ixNet commit
+			}
+			-ipv4_gw_addr_step {
+				ixNet setA $handle/ipRange -gatewayIncrement $value
+                ixNet commit
+			}
+			-ipv4_gw_incr_mode {
+			    if {$value == "perSubnet" || $value == "perInterface"} {
+				    ixNet setA $handle/ipRange -gatewayIncrementMode $value
+                    ixNet commit
+				} else {
+				     error "$errNumber(1) key:$key value:$value"
+				}
+			}
+			-mss {
+			    ixNet setA $handle/ipRange -mss $value
+                ixNet commit
+			}
+			-auto_mac_generation {
+			    set auto_mac_generation $value
+                ixNet commit
+			}
+            -mac {
+			    ixNet setA $handle/macRange -mac $value
+                ixNet commit
+            }
+            -mac_step {
+			    ixNet setA $handle/macRange -incrementBy $value
+                ixNet commit
+            }
+            -vlan_id {
+                ixNet setMultiAttrs $handle/vlanRange \
+                    -enabled True \
+                    -firstId $value
+                ixNet commit
+            }
+            -vlan_id_step {
+                ixNet setMultiAttrs $handle/vlanRange \
+                    -enabled True \
+                    -increment $value
+                ixNet commit
+            }
+            -vlan_priority {
+                ixNet setMultiAttrs $handle/vlanRange \
+                    -enabled True \
+                    -priority $value
+                ixNet commit
+            }
+            -vlan_unique_count {
+                ixNet setMultiAttrs $handle/vlanRange \
+                    -enabled True \
+                    -uniqueCount $value
+                ixNet commit
+            }
+        }
+    }
+	
+	ixNet commit
+}
 
+body IpHost::start {} {
+    set tag "body IpHost::start [info script]"
+    Deputs "----- TAG: $tag -----"
+    Deputs "handle : $handle"
+	after 3000
+	if { [ catch {
+		ixNet exec start $hIp async
+	} ] } {
+		after 3000
+		ixNet exec start $hIp async
+	}
+    return [GetStandardReturnHeader]
+}
+body IpHost::stop {} {
+    set tag "body IpHost::stop [info script]"
+    Deputs "----- TAG: $tag -----"
+    Deputs "handle : $handle"
+    ixNet exec stop $hIp
+    return [GetStandardReturnHeader]
+}
+
+body IpHost::abort {} {
+    set tag "body IpHost::abort [info script]"
+    Deputs "----- TAG: $tag -----"
+	after 3000
+	if { [ catch {
+		ixNet exec abort $hIp async
+	} ] } {
+		after 3000
+		ixNet exec abort $hIp async
+	}
+    return [GetStandardReturnHeader]
+}
 # Child Lists:
 	# ancpRange (kOptional : getList)
 	# dhcpRange (kRequired : getList)

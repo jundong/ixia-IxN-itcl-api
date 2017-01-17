@@ -467,9 +467,9 @@ body Port::config { args } {
 	set sig_end 1
 	
     set tag "body Port::config [info script]"
-Deputs "----- TAG: $tag -----"
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -560,7 +560,7 @@ Deputs "Args:$args "
                 set value [ string tolower $value ]
                 if { [ lsearch -exact $EMedia $value ] >= 0 } {
                     set media $value
-Deputs "media:$media"                    
+                    Deputs "media:$media"                    
                 } else {
                     error "$errNumber(1) key:$key value:$value"
                 }
@@ -571,7 +571,7 @@ Deputs "media:$media"
                         set speed 10
                     }
                     100M {
-Deputs "speed:$speed"					
+                        Deputs "speed:$speed"					
                         set speed 100
                     }
                     1G {
@@ -605,70 +605,70 @@ Deputs "speed:$speed"
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-            # -inner_vlan_id {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
-                    # set inner_vlan_id $value
-                    # set flagInnerVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -inner_vlan_step {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
-                    # set inner_vlan_step $value
-                    # set flagInnerVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -inner_vlan_num {
-                # if { [ string is integer $value ] && ( $value >= 0 ) } {
-                    # set inner_vlan_num $value
-                    # set flagInnerVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -inner_vlan_priority {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
-                    # set inner_vlan_priority $value
-                    # set flagInnerVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -outer_vlan_id {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
-                    # set outer_vlan_id $value
-                    # set flagOuterVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -outer_vlan_step {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
-                    # set outer_vlan_step $value
-                    # set flagOuterVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -outer_vlan_num {
-                # if { [ string is integer $value ] && ( $value >= 0 ) } {
-                    # set outer_vlan_num $value
-                    # set flagOuterVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
-            # -outer_vlan_priority {
-                # if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
-                    # set outer_vlan_priority $value
-                    # set flagOuterVlan   1
-                # } else {
-                    # error "$errNumber(1) key:$key value:$value"
-                # }
-            # }
+            -inner_vlan_id {
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
+                    set inner_vlan_id $value
+                    set flagInnerVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
+            -inner_vlan_step {
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
+                    set inner_vlan_step $value
+                    set flagInnerVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
+            -inner_vlan_num {
+                if { [ string is integer $value ] && ( $value >= 0 ) } {
+                    set inner_vlan_num $value
+                    set flagInnerVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
+            -inner_vlan_priority {
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
+                    set inner_vlan_priority $value
+                    set flagInnerVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
+            -outer_vlan_id {
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
+                    set outer_vlan_id $value
+                    set flagOuterVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
+            -outer_vlan_step {
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
+                    set outer_vlan_step $value
+                    set flagOuterVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
+            -outer_vlan_num {
+                if { [ string is integer $value ] && ( $value >= 0 ) } {
+                    set outer_vlan_num $value
+                    set flagOuterVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
+            -outer_vlan_priority {
+                if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 8 ) } {
+                    set outer_vlan_priority $value
+                    set flagOuterVlan   1
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+            }
             -ipv6_addr {
             	set ipv6_addr $value
             }
@@ -716,12 +716,15 @@ Deputs "speed:$speed"
 			-sig_end {
 				set sig_end $value
 			}
+            -mac_addr {
+                set mac_addr $value
+            }
         }
     }
-# IxDebugOn    
-Deputs "add interface on port..."
+    # IxDebugOn    
+    Deputs "add interface on port..."
 	set intLen [ llength [ ixNet getList $handle interface ] ] 
-Deputs "interface count:$intLen"
+    Deputs "interface count:$intLen"
     if { $intLen == 0 } {
 		set interface [list]
     } else {
@@ -741,6 +744,12 @@ Deputs "interface count:$intLen"
 		lappend intf_mac [ ixNet getA $newInt/ethernet -macAddress ]
 	}
 Deputs "port interface mac:$intf_mac"		
+    
+    if { [ info exists mac_addr ] } {
+        foreach int $interface {
+            ixNet setA $int/ethernet -macAddress $mac_addr
+        }
+    }
     
 # -- enable ping defaultly
     ixNet setA $handle/protocols/ping -enabled true
@@ -827,22 +836,22 @@ Deputs "dut_ip: $dut_ip"
     }
 ixNet commit
   
-# Deputs "set vlan on interface"
-    # if { $flagInnerVlan } {
-		# foreach int $interface {
-			# if { [ llength [ixNet getL $int vlan] ] > 0 } {
-				# set vlan [ lindex [ixNet getL $int vlan] 0 ]
-			# } else {
-				# set vlan [ ixNet add $int vlan ]
-			# }
-			
-			# ixNet setM $vlan \
-				# -vlanId         $inner_vlan_id \
-				# -vlanEnable     true \
-				# -vlanCount      $inner_vlan_num \
-				# -vlanPriority   $inner_vlan_priority
-		# }
-    # }
+    Deputs "set vlan on interface"
+    if { $flagInnerVlan } {
+        foreach int $interface {
+            if { [ llength [ixNet getL $int vlan] ] > 0 } {
+                set vlan [ lindex [ixNet getL $int vlan] 0 ]
+            } else {
+                set vlan [ ixNet add $int vlan ]
+            }
+           
+            ixNet setM $vlan \
+                -vlanId         $inner_vlan_id \
+                -vlanEnable     true \
+                -vlanCount      $inner_vlan_num \
+                -vlanPriority   $inner_vlan_priority
+        }
+    }
     
     # if { $flagOuterVlan } {
 		# foreach int $interface {
@@ -1034,8 +1043,8 @@ Deputs "----- TAG: $tag -----"
 	set interval 	1000
 	set flag 		1
 
-#param collection
-Deputs "Args:$args "
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -1674,22 +1683,22 @@ Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
 	    set statsItem   "arp_reply_tx"
-        set statsVal    [ lindex $row $ping_reply_tx ]
+        set statsVal    [ lindex $row $arp_reply_tx ]
 Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "arp_reply_rx"
-        set statsVal    [ lindex $row $ping_reply_rx ]
+        set statsVal    [ lindex $row $arp_reply_rx ]
 Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "arp_request_tx"
-        set statsVal    [ lindex $row $ping_request_tx ]
+        set statsVal    [ lindex $row $arp_request_tx ]
 Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
         set statsItem   "arp_request_rx"
-        set statsVal    [ lindex $row $ping_request_rx ]
+        set statsVal    [ lindex $row $arp_request_rx ]
 Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
@@ -1876,8 +1885,8 @@ class Host {
 	constructor { port } {}
 	method config { args } {}
 	method unconfig {} {
-    set tag "body Host::unconfig [info script]"
-Deputs "----- TAG: $tag -----"
+        set tag "body Host::unconfig [info script]"
+        Deputs "----- TAG: $tag -----"
 		set hPort ""
 		chain
 	}
@@ -1910,7 +1919,7 @@ body Host::config { args } {
     global errNumber
     
     set tag "body Host::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 	
 	if { $hPort == "" } {
 		reborn
@@ -1931,6 +1940,7 @@ Deputs "----- TAG: $tag -----"
 	set enabled 		True
 	set unconnected		0
 	set static 0
+    set enable_vlan true
 	
     foreach { key value } $args {
         set key [string tolower $key]
@@ -1938,6 +1948,9 @@ Deputs "----- TAG: $tag -----"
 			-enabled {
 				set  enabled $value
 			}
+            -enable_vlan {
+                set enable_vlan $value
+            }
             -count {
 				set count $value
             }
@@ -1959,6 +1972,9 @@ Deputs "----- TAG: $tag -----"
 			-outer_vlan_step {
 				set vlan_id1_step $value
             }
+            -vlan_pri1 {
+                set vlan_pri1 $value
+            }
             -vlan_id2 -
 			-inner_vlan_id {
 				set vlan_id2 $value
@@ -1966,6 +1982,9 @@ Deputs "----- TAG: $tag -----"
             -vlan_id2_step -
 			-inner_vlan_step {
 				set vlan_id2_step $value
+            }
+            -vlan_pri2 {
+                set vlan_pri2 $value
             }
             -ipv4_addr {
 				set ipv4_addr $value
@@ -2015,7 +2034,7 @@ Deputs "----- TAG: $tag -----"
 	if { [ info exists ipv4_gw_step ] } {
 		set gwPfxIncr	[ GetStepPrefixlen $ipv4_gw_step ]
 	}
-Deputs "pfxIncr:$pfxIncr"	
+    Deputs "pfxIncr:$pfxIncr"	
 	if { [ info exists static] == 0 } {
 		if { [ info exists ipv4_addr ] } {
 			set static 0
@@ -2059,17 +2078,31 @@ Deputs "pfxIncr:$pfxIncr"
 				} else {
 					set vlanIncrMode noIncrement
 				}
-				ixNet setM $handle -enableVlan True \
+				ixNet setM $handle -enableVlan $enable_vlan \
 					-enableIncrementVlan $enableVlanIncr \
 					-incremetVlanMode $vlanIncrMode
 				if { [ info exists vlan_id2 ] } {
-					ixNet setM $handle \
+					ixNet setM $handle/vlan \
 						-vlanCount 2 \
 						-vlanId "${vlan_id1},${vlan_id2}"
+                    ixNet commit
+                    
+                    if { [ info exists vlan_pri2 ] } {
+                        ixNet setA $handle/vlan -vlanPriority "${vlan_pri1},${vlan_pri2}"
+                        ixNet commit
+                    } else {
+                        ixNet setA $handle/vlan -vlanPriority "${vlan_pri1}"
+                        ixNet commit
+                    }
 				} else {
-					ixNet setM $handle \
+					ixNet setM $handle/vlan \
 						-vlanCount 1 \
 						-vlanId $vlan_id1
+                    ixNet commit
+                    if { [ info exists vlan_pri1 ] } {
+                        ixNet setA $handle/vlan -vlanPriority "${$vlan_pri1}"
+                        ixNet commit
+                    }
 				}
 			} 
 		}
@@ -2078,8 +2111,8 @@ Deputs "pfxIncr:$pfxIncr"
 		for { set index 0 } { $index < $count } { incr index } {
 			set int [ ixNet add $hPort interface ]
 			if { $unconnected } {
-Deputs "unconncted:$unconnected"
-Deputs "int:$int"		
+                Deputs "unconncted:$unconnected"
+                Deputs "int:$int"		
 				ixNet setA $int -type routed
 			}
 			ixNet setA $int -description $this
@@ -2087,7 +2120,7 @@ Deputs "int:$int"
 			set int [ixNet remapIds $int]
 			lappend handle $int
 
-	Deputs "int:$int"	
+            Deputs "int:$int"	
 			if { [ info exists ipv4_addr ] } {
 				if { [ llength [ ixNet getL $int ipv4 ] ] == 0 } {
 					ixNet add $int ipv4
@@ -2098,7 +2131,7 @@ Deputs "int:$int"
 					-gateway $ipv4_gw \
 					-maskWidth $ipv4_prefix_len
 				ixNet commit
-	Deputs "Step10"			
+                Deputs "Step10"			
 				if { $pfxIncr > 0 } {
 					set ipv4_addr [ IncrementIPAddr $ipv4_addr $pfxIncr ]
 				}
@@ -2140,7 +2173,7 @@ Deputs "config vlan1"
 				
 				ixNet setM $int/vlan \
 					-count 1 \
-					-vlanEnable True \
+					-vlanEnable $enable_vlan \
 					-vlanId $vlanId
 				ixNet commit
 				incr vlan_id1 $vlan_id1_step
@@ -2155,7 +2188,7 @@ Deputs "config vlan2"
 			
 				ixNet setM $int/vlan \
 					-count 2 \
-					-vlanEnable True \
+					-vlanEnable $enable_vlan \
 					-vlanId $vlanId
 				ixNet commit
 				incr vlan_id2 $vlan_id2_step

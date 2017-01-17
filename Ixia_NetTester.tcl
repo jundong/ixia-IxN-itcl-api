@@ -796,6 +796,12 @@ proc Tester::saveResults { args } {
         if { [ $obj isa Traffic ] } {
             set traffic_name [ ixNet getA [ $obj cget -handle ] -name ]
             Deputs "Traffic obj: $traffic_name"
+            catch {
+                set highLevelStream [ $obj cget -highLevelStream ]
+                set frameSize [ ixNet getL $highLevelStream frameSize ]
+                set frame_size [ ixNet getA $frameSize -fixedSize ]
+                Deputs "Traffic frame size: $frame_size"
+            }
             set retResults [ $obj get_stats ]
             set captions "Traffic Item, Frame Size, Tx Frames, Rx Frames, Store-Forward Avg Latency (ns), Store-Forward Min Latency (ns), Store-Forward Max Latency (ns), First TimeStamp, Last TimeStamp"
             set values "$traffic_name,$frame_size,[GetStatsFromReturn $retResults tx_frame_count],[GetStatsFromReturn $retResults rx_frame_count],[GetStatsFromReturn $retResults avg_latency],[GetStatsFromReturn $retResults min_latency],[GetStatsFromReturn $retResults max_latency],[GetStatsFromReturn $retResults first_arrival_time],[GetStatsFromReturn $retResults last_arrival_time]"

@@ -15,94 +15,18 @@
 
 class BgpSession {
     inherit RouterEmulationObject
+    public variable ip_version
        
-    constructor { port } {
-
+    constructor { port {version ipv4} } {
 		set tag "body BgpSession::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		set portObj [ GetObject $port ]
 		set handle ""
+        set ip_version $version
 		# reborn
 	}
 
-	method reborn { { ip_version ipv4 } } {
-		global errNumber
-		
-		set tag "body BgpSession::reborn [info script]"
-Deputs "----- TAG: $tag -----"
-
-		if { [ catch {
-			set hPort   [ $portObj cget -handle ]
-		} ] } {
-			error "$errNumber(1) Port Object in BgpSession ctor"
-		}		
-		
-		ixNet setA $hPort/protocols/bgp -enabled True
-			
-		#-- add bgp protocol
-		set handle [ ixNet add $hPort/protocols/bgp neighborRange ]
-		if { $ip_version == "ipv6" } {
-			ixNet setM $handle \
-				-dutIpAddress 0:0:0:0:0:0:0:0 \
-				-localIpAddress 0:0:0:0:0:0:0:0
-		} 
-		ixNet commit
-		set handle [ ixNet remapIds $handle ]
-		ixNet setA $handle \
-			-name $this \
-			-enabled True
-		ixNet commit
-		array set routeBlock [ list ]
-		
-		#-- add interface
-		set interface [ ixNet getL $hPort interface ]
-		if { [ llength $interface ] == 0 } {
-			set interface [ ixNet add $hPort interface ]
-			ixNet add $interface ipv4
-			ixNet commit
-			set interface [ ixNet remapIds $interface ]
-Deputs "interface:$interface"			
-			ixNet setM $interface \
-				-enabled True
-			ixNet commit
-		} else {
-			set interface [ lindex $interface end ]
-		}
-		ixNet setA $handle \
-			-interfaceType "Protocol Interface" \
-			-interfaces [ lindex $interface end ]
-		ixNet commit
-		
-		#-- set capability
-		ixNet setM $handle \
-			-ipV4Mpls true \
-			-ipV4MplsVpn true \
-			-ipV4Multicast true \
-			-ipV4Unicast true \
-			-ipV6Mpls true \
-			-ipV6MplsVpn true \
-			-ipV6Multicast true \
-			-ipV6Unicast true
-			
-		ixNet setM $handle/learnedFilter/capabilities \
-			-ipV4Mpls true \
-			-ipV4MplsVpn true \
-			-ipV4Multicast true \
-			-ipV4MulticastMplsVpn true \
-			-ipV4MulticastVpn true \
-			-ipV4Unicast true \
-			-ipV6Mpls true \
-			-ipV6MplsVpn true \
-			-ipV6Multicast true \
-			-ipV6MulticastMplsVpn true \
-			-ipV6MulticastVpn true \
-			-ipV6Unicast true \
-			-vpls true
-
-		ixNet commit
-		
-		set protocol bgp
-	}
+	method reborn {} { }
     method config { args } {}
 	method enable {} {}
 	method disable {} {}
@@ -114,17 +38,111 @@ Deputs "interface:$interface"
 	method wait_session_up { args } {}
 }
 
+body BgpSession::reborn {} {
+    global errNumber
+    
+    set tag "body BgpSession::reborn [info script]"
+    Deputs "----- TAG: $tag -----"
+
+    if { [ catch {
+        set hPort   [ $portObj cget -handle ]
+    } ] } {
+        error "$errNumber(1) Port Object in BgpSession ctor"
+    }		
+    
+    ixNet setA $hPort/protocols/bgp -enabled True
+        
+    #-- add bgp protocol
+    set handle [ ixNet add $hPort/protocols/bgp neighborRange ]
+    if { $ip_version == "ipv6" } {
+        ixNet setM $handle \
+            -dutIpAddress 0:0:0:0:0:0:0:0 \
+            -localIpAddress 0:0:0:0:0:0:0:0
+    } 
+    ixNet commit
+    set handle [ ixNet remapIds $handle ]
+    ixNet setA $handle \
+        -name $this \
+        -enabled True
+    ixNet commit
+    array set routeBlock [ list ]
+    
+    #-- add interface
+    set interface [ ixNet getL $hPort interface ]
+    if { [ llength $interface ] == 0 } {
+        set interface [ ixNet add $hPort interface ]
+        if { $ip_version == "ipv4" } {
+            ixNet add $interface ipv4
+            ixNet commit
+        } elseif { $ip_version == "ipv6" } {
+            ixNet add $interface ipv6
+            ixNet commit
+        }
+        set interface [ ixNet remapIds $interface ]
+        Deputs "interface:$interface"			
+        ixNet setM $interface \
+            -enabled True
+        ixNet commit
+    } else {
+        set interface [ lindex $interface end ]
+        if { $ip_version == "ipv4" } {
+            if { [llength [ixNet getL $interface ipv4]] == 0 } {
+                ixNet add $interface ipv4
+                ixNet commit
+            }
+        } elseif { $ip_version == "ipv6" } {
+            if { [llength [ixNet getL $interface ipv6]] == 0 } {
+                ixNet add $interface ipv6
+                ixNet commit
+            }
+        }
+    }
+    ixNet setA $handle \
+        -interfaceType "Protocol Interface" \
+        -interfaces [ lindex $interface end ]
+    ixNet commit
+    
+    #-- set capability
+    ixNet setM $handle \
+        -ipV4Mpls true \
+        -ipV4MplsVpn true \
+        -ipV4Multicast true \
+        -ipV4Unicast true \
+        -ipV6Mpls true \
+        -ipV6MplsVpn true \
+        -ipV6Multicast true \
+        -ipV6Unicast true
+        
+    ixNet setM $handle/learnedFilter/capabilities \
+        -ipV4Mpls true \
+        -ipV4MplsVpn true \
+        -ipV4Multicast true \
+        -ipV4MulticastMplsVpn true \
+        -ipV4MulticastVpn true \
+        -ipV4Unicast true \
+        -ipV6Mpls true \
+        -ipV6MplsVpn true \
+        -ipV6Multicast true \
+        -ipV6MulticastMplsVpn true \
+        -ipV6MulticastVpn true \
+        -ipV6Unicast true \
+        -vpls true
+
+    ixNet commit
+    
+    set protocol bgp
+}
+    
 body BgpSession::config { args } {
     global errorInfo
     global errNumber
     set tag "body BgpSession::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 	
-	set ip_version ipv4
 	set loopback_ipv4_gw 1.1.1.1
 
-#param collection
-Deputs "Args:$args "
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -158,21 +176,28 @@ Deputs "Args:$args "
             -ip_version {
             	set ip_version $value
             }
+            -ipv6_addr -
+            -address -
+            -ip -
 			-ipv4_addr {
 				set ipv4_addr $value
+                set ip $value
+                set ipv6_addr $value
 			}
+            -gateway -
 			-ipv4_gw {
 				set ipv4_gw $value
+                set gateway $value
 			}
+            -mac {
+                set mac $value
+            }
 			-type {
 				set type $value
 			}
 			-bgp_id -
 			-router_id {
 				set bgp_id $value
-			}
-			-ipv6_addr {
-				set ipv6_addr $value
 			}
 			-loopback_ipv4_addr {
 				set loopback_ipv4_addr $value
@@ -184,16 +209,34 @@ Deputs "Args:$args "
     }
 	
 	if { $handle == "" } {
-		reborn $ip_version
+		reborn
 	}
 	
 	if { [ info exists ipv4_addr ] } {
-        Deputs "ipv4: [ixNet getL $interface ipv4]"	
-        Deputs "interface:$interface"
-		ixNet setA $interface/ipv4 -ip $ipv4_addr
+        if { $ip_version == "ipv4" } {
+            Deputs "ipv4: [ixNet getL $interface ipv4]"	
+            Deputs "interface:$interface"
+            ixNet setA [ixNet getL $interface ipv4] -ip $ipv4_addr
+            ixNet commit
+        } else {
+            Deputs "ipv6: [ixNet getL $interface ipv6]"	
+            Deputs "interface:$interface"
+            ixNet setA [ixNet getL $interface ipv6] -ip $ip
+            ixNet commit
+        }
 	}
 	if { [ info exists ipv4_gw ] } {
-		ixNet setA $interface/ipv4 -gateway $ipv4_gw		
+        if { $ip_version == "ipv4" } {
+            ixNet setA [ixNet getL $interface ipv4] -gateway $ipv4_gw
+            ixNet commit
+        } else {
+            ixNet setA [ixNet getL $interface ipv6] -gateway $gateway
+            ixNet commit
+        }
+	}
+	if { [ info exists mac ] } {
+        ixNet setM $interface/ethernet -macAddress $mac
+        ixNet commit
 	}
 	if { [ info exists loopback_ipv4_addr ] } {
 		
@@ -202,16 +245,17 @@ Deputs "Args:$args "
 		ixNet setA $handle -type $type
 	}
     if { [ info exists afi ] } {
-Deputs "not implemented parameter: afi"
+        Deputs "not implemented parameter: afi"
     }
     if { [ info exists sub_afi ] } {
-Deputs "not implemented parameter: safi"
+        Deputs "not implemented parameter: safi"
     }
     if { [ info exists as ] } {
     	ixNet setA $handle -localAsNumber $as
+        ixNet commit
     }
     if { [ info exists dut_ip ] } {
-Deputs "dut_ip:$dut_ip"	
+        Deputs "dut_ip:$dut_ip"	
     	ixNet setA $handle -dutIpAddress $dut_ip
 		ixNet commit
     }
@@ -227,9 +271,11 @@ Deputs "dut_ip:$dut_ip"
     }
 	if { [ info exists bgp_id ] } {
 		ixNet setA $handle -bgpId $bgp_id
+        ixNet commit
 	}
 	if { [ info exists ipv6_addr ] } {
 		ixNet setA $handle -localIpAddress $ipv6_addr
+        ixNet commit
 	}
 	if { [ info exists loopback_ipv4_addr ] } {
 		Host $this.loopback $portObj
@@ -239,9 +285,9 @@ Deputs "dut_ip:$dut_ip"
 			-ipv4_prefix_len 32 \
 			-ipv4_gw $loopback_ipv4_gw
 		set loopbackInt [ $this.loopback cget -handle ] 
-Deputs "loopback int:$loopbackInt"
+        Deputs "loopback int:$loopbackInt"
 		set viaInt [ lindex $interface end ]
-Deputs "via interface:$viaInt"
+        Deputs "via interface:$viaInt"
 		ixNet setA $loopbackInt/unconnected \
 			-connectedVia $viaInt
 		ixNet commit
@@ -251,7 +297,6 @@ Deputs "via interface:$viaInt"
 			-interfaceType "Protocol Interface" \
 			-interfaces [ lindex $interface end ]
 		ixNet commit
-
 	}
 	
 	
@@ -261,14 +306,13 @@ Deputs "via interface:$viaInt"
 }
 
 body BgpSession::set_route { args } {
-
     global errorInfo
     global errNumber
     set tag "body BgpSession::config [info script]"
-Deputs "----- TAG: $tag -----"
-
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -279,17 +323,18 @@ Deputs "Args:$args "
     }
 	
 	if { [ info exists route_block ] } {
-	
 		foreach rb $route_block {
 			set num 		[ $rb cget -num ]
 			set step 		[ $rb cget -step ]
 			set prefix_len 	[ $rb cget -prefix_len ]
 			set start 		[ $rb cget -start ]
 			set type 		[ $rb cget -type ] 
-			
+			Deputs "num:$num, step:$step, prefix_len:$prefix_len, start:$start, type:$type"
+            
 			set hRouteBlock [ ixNet add $handle routeRange ]
 			ixNet commit
 			set hRouteBlock [ ixNet remapIds $hRouteBlock ]
+            Deputs "hRouteBlock:$hRouteBlock"
 			set routeBlock($rb,handle) $hRouteBlock
 			lappend routeBlock(obj) $rb
 			
@@ -310,18 +355,16 @@ Deputs "Args:$args "
 	}
 	
     return [GetStandardReturnHeader]
-	
-
 }
 
 body BgpSession::advertise_route { args } {
     global errorInfo
     global errNumber
     set tag "body BgpSession::advertise_route [info script]"
-Deputs "----- TAG: $tag -----"
-
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+    
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -336,7 +379,7 @@ Deputs "Args:$args "
 			-enabled True
 	} else {
 		foreach hRouteBlock $routeBlock(obj) {
-Deputs "hRouteBlock : $hRouteBlock"		
+            Deputs "hRouteBlock : $hRouteBlock"		
 			ixNet setA $routeBlock($hRouteBlock,handle) -enabled True
 		}
 	}

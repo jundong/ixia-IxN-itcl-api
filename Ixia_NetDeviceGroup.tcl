@@ -55,21 +55,30 @@ class DeviceGroup {
 			BGP4_DUAL {
 				set ethernet [ixNet add $handle ethernet]
 				ixNet commit
+				set ethernet [ixNet remapIds $ethernet]
 				set vlan [lindex [ixNet getL $ethernet vlan] 0]
 				set ipv4 	 [ixNet add $ethernet ipv4]
 				ixNet commit
+				set ipv4 [ixNet remapIds $ipv4]
 				set ipv6	 [ixNet add $ethernet ipv6]
 				ixNet commit
+				set ipv6 [ixNet remapIds $ipv6]
 				set bgpIpv4Peer [ixNet add $ipv4 bgpIpv4Peer]
 				ixNet commit
+				set bgpIpv4Peer [ixNet remapIds $bgpIpv4Peer]
 				set bgpIpv6Peer [ixNet add $ipv6 bgpIpv6Peer]
 				ixNet commit
+				set bgpIpv6Peer [ixNet remapIds $bgpIpv6Peer ]
 				set bgpIpv4NetworkGroup [ixNet add $handle networkGroup]
 				set bgpIpv6NetworkGroup [ixNet add $handle networkGroup]
 				ixNet commit
+				set bgpIpv4NetworkGroup [ixNet remapIds $bgpIpv4NetworkGroup]
+				set bgpIpv6NetworkGroup [ixNet remapIds $bgpIpv6NetworkGroup]
 				set ipv4PrefixPools [ ixNet add $bgpIpv4NetworkGroup ipv4PrefixPools ]
 				set ipv6PrefixPools [ ixNet add $bgpIpv6NetworkGroup ipv6PrefixPools ]
 				ixNet commit
+				set ipv4PrefixPools [ixNet remapIds $ipv4PrefixPools]
+				set ipv6PrefixPools [ixNet remapIds $ipv6PrefixPools]
 				set bgpIPRouteProperty 		[ ixNet getL $ipv4PrefixPools bgpIPRouteProperty ]
 				set bgpV6IPRouteProperty 	[ ixNet getL $ipv6PrefixPools bgpV6IPRouteProperty ]
 				SetMultipleValue [ ixNet getL $ipv4PrefixPools bgpV6IPRouteProperty ] -active false
@@ -84,7 +93,10 @@ class DeviceGroup {
 				ixNet commit
 				set bgpIpv4Peer [ixNet add $ipv4 bgpIpv4Peer]
 				ixNet commit
-			
+				set bgpIpv4NetworkGroup [ixNet add $handle networkGroup]
+				ixNet commit
+				set ipv4PrefixPools [ ixNet add $bgpIpv4NetworkGroup ipv4PrefixPools ]
+				ixNet commit
 			}
 			IPV4 {
 				set ethernet [ixNet add $handle ethernet]
@@ -111,16 +123,16 @@ class DeviceGroup {
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::SetMultipleValue [info script]"
-Deputs "----- TAG: $tag -----"
-Deputs "obj:$obj key:$key val:$value step:$step"
+		Deputs "----- TAG: $tag -----"
+		Deputs "obj:$obj key:$key val:$value step:$step"
 		set mv [ ixNet getA $obj $key ]
-Deputs "mv:$mv"
+		Deputs "mv:$mv"
 		if { $step != 0 } {
-Deputs Step5
+			Deputs Step5
 			ixNet setA $mv -pattern counter
 			ixNet commit
 		}
-Deputs Step10		
+		Deputs Step10		
 		if { [ catch {
 			set isMvObj [ixNet exists $mv]
 	 	} ] } {
@@ -135,13 +147,13 @@ Deputs Step10
 			-start $value \
 			-step $step
 		if { [ catch {
-Deputs Step20		
+			Deputs Step20		
 			ixNet commit
 		} ] } {
-Deputs Step30		
+			Deputs Step30		
 			ixNet setA $mv/singleValue -value $value
 			catch {
-Deputs Step40			
+				Deputs Step40			
 				ixNet commit
 			}
 		}
@@ -159,9 +171,8 @@ Deputs Step40
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::config_bgp4_route [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		if { [ info exists bgpIPRouteProperty ] } {
-		
 			eval config_bgp_route $args -obj $bgpIPRouteProperty
 		} else {
 			eval config_bgp_route $args -family ipv4
@@ -173,7 +184,7 @@ Deputs "----- TAG: $tag -----"
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::config_bgp4plus_route [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		eval config_bgp_route $args -obj $bgpV6IPRouteProperty
 		return [GetStandardReturnHeader]
 
@@ -182,8 +193,8 @@ Deputs "----- TAG: $tag -----"
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::import_bgp_route [info script]"
-Deputs "----- TAG: $tag -----"
-Deputs "filename:$filename"
+		Deputs "----- TAG: $tag -----"
+		Deputs "filename:$filename"
 		ixNet setM $obj/importBgpRoutesParams \
 			-fileType csv \
 			-dataFile [ixNet readFrom $filename]
@@ -194,14 +205,14 @@ Deputs "filename:$filename"
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::import_bgp4_route [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		import_bgp_route $bgpIPRouteProperty $filename
 	}
 	method import_bgp4plus_route { filename } {
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::import_bgp4plus_route [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		import_bgp_route $bgpV6IPRouteProperty $filename
 	}
 	method start_bgp4_route {} {
@@ -215,28 +226,28 @@ Deputs "----- TAG: $tag -----"
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::enable_prefix [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		SetMultipleValue [ixNet getP $obj] -enabled true
 	}
 	proc disable_prefix { obj } {
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::disable_prefix [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		SetMultipleValue [ixNet getP $obj] -enabled false
 	}
 	proc start_prefix { obj } {
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::advertise_prefix [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		ixNet exec start [ixNet getP $obj]
 	}
 	proc stop_prefix { obj } {
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::stop_prefix [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
 		ixNet exec stop [ixNet getP $obj]
 	}
 
@@ -246,7 +257,7 @@ body DeviceGroup::reborn {} {
 	global errorInfo
 	global errNumber
 	set tag "body DeviceGroup::reborn [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 	set root [ixNet getRoot]
 	set topology [ixNet add $root topology]
 	set vPortList [ list ]
@@ -281,15 +292,15 @@ body DeviceGroup::config { args } {
     global errorInfo
     global errNumber
     set tag "body DeviceGroup::config [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
 	if { $handle == "" } {
 		reborn
 	}
 	
 	set count 1
-#param collection
-Deputs "Args:$args "
+	#param collection
+	Deputs "Args:$args "
     foreach { key value } $args {
 		set key [string tolower $key]
 		switch -exact -- $key {
@@ -332,7 +343,7 @@ body DeviceGroup::config_ethernet { args } {
     global errorInfo
     global errNumber
     set tag "body DeviceGroup::config_ethernet [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
 	if { $handle == "" } {
 		config -count $count
@@ -485,14 +496,14 @@ body DeviceGroup::config_ip { args } {
     global errorInfo
     global errNumber
     set tag "body DeviceGroup::config_ip [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
 	if { $handle == "" } {
 		config -count $count
 	}
 	
-#param collection
-Deputs "Args:$args "
+	#param collection
+	Deputs "Args:$args "
 
 	array set kvList [list]
 
@@ -598,14 +609,14 @@ body DeviceGroup::config_bgp { args } {
     global errorInfo
     global errNumber
     set tag "body DeviceGroup::config_bgp [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
 	if { $handle == "" } {
 		config -count $count
 	}
 	
-#param collection
-Deputs "Args:$args "
+	#param collection
+	Deputs "Args:$args "
 
 	array set kvList [list]
 
@@ -649,7 +660,11 @@ Deputs "Args:$args "
 		foreach key [array names kvList] {
 			switch -- $key {
 				-localAs2Bytes {
-					SetMultipleValue $obj $key $kvList($key) $as_step
+					if { [info exists as_step] } {
+						SetMultipleValue $obj $key $kvList($key) $as_step
+					} else {
+						SetMultipleValue $obj $key $kvList($key)
+					}
 				}
 				default {
 					SetMultipleValue $obj $key $kvList($key)
@@ -672,7 +687,7 @@ body DeviceGroup::config_bgp4plus { args } {
     global errorInfo
     global errNumber
     set tag "body DeviceGroup::config_bgp4plus [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 
 	return [eval config_bgp -family $bgpIpv6Peer $args]
 }
@@ -695,14 +710,14 @@ body DeviceGroup::config_bgp_route { args } {
     global errorInfo
     global errNumber
     set tag "body DeviceGroup::config_bgp [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 	if { $handle == "" } {
 		config -count $count
 	}
 	
 	set num 1
-#param collection
-Deputs "Args:$args "
+	#param collection
+	Deputs "Args:$args "
     foreach { key value } $args {
 		set key [string tolower $key]
 		switch -exact -- $key {
@@ -818,8 +833,6 @@ Deputs "Args:$args "
 	}
 	
     return [GetStandardReturnHeader]
-	
-
 }
 
 

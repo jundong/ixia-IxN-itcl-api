@@ -838,6 +838,20 @@ proc BinToDec {value} {
 	return $decimal_value
 }
 
+proc IntToBin {value {len 8}} {
+	set bin ""
+	for { set exp [ expr $len - 1 ] } { $exp >= 0 } { incr exp -1 } {
+		set pow [ expr pow(2, $exp) ]
+		if { [expr $value - $pow ] >= 0 } {
+			set bin ${bin}1
+			set value [ expr $value - $pow ]
+		} else {
+			set bin ${bin}0
+		}
+	}
+	return $bin
+}
+
 proc PutsFormatInput { input { isgets 1 } } {
 	puts "<input_para>"
 	foreach cin $input {

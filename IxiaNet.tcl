@@ -377,13 +377,13 @@ proc Login { { location "localhost/8009"} { force 0 } { filename null } } {
                 loadconfig $filename
 				after 15000
                 
-                #foreach pname $portnamelist pobj $portlist {
-                #    Port $pname NULL NULL $pobj
-                #}
-                #
-                #foreach tname $trafficnamelist tobj $trafficlist tport $portnamelist {
-                #    Traffic $tname $tport $tobj
-                #}
+                foreach pname $portnamelist pobj $portlist {
+                   Port $pname NULL NULL $pobj
+                }
+                
+                foreach tname $trafficnamelist tobj $trafficlist tport $portnamelist {
+                   Traffic $tname $tport $tobj
+                }
 				
 				return
                 
@@ -418,6 +418,7 @@ proc SearchMinFrameSizeByLoad { args } {
     set streams [list]
     set downstreams [list]
     set duration [ expr 60 * 1000 ]
+	set percentage 99.98
 	foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -449,11 +450,15 @@ proc SearchMinFrameSizeByLoad { args } {
             -resultfile {
                 set resultfile $value
             }
+			-percentage {
+				set percentage $value
+             }
         }
     }
     # According to inflation to calculate traffic load
     foreach frame_size $frame_size_list {
         set frame_load($frame_size) [expr (($frame_size + 20) * 1.0 / ($frame_size + 20 + $inflation)) * 100]
+        Deputs "Frame size: $frame_size, traffic load: $frame_load($frame_size)"
     }  
     
     set index 0
@@ -500,11 +505,11 @@ proc SearchMinFrameSizeByLoad { args } {
                     if { $upstream == [ string range $src 0 [ expr [ string length $upstream ] - 1 ] ] ||
                          $src == [ string range $upstream 0 [ expr [ string length $src ] - 1 ] ] } {
                         ixNet setM $frameRate -rate 100 -type percentLineRate
-                        if { [ expr $frame_size - $inflation ] >= 64 } {
-                            ixNet setA $frameSize -fixedSize [ expr $frame_size - $inflation ]
-                        } else {
-                            ixNet setA $frameSize -fixedSize 64
-                        }
+                        ixNet setA $frameSize -fixedSize [ expr $frame_size + $inflation ]
+                        ixNet commit
+                    } elseif { $upstream == $trafficItem } {
+                       ixNet setM $frameRate -rate 100 -type percentLineRate
+                        ixNet setA $frameSize -fixedSize [ expr $frame_size + $inflation ]
                         ixNet commit
                     }
                 }

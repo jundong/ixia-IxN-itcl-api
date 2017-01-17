@@ -625,10 +625,10 @@ body RouteBlock::config { args } {
     global errorInfo
     global errNumber
     set tag "body RouteBlock::config [info script]"
-Deputs "----- TAG: $tag -----"
-	
-#param collection
-Deputs "Args:$args "
+    Deputs "----- TAG: $tag -----"
+        
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {

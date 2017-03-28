@@ -605,6 +605,9 @@ body Port::config { args } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
+            -inner_vlan_enable {
+                set flagInnerVlan   1
+            }
             -inner_vlan_id {
                 if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
                     set inner_vlan_id $value
@@ -636,6 +639,9 @@ body Port::config { args } {
                 } else {
                     error "$errNumber(1) key:$key value:$value"
                 }
+            }
+            -outer_vlan_enable {
+                set flagOuterVlan   1
             }
             -outer_vlan_id {
                 if { [ string is integer $value ] && ( $value >= 0 ) && ( $value < 4096 ) } {
@@ -837,6 +843,21 @@ Deputs "dut_ip: $dut_ip"
 ixNet commit
   
     Deputs "set vlan on interface"
+    if { $flagOuterVlan } {
+        foreach int $interface {
+            if { [ llength [ixNet getL $int vlan] ] > 0 } {
+                set vlan [ lindex [ixNet getL $int vlan] 0 ]
+            } else {
+                set vlan [ ixNet add $int vlan ]
+            }
+           
+            ixNet setM $vlan \
+                -vlanId         $outer_vlan_id \
+                -vlanEnable     true \
+                -vlanCount      $outer_vlan_num \
+                -vlanPriority   $outer_vlan_priority
+        }
+    }
     if { $flagInnerVlan } {
         foreach int $interface {
             if { [ llength [ixNet getL $int vlan] ] > 0 } {
@@ -846,28 +867,12 @@ ixNet commit
             }
            
             ixNet setM $vlan \
-                -vlanId         $inner_vlan_id \
-                -vlanEnable     true \
-                -vlanCount      $inner_vlan_num \
-                -vlanPriority   $inner_vlan_priority
+                    -vlanId         "$outer_vlan_id,$inner_vlan_id" \
+                    -vlanEnable     true \
+                    -vlanCount      $inner_vlan_num \
+                    -vlanPriority   "$outer_vlan_priority,$inner_vlan_priority"
         }
     }
-    
-    # if { $flagOuterVlan } {
-		# foreach int $interface {
-			# if { [ llength [ixNet getL $int vlan] ] > 1 } {
-				# set vlan [ lindex [ixNet getL $int vlan] 1 ]
-			# } else {
-				# set vlan [ ixNet add $int vlan ]
-			# }
-			
-			# ixNet setM $vlan \
-				# -vlanId         $outer_vlan_id \
-				# -vlanEnable     true \
-				# -vlanCount      $outer_vlan_num \
-				# -vlanPriority   $outer_vlan_priority
-		# }
-    # }
     ixNet commit    
     
     if { [ info exists type ] } {

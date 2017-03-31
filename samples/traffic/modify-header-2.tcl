@@ -3,13 +3,13 @@ package req IxiaNet
 
 Login
 IxDebugOn
-#Port @tester_to_dta1 172.16.174.134/1/1
-#Port @tester_to_dta2 172.16.174.134/2/1
+Port @tester_to_dta1 172.16.174.129/1/1
+Port @tester_to_dta2 172.16.174.129/2/1
 #Port @tester_to_dta1 10.210.100.12/5/1
 #Port @tester_to_dta2 10.210.100.12/5/2
 
-Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
-Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
+#Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
+#Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
 #Port @tester_to_dta3 NULL NULL ::ixNet::OBJ-/vport:3
 #Port @tester_to_dta4 NULL NULL ::ixNet::OBJ-/vport:4
 
@@ -33,7 +33,7 @@ EtherHdr @tester.pdu.eth(1)
    -dst "@tester_to_dta2" \
    -tx_mode "continuous" \
    -frame_len "164" \
-   -stream_load "13" \
+   -stream_load "0.1" \
    -load_unit "percent" \
    -traffic_type "raw"
 

@@ -2491,6 +2491,9 @@ body Traffic::get_stats { args } {
 		    -tracking {
 				set tracking $value
 		    }
+			-filter_value {
+				set filter_value $value
+			}
 	    }
     }
 
@@ -2502,18 +2505,16 @@ body Traffic::get_stats { args } {
 		if { [ info exists rx_port ] == 0 || [ string length $rx_port ] == 0 } {
 			set view {::ixNet::OBJ-/statistics/view:"Traffic Item Statistics"}
 		} else {
-		
 			if { [ $rx_port isa Port ] == 0 } {
 			   error "$errNumber(1) key:port object value:$rx_port"
 			}
-
 			set view  [ ixNet getF $root/statistics view -caption "trafficPerPortView($this:$rx_port)" ]
 			if { $view == "" } {
 				if { [ catch {
-	Deputs "recreate view..."
+                    Deputs "recreate view..."
 					set view [ CreatePerPortView $rx_port ]
 				} err ] } {
-	Deputs "create stats err:$err"
+                    Deputs "create stats err:$err"
 					return [ GetErrorReturnHeader "Cannot fetch traffic stats, please make sure the stream was created correctly." ]
 				}
 			}
@@ -2563,6 +2564,9 @@ body Traffic::get_stats { args } {
 		if { $tracking == "precedence" } {
             set statsItem   "precedence"
             set statsVal    [ lindex $row $ipv4PrecedenceIndex ]
+            if { [info exists filter_value] && [lsearch $filter_value $statsVal] == -1 } {
+                continue
+            }
             Deputs "stats val:$statsVal"
             set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			

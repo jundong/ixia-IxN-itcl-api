@@ -283,18 +283,16 @@ class SimulatedRoute {
 }
 
 body SimulatedRoute::config { args } {
-
 	global errorInfo
     global errNumber
     set tag "body SimulatedRoute::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	eval chain $args
 
 	foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
-            
 			-route_type {
 				set route_type $value
 			}

@@ -1,16 +1,19 @@
+lappend auto_path [file dirname [file dirname [file dirname [info script]]]]
 package req IxiaNet
 Login
-IxDebugOff
-Port @tester_to_dta1 10.206.25.136/1/1
+IxDebugOn
+#Port @tester_to_dta1 10.206.25.136/1/1
+Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
 @tester_to_dta1 config -location "192.168.3.200/2/1" -dut_ip "1.21.14.1" -intf_ip "1.21.14.2"
 
-Port @tester_to_dta2 10.206.25.136/1/2
+#Port @tester_to_dta2 10.206.25.136/1/2
+Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
 @tester_to_dta1 config -location "192.168.3.200/2/1" -dut_ip "1.22.14.1" -intf_ip "1.22.14.2"
 
-Port @tester_to_dta3 10.206.25.136/1/3
+#Port @tester_to_dta3 10.206.25.136/1/3
+Port @tester_to_dta3 NULL NULL ::ixNet::OBJ-/vport:3
 @tester_to_dta1 config -location "192.168.3.200/2/1" -dut_ip "1.23.14.1" -intf_ip "1.23.14.2"
 
-IxDebugOn
 BfdSession @tester_to_dta1.bfd(0) @tester_to_dta1
 @tester_to_dta1.bfd(0) config \
 	-router_id "1.0.1.2" \

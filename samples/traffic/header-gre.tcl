@@ -1,10 +1,13 @@
+lappend auto_path [file dirname [file dirname [file dirname [info script]]]]
 package req IxiaNet 
 
 IxDebugOff
 #-- This is a sample of port initialization
 Login
-Port port1 10.206.25.136/1/1
-Port port2 10.206.25.136/1/2
+#Port port1 10.206.25.136/1/1
+#Port port2 10.206.25.136/1/2
+Port port1 NULL NULL ::ixNet::OBJ-/vport:1
+Port port2 NULL NULL ::ixNet::OBJ-/vport:2
 
 GreHdr hdr
 hdr config \

@@ -16,7 +16,7 @@ class BfdSession {
 		global errNumber
 		
 		set tag "body BfdSession::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		set portObj [ GetObject $port ]
 		set handle ""
@@ -25,7 +25,7 @@ Deputs "----- TAG: $tag -----"
 	
 	method reborn {} {
 		set tag "body BfdSession::reborn [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 
 		if { [ catch {
 			set hPort   [ $portObj cget -handle ]
@@ -48,7 +48,7 @@ Deputs "----- TAG: $tag -----"
 		
 		#-- add bfd protocol
 		set handle [ ixNet add $hPort/protocols/bfd router ]
-		ixNet setA $handle -Enabled True
+		ixNet setA $handle -enabled True
 		ixNet commit
 		set handle [ ixNet remapIds $handle ]
 		ixNet setA $handle -name $this

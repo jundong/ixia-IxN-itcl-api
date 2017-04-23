@@ -641,7 +641,6 @@ body Traffic::config { args  } {
     set enable_burst_gap "true"
     set burst_packet_count 1
     set enable_min_frame_size "true"
-
 	
     set tag "body Traffic::config [info script]"
     Deputs "----- TAG: $tag -----"
@@ -650,6 +649,55 @@ body Traffic::config { args  } {
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
+			-precedence {
+				set precedence $value
+			}
+			-precedence_num {
+				set trans [ UnitTrans $value ]
+				if { [ string is integer $trans ] } {
+					set precedence_num $trans
+				} else {
+					error "$errNumber(1) key:$key value:$value"
+				}
+			}
+			-precedence_step {
+				set trans [ UnitTrans $value ]
+				if { [ string is integer $trans ] } {
+					set precedence_step $trans
+				} else {
+					error "$errNumber(1) key:$key value:$value"
+				}
+			}
+			-precedence_mode {
+				set precedence_mode [ string tolower $value ]
+				switch $precedence_mode {
+					incr {
+						set precedence_mode increment
+					}
+					decr {
+						set precedence_mode decrement
+					}
+					random {
+						set precedence_mode random
+					}
+					list {
+						set precedence_mode valueList
+					}
+					default {
+						set precedence_mode singleValue
+					}
+				}
+
+			}
+			-precedence_fullmesh {
+				 set trans [ BoolTrans $value ]
+				 if { $trans == "1" || $trans == "0" } {
+					set precedence_fullmesh $value
+				 } else {
+					error "$errNumber(1) key:$key value:$value"
+				 }
+				
+			}
             -frame_ordering_mode {
                 set root [ixNet getRoot]
                 if { [string tolower $value] == "rfc2889" } {
@@ -2173,7 +2221,35 @@ body Traffic::config { args  } {
         Deputs "ep:$endpointSetList"
         Deputs "stream:$highLevelStream"
 	}
-	
+    
+    foreach hs $highLevelStream {
+        foreach stack [ ixNet getList $hs stack ] {
+            if { [ regexp ipv4 $stack ] } {
+                foreach filed [ ixNet getList $stack field ] {
+                    if { [ regexp precedence $filed ] } {
+                        if { [ info exists precedence ] } {
+                            ixNet setA $filed -startValue $precedence
+                            ixNet setA $filed -singleValue $precedence
+                        }
+                        if { [ info exists precedence_fullmesh ] } {
+                            ixNet setA $filed -fullMesh $precedence_fullmesh
+                        }
+                        if { [ info exists precedence_mode ] } {
+                            ixNet setA $filed -valueType $precedence_mode
+                        }
+                        if { [ info exists precedence_num ] } {
+                            ixNet setA $filed -countValue $precedence_num
+                        }
+                        if { [ info exists precedence_step ] } {
+                            ixNet setA $filed -stepValue $precedence_step
+                        }
+                    }
+                }
+            }
+        }
+        ixNet commit
+    }
+    
     return [GetStandardReturnHeader]
 
 }

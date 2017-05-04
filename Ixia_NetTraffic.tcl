@@ -1421,11 +1421,11 @@ body Traffic::config { args  } {
                                 if { [ llength $stackList ] == 2 } {
                                     break
                                 }
-                                ixNet exec remove [ lindex $stackList [ expr [ llength $stackList ] - 2  ] ]
+                                catch { ixNet exec remove [ lindex $stackList [ expr [ llength $stackList ] - 2  ] ] }
                             }
                             Deputs "Stack ready to add:$stackList"
                             ixNet exec append [ lindex $stackList 0 ] $proStack
-                            ixNet exec remove [ lindex $stackList 0 ]
+                            catch { ixNet exec remove [ lindex $stackList 0 ] }
                             set stack  [ lindex [ ixNet getList $hStream stack ] 0 ]
                         }
                         APP {
@@ -1668,6 +1668,9 @@ body Traffic::config { args  } {
                         Deputs "PDU:\n\tModes:$fieldModes\n\tFields:$fields\n\tConfigs:$fieldConfigs\n\tOptional:$optional\n\tAutos:$autos\n\tMeshes:$meshes"
                         foreach mode $fieldModes field $fields conf $fieldConfigs\
                         opt $optional auto $autos mesh $meshes {
+                            if { $field == "" } {
+                                continue
+                            }
                             Deputs "stack:$stack"
                             Deputs "field:$field"
                             Deputs "mesh:$mesh"
@@ -1807,7 +1810,7 @@ body Traffic::config { args  } {
                         ixNet exec append [ lindex $stackList 0 ] [ GetProtocolTemp custom ]
                         #-- remove the ethernet header will remove fcs as well
                         Deputs "remove stack..."
-                        ixNet exec remove [ lindex $stackList 0 ]
+                        catch { ixNet exec remove [ lindex $stackList 0 ] }
                         # # # #-- split the ethernet value
                         # # # set mac [ string range $pdu 0 11 ]
                         # # # set da "[ string range $mac 0 1 ]:[ string range $mac 2 3 ]:[ string range $mac 4 5 ]:[ string range $mac 6 7 ]:[ string range $mac 8 9 ]:[ string range $mac 10 11 ]"
@@ -2320,18 +2323,14 @@ body Traffic::search_min_frame_size_by_load {} {
 
 body Traffic::enable {} {
     set tag "body Traffic::enable [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-	if { [ string tolower [ ixNet getA $handle -enabled ] ] == "true" && [ string tolower [ ixNet getA $handle -suspend ] ] == "false" } {
-Deputs "no change."	
+	if { [ string tolower [ ixNet getA $handle -enabled ] ] == "true" } {
+        Deputs "no change."	
 		return [ GetStandardReturnHeader ]
 	}
 
-
-Deputs "enable:[ ixNet getA $handle -enabled ] suspend:[ ixNet getA $handle -suspend ]"
-	#ixNet setA $handle -enabled True 
-	ixNet setA $handle -suspend False
-    ixNet commit
+	ixNet setA $handle -enabled True 
 	ixNet setA $handle -suspend False
     ixNet commit
 		
@@ -2339,16 +2338,18 @@ Deputs "enable:[ ixNet getA $handle -enabled ] suspend:[ ixNet getA $handle -sus
 }
 body Traffic::disable {} {
     set tag "body Traffic::disable [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-	#ixNet setA $handle -enabled false
-	ixNet setA $handle -suspend True
-    ixNet commit
+	if { [ string tolower [ ixNet getA $handle -enabled ] ] == "false" } {
+        Deputs "no change."	
+		return [ GetStandardReturnHeader ]
+	}
+    
+	ixNet setA $handle -enabled False
 	ixNet setA $handle -suspend True
     ixNet commit
 	
     return [ GetStandardReturnHeader ]
-
 }
 
 body Traffic::traffic_enable {} {
@@ -6270,44 +6271,84 @@ body CustomHdr::config { args } {
     global errNumber
 
     set tag "body CustomHdr::config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
-# param collection
+    # param collection
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
-		  -pattern  {
-				set pattern $value
-		  }
+            -pattern  {
+                set pattern $value
+            }
+            -pattern_mode {
+                set pattern_mode $value
+            }
+            -pattern_step {
+                set pattern_step $value
+            }
+            -pattern_num {
+                set pattern_num $value
+            }
+            -length {
+                set length $value
+            }
 	   }
     }
-Deputs Step10
+    Deputs Step10
     set pro [ string tolower $protocol ]
-Deputs "Pro: $pro"
+    Deputs "Pro: $pro"
     if { $pro != "custom" } {
 	   error "$errNumber(3) key:protocol value:$pro"
     }
     SetProtocol custom
-	if { [ info exists pattern ] } {
-	    set len [ string length $pattern ]
-		if { $len >1 } {
-		    set temP ""
-		    foreach Element $pattern {
-			    set temP ${temP}${Element}
-			}
-			set pattern $temP
-		}
-	    
-		if { [ string first 0x $pattern  ] >= 0 } {
-			string replace $pattern 0 1
-		}
-	   set pduLen [expr [string length $pattern] * 4]
+    if { [ info exists length ] } {
 	   AddField length
 	   AddFieldMode Fixed
-	   AddFieldConfig $pduLen
-	   AddField data
-	   AddFieldMode Fixed
-	   AddFieldConfig $pattern
+	   AddFieldConfig $length
+    }
+	if { [ info exists pattern ] } {
+        if { ![ info exists length ] } {
+            set len [ string length $pattern ]
+            if { $len >1 } {
+                set temP ""
+                foreach Element $pattern {
+                    set temP ${temP}${Element}
+                }
+                set pattern $temP
+            }
+            
+            if { [ string first 0x $pattern  ] >= 0 } {
+                string replace $pattern 0 1
+            }
+           set pduLen [expr [string length $pattern] * 4]
+           AddField length
+           AddFieldMode Fixed
+           AddFieldConfig $pduLen
+           AddField data
+           AddFieldMode Fixed
+           AddFieldConfig $pattern
+        } else {
+            if { [ info exists pattern_mode ] } {
+               switch -exact $pattern_mode {
+                  Fixed {
+                     AddFieldMode $pattern_mode
+                     AddField data
+                     AddFieldConfig $pattern
+                  }
+                  Decrementing -
+                  Incrementing {
+                     if { [ info exists pattern_count ] && [ info exists pattern_step ] } {
+                         AddFieldMode $pattern_mode
+                         AddField data
+                         AddFieldConfig \
+                         [ list 0 $pattern $pattern_count $pattern_step ]
+                     } else {
+                         error "$errNumber(2) key:pattern/pattern_step"
+                     }
+                  }
+               }
+            } 
+         }
 	}
 }
 body TrillHdr::config { args } {

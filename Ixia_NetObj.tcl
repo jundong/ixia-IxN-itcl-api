@@ -504,7 +504,7 @@ class RouterEmulationObject {
 			
             Deputs "hFlapList:$hFlapList"
 			set id [ thread::create { 
-				proc runFlap { hFlapList } {
+				proc runFlap { hFlapList w2a a2w } {
 					while { 1 } {
                         puts "withdraw..."					
 						foreach handle $hFlapList {
@@ -521,7 +521,6 @@ class RouterEmulationObject {
 					}
 				}
 				proc init { tclServer tclPort version } {
-					
 					package req IxTclNetwork
 					ixNet connect $tclServer \
 						-port $tclPort \
@@ -533,15 +532,16 @@ class RouterEmulationObject {
 			lappend flappingProcessId $id
 			
 			global currDir
-			global server
-			global serverPort
+			global remote_server
+			global remote_serverPort
 			global ixN_tcl_v
+			global ixN_lib
 			
             Deputs "version: $ixN_tcl_v"			
-            Deputs "server port:$serverPort"			
-            Deputs "server:$server"			
+            Deputs "server port:$remote_serverPort"			
+            Deputs "server:$remote_server"			
 
-			set tclLib [file dirname [info script]]/IxNetwork
+			set tclLib $ixN_lib
             Deputs "tcl lib:$tclLib"
 
 			set result \
@@ -549,20 +549,20 @@ class RouterEmulationObject {
 			[ list lappend auto_path $tclLib ] ]
             Deputs "result:$result"
 			
-			set result \
-			[ thread::send $id \
-			[ list source "$currDir/ixianet.tcl" ] ]
-            Deputs "result:$result"
+			#set result \
+			#[ thread::send $id \
+			#[ list source "$currDir/ixianet.tcl" ] ]
+            #Deputs "result:$result"
 			
 			set result \
 			[ thread::send $id \
-			[ list init $server $serverPort $ixN_tcl_v ] ]
-            Deputs "result:$result"
+			[ list init $remote_server $remote_serverPort $ixN_tcl_v ] ]
+            Deputs "init result:$result"
 
 			set result \
 			[ thread::send -async $id \
-			[ list runFlap $hFlapList ] ]
-            Deputs "result:$result"
+			[ list runFlap $hFlapList $w2a $a2w ] ]
+            Deputs "runFlap result:$result"
 
 		}	
 		return [ GetStandardReturnHeader ]

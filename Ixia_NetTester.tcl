@@ -581,9 +581,9 @@ Deputs "----- TAG: $tag -----"
 
 proc Tester::clear_traffic_stats {} {
     set tag "proc Tester::synchronize [info script]"
-Deputs "----- TAG: $tag -----"
-    	ixNet exec clearStats
-    	return [ GetStandardReturnHeader ]
+	Deputs "----- TAG: $tag -----"
+	ixNet exec clearStats
+	return [ GetStandardReturnHeader ]
 }
 
 proc Tester::get_log { { file default } } {

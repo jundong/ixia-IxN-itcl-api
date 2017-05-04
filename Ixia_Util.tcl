@@ -763,7 +763,33 @@ proc GetPrefixV4Step { pfx { step 1 } } {
 	
 }
 
+proc DecToHex { value } {
+   set value [format "%x" $value]
+   if { [ expr [ string length $value ] % 2 ] != 0 } {
+      set value 0$value
+   }
+   return $value
+}
+
 proc IncrMacAddr { mac1 { mac2 00:00:00:00:00:01 } } {
+   if { [ string is integer $mac2 ] } {
+      set hexVal [ DecToHex $mac2 ]
+      set len [ expr [ string length $hexVal] / 2 ]
+      set macStr ""
+      for { set i 0 } { $i < [ expr 6 - $len] } { incr i } {
+         set macStr ${macStr}00
+      }
+      set macStr $macStr$hexVal
+      
+      set mac2 ""
+      for { set i 0 } { $i < 12 } { incr i 2 } {
+         if { $mac2 != "" } {
+            set mac2 ${mac2}:[ string range $macStr $i [ expr $i + 1 ] ]
+         } else {
+            set mac2 [ string range $macStr $i [ expr $i + 1 ] ]
+         }
+      }
+   }
 	set mac1List [ split $mac1 ":" ]
 	set mac2List [ split $mac2 ":" ]
 	set macLen [ llength $mac1List ]
@@ -771,9 +797,9 @@ proc IncrMacAddr { mac1 { mac2 00:00:00:00:00:01 } } {
 	set macResult 	""
 	set flagAdd		0
 	for { set index $macLen } { $index > 0 } { incr index -1 } {
-Deputs "loop index:$index"
+      Deputs "loop index:$index"
 		set eleIndex  	[ expr $index -1 ]
-Deputs "index:$eleIndex"
+      Deputs "index:$eleIndex"
 		set mac1Ele 	[ lindex $mac1List $eleIndex ]
 		set mac2Ele		[ lindex $mac2List $eleIndex ]
 Deputs "mac element:$mac1Ele $mac2Ele"
@@ -832,10 +858,17 @@ proc HexValue {value} {
 	}
 }
 
-proc HexToDec {value} {
+proc HexToDec { value } {
    set value [HexValue $value]
    scan $value %x dec
    return $dec
+}
+proc DecToHex { value } {
+   set value [format "%x" $value]
+   if { [ expr [ string length $value ] / 2 ] != 0 } {
+      set value 0$value
+   }
+   return $value
 }
 proc BinToDec {value} {
 	set binary_vlaue $value

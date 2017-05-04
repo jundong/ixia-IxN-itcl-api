@@ -68,7 +68,7 @@ Deputs "ldp:$ldp"
 
 	method generate_interface { args } {
 		set tag "body LdpSession::generate_interface [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		foreach int $rb_interface {
 		
 			if { [ ixNet getA $int -type ] == "routed" } {

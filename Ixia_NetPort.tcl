@@ -276,7 +276,7 @@ body Port::Connect { location { medium NULL } { checkLink 0 } } {
     set vport   [ ixNet add $root vport ]
     ixNet setA $vport -name $this
 	if { $medium != "NULL" } {
-Deputs "connect medium:$medium"	
+        Deputs "connect medium:$medium"	
 		ixNet setA $vport/l1Config/ethernet -media $medium
 	}
     set vport [ixNet remapIds $vport]
@@ -305,7 +305,7 @@ Deputs "connect medium:$medium"
 		ixNet commit
 	}
 	set handle [ixNet remapIds $handle]
-Deputs "handle:$handle"	
+    Deputs "handle:$handle"	
 	ixNet setA $handle -transmitIgnoreLinkStatus True
        ixNet commit       
  
@@ -314,22 +314,22 @@ Deputs "handle:$handle"
 
 body Port::Reconnect { location { medium NULL } { checkLink 0 } } {
     set tag "body Port::Reconnect [info script]"
-Deputs "----- TAG: $tag -----"
-# -- add vport
+    Deputs "----- TAG: $tag -----"
+    # -- add vport
     set root    [ ixNet getRoot ]   
-# -- connect to hardware
+    # -- connect to hardware
 	set locationInfo [ split $location "/" ]
 	set chassis     [ lindex $locationInfo 0 ]
 	set ModuleNo    [ lindex $locationInfo 1 ]
 	set PortNo      [ lindex $locationInfo 2 ]
 
 	if { [ string tolower [ ixNet getA $root/statistics -guardrailEnabled ] ] != "true" } {
-Deputs "guardrail: false"
+        Deputs "guardrail: false"
 		catch {
 			ixNet setA $root/statistics -guardrailEnabled True
 			ixNet commit
 		}
-Deputs "guardrail:[ ixNet getA $root/statistics -guardrailEnabled  ]"
+        Deputs "guardrail:[ ixNet getA $root/statistics -guardrailEnabled  ]"
 	}
 
 	if { $checkLink } {
@@ -340,27 +340,27 @@ Deputs "guardrail:[ ixNet getA $root/statistics -guardrailEnabled  ]"
 		ixNet commit
 	}
 	set handle [ixNet remapIds $handle]
-Deputs "handle:$handle"	
+    Deputs "handle:$handle"	
 	ixNet setA $handle -transmitIgnoreLinkStatus True
-       ixNet commit
+    ixNet commit
  
 	return $handle
 }
 
 body Port::GetRealPort { chassis card port } {
     set tag "body Port::GetRealPort [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     set root    [ixNet getRoot]
-Deputs "chassis:$chassis"        
+    Deputs "chassis:$chassis"        
 	set root [ixNet getRoot]
 	if { [ llength [ixNet getList $root/availableHardware chassis] ] == 0 } {
-Deputs Step20
+        Deputs Step20
 		set chas [ixNet add $root/availableHardware chassis]
 		ixNet setA $chas -hostname $chassis
 		ixNet commit
 		set chas [ixNet remapIds $chas]
 	} else {
-Deputs Step30
+        Deputs Step30
 		set chas [ixNet getList $root/availableHardware chassis]
 		set hostname [ixNet getA $chas -hostname]
 		if { $hostname != $chassis } {
@@ -374,29 +374,29 @@ Deputs Step30
 	}
 	set chassis $chas
     set realCard $chassis/card:$card
-Deputs "card:$realCard"
+    Deputs "card:$realCard"
     set cardList [ixNet getList $chassis card]
-Deputs "cardList:$cardList"
+    Deputs "cardList:$cardList"
     set findCard 0
     foreach ca $cardList {
         eval set ca $ca
         eval set realCard $realCard
-Deputs "realCard:$realCard"
-Deputs "ca:$ca"
+        Deputs "realCard:$realCard"
+        Deputs "ca:$ca"
         if { $ca == $realCard } {
             set findCard 1
             break
         } 
     }
-Deputs Step10
-Deputs "findCard:$findCard"
+    Deputs Step10
+    Deputs "findCard:$findCard"
     if { $findCard == 0} {
         return [ixNet getNull]
     }
     set realPort $chassis/card:$card/port:$port
-Deputs "port:$realPort"
+    Deputs "port:$realPort"
     set portList [ ixNet getList $chassis/card:$card port ]
-Deputs "portList:$portList"
+    Deputs "portList:$portList"
     set findPort 0
     foreach po $portList {
         eval set po $po
@@ -416,9 +416,8 @@ Deputs "portList:$portList"
     }
 }
 
-body Port::config { args } {
-    
-# object reborn
+body Port::config { args } {    
+    # object reborn
 	if { $handle == "" } {
 		if { $location != "NULL" } {
 			catch {
@@ -429,7 +428,7 @@ body Port::config { args } {
 			return [ GetErrorReturnHeader "No port information or wrong port information." ]
 		}
 	}
-#
+    #
     global errorInfo
     global errNumber
 

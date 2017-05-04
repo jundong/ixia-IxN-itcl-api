@@ -144,9 +144,9 @@ class DhcpHost {
 		ixNet setA $optionSet -name "${this}_OptionSet"
 		ixNet commit
 		set optionSet [ixNet remapIds $optionSet]
-Deputs "option:$optionSet"
-Deputs "[ixNet getA $handle/dhcpRange -clientOptionSet]"
-Deputs "ixNet setA $handle/dhcpRange -clientOptionSet $optionSet"
+        Deputs "option:$optionSet"
+        Deputs "[ixNet getA $handle/dhcpRange -clientOptionSet]"
+        Deputs "ixNet setA $handle/dhcpRange -clientOptionSet $optionSet"
 		ixNet setA $handle/dhcpRange -clientOptionSet $optionSet
 		ixNet commit
 		ixNet setA $handle/dhcpRange -clientOptionSet $optionSet
@@ -156,9 +156,9 @@ Deputs "ixNet setA $handle/dhcpRange -clientOptionSet $optionSet"
 	    set igmpObj ""
 	    
 		#disable all the interface defined on port
-		foreach int [ ixNet getL $hPort interface ] {
-			ixNet setA $int -enabled false
-		}
+		#foreach int [ ixNet getL $hPort interface ] {
+		#	ixNet setA $int -enabled false
+		#}
 		ixNet commit
     }
 	

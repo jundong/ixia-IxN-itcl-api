@@ -825,15 +825,18 @@ set errNumber(4)    "Confilct argument..."
 puts "set error message list..."
 
 set ixN_tcl_v "6.0"
+set ixN_lib ""
 puts "connect to ixNetwork Tcl Server version $ixN_tcl_v"
 if { $::tcl_platform(platform) == "windows" } {
 	puts "windows platform..."
 	package require registry
 
     if { [ catch {
-	    lappend auto_path  "[ GetEnvTcl IxNetwork ]/TclScripts/lib/IxTclNetwork"
+        set ixN_lib "[ GetEnvTcl IxNetwork ]/TclScripts/lib/IxTclNetwork"
+	    lappend auto_path  $ixN_lib
     } err ] } {
-		lappend auto_path $currDir/IxNetwork
+        set ixN_lib $currDir/IxNetwork
+		lappend auto_path $ixN_lib
         puts "Failed to invoke IxNetwork environment...$err"
 		puts "Try to load IxNetwork local lib..."
 	}

@@ -769,8 +769,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -frame_len {
                 if { [ string is integer $value ] && ( $value >= 12 ) } {
                     set frame_len $value
@@ -779,8 +777,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -min_frame_len {
                 if { [ string is integer $value ] && ( $value >= 12 ) } {
                     set min_frame_len $value
@@ -789,8 +785,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -max_frame_len {
                 if { [ string is integer $value ] && ( $value >= 12 ) } {
                     set max_frame_len $value
@@ -799,8 +793,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -frame_len_step {
                 if { [ string is integer $value ] } {
                     set frame_len_step $value
@@ -809,8 +801,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -enable_fcs_error_insertion {
                 set trans [ BoolTrans $value ]
                 if { $trans == "1" || $trans == "0" } {
@@ -859,8 +849,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -stream_load {
                 if { [ string is integer $value ] || [ string is double $value ] } {
                     set stream_load $value
@@ -869,8 +857,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }				
             }
-
-
             -load_unit {
                 set value [ string toupper $value ]
                 if { [ lsearch -exact $ELoadUnit $value ] >= 0 } {
@@ -3765,14 +3751,11 @@ body SingleVlanHdr::config { args } {
 
 }
 body VlanHdr::config { args } {
-    
     global errorInfo
     global errNumber
 
-
     set tag "body VlanHdr::config [info script]"
     Deputs "----- TAG: $tag -----"
-
 
     set id1         100
     set id1_num     1

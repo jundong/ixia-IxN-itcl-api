@@ -748,7 +748,7 @@ body Port::config { args } {
 		lappend interface $newInt
 		lappend intf_mac [ ixNet getA $newInt/ethernet -macAddress ]
 	}
-Deputs "port interface mac:$intf_mac"		
+    Deputs "port interface mac:$intf_mac"		
     
     if { [ info exists mac_addr ] } {
         foreach int $interface {
@@ -756,9 +756,9 @@ Deputs "port interface mac:$intf_mac"
         }
     }
     
-# -- enable ping defaultly
+    # -- enable ping defaultly
     ixNet setA $handle/protocols/ping -enabled true
-# -- change the autoInstrumentation defaultly
+    # -- change the autoInstrumentation defaultly
     # ixNet setA $handle/l1Config/ethernet -autoInstrumentation floating
     ixNet commit
 	if { [ info exists ip_version ] == 0 || $ip_version != "ipv4" } {
@@ -770,7 +770,7 @@ Deputs "port interface mac:$intf_mac"
 			set ipv6_addr "::${a}:${b}:${c}:${d}"	
 		}
 	}
-Deputs "set ipv6 on interface..."
+    Deputs "set ipv6 on interface..."
     if { [ info exists ipv6_addr ] } {
 	
 		foreach int $interface {
@@ -783,11 +783,11 @@ Deputs "set ipv6 on interface..."
 
 			ixNet setA $ipv6Int -ip $ipv6_addr 
 			ixNet setA $ipv6Int -prefixLength $ipv6_mask
-#==			increment not supported 
+            #==			increment not supported 
 		}
 	    ixNet commit
     }	
-Deputs "set dut ipv6 address..."	
+    Deputs "set dut ipv6 address..."	
     if { [ info exists dut_ipv6 ] } {
 		foreach int $interface {
 			if { [ llength [ ixNet getList $int ipv6 ] ] == 0 } {
@@ -798,12 +798,12 @@ Deputs "set dut ipv6 address..."
 			ixNet setA $ipv6Int -gateway $dut_ipv6
 			ixNet setA $ipv6Int -prefixLength $ipv6_mask
 			# set dut_ip [ IncrementIPAddr $dut_ip $dut_ip_mod $dut_ip_step ]
-# Deputs "dut_ip: $dut_ip"
+            # Deputs "dut_ip: $dut_ip"
 		}
 	    ixNet commit
     }	
 	
-Deputs "set ipv4 on interface..."
+    Deputs "set ipv4 on interface..."
     if { [ info exists intf_ip ] } {
 	
 		foreach int $interface {
@@ -816,16 +816,16 @@ Deputs "set ipv4 on interface..."
 			
 			ixNet setA $ipv4Int -ip $intf_ip 
 			ixNet setA $ipv4Int -maskWidth $mask
-Deputs "int_ip increment:$intf_ip $intf_ip_mod $intf_ip_step"
+            Deputs "int_ip increment:$intf_ip $intf_ip_mod $intf_ip_step"
 			lappend intf_ipv4 $intf_ip
 			set intf_ip [ IncrementIPAddr $intf_ip $intf_ip_mod $intf_ip_step ]
-Deputs "int_ip: $intf_ip"
+            Deputs "int_ip: $intf_ip"
 		}
     }
-Deputs "port intf_ipv4:$intf_ipv4"
-ixNet commit
+    Deputs "port intf_ipv4:$intf_ipv4"
+    ixNet commit
 
-Deputs "set dut ipv4 address..."	
+    Deputs "set dut ipv4 address..."	
     if { [ info exists dut_ip ] } {
 		foreach int $interface {
 			if { [ llength [ ixNet getList $int ipv4 ] ] == 0 } {
@@ -2113,7 +2113,14 @@ body Host::config { args } {
 		ixNet commit
 	} else {
 		for { set index 0 } { $index < $count } { incr index } {
-			set int [ ixNet add $hPort interface ]
+            set int [lindex [ixNet getList $hPort interface] $index]
+            if { $int != "" } {
+                if { [llength [ ixNet getL $int ipv4 ]] != 0 } {
+                    set int [ ixNet add $hPort interface ]
+                }
+            } else {
+                set int [ ixNet add $hPort interface ]
+            }
 			if { $unconnected } {
                 Deputs "unconncted:$unconnected"
                 Deputs "int:$int"		

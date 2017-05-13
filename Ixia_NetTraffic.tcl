@@ -641,6 +641,7 @@ body Traffic::config { args  } {
     set enable_burst_gap "true"
     set burst_packet_count 1
     set enable_min_frame_size "true"
+    set regenerate false
 	
     set tag "body Traffic::config [info script]"
     Deputs "----- TAG: $tag -----"
@@ -649,6 +650,13 @@ body Traffic::config { args  } {
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
+            -regenerate {
+                set regenerate $value
+            }
+            -name {
+                ixNet setA $handle -name $value
+                ixNet commit
+            }
 			-precedence {
 				set precedence $value
 			}
@@ -769,8 +777,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -frame_len {
                 if { [ string is integer $value ] && ( $value >= 12 ) } {
                     set frame_len $value
@@ -779,8 +785,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -min_frame_len {
                 if { [ string is integer $value ] && ( $value >= 12 ) } {
                     set min_frame_len $value
@@ -789,8 +793,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -max_frame_len {
                 if { [ string is integer $value ] && ( $value >= 12 ) } {
                     set max_frame_len $value
@@ -799,8 +801,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -frame_len_step {
                 if { [ string is integer $value ] } {
                     set frame_len_step $value
@@ -809,8 +809,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -enable_fcs_error_insertion {
                 set trans [ BoolTrans $value ]
                 if { $trans == "1" || $trans == "0" } {
@@ -859,8 +857,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-
-
             -stream_load {
                 if { [ string is integer $value ] || [ string is double $value ] } {
                     set stream_load $value
@@ -869,8 +865,6 @@ body Traffic::config { args  } {
                     error "$errNumber(1) key:$key value:$value"
                 }				
             }
-
-
             -load_unit {
                 set value [ string toupper $value ]
                 if { [ lsearch -exact $ELoadUnit $value ] >= 0 } {
@@ -1793,8 +1787,8 @@ body Traffic::config { args  } {
                      # IxDebugOff
                     }
 		   } else {
-				set pdu [ List2Str $pdu ]
-                if { [ IsHex $pdu ] == 0 } {
+                set pduLen [llength $pdu]
+                if { [ IsHex [ List2Str $pdu ] ] == 0 } {
                     error "$errNumber(2) key: pdu(pdu is not hex or object)"
                 } else {
                     #-- Create quick stream
@@ -1819,7 +1813,7 @@ body Traffic::config { args  } {
                         # # # # set sa [ string range $pdu 12 23 ]
                         # # # set et [ string range $pdu 24 27 ]
                         # # # set pdu [ string range $pdu 28 end ]
-                        set pduLen [expr [string length $pdu] * 4]
+                        
                         Deputs "pdu len:$pduLen"
                         # # # #-- modify the eth stack field
                         # # # set ethStack [ lindex [ ixNet getList $stream stack ] 0 ]
@@ -1836,16 +1830,19 @@ body Traffic::config { args  } {
                         # set customStack [ lindex [ ixNet getList $stream stack ] 1 ]
                         Deputs "custom stack:$customStack"
                         set fieldList [ ixNet getList $customStack field ]
-                        Deputs "pdu len:$pduLen pdu:$pdu"
+                        Deputs "pdu len:$pduLen, pdu:$pdu"
                         ixNet setA [ lindex $fieldList 0 ] -singleValue $pduLen
                         ixNet commit
-                        if { [ regexp -nocase {^0x} $value ] } {
-                            Deputs Step51
-                            ixNet setA [ lindex $fieldList 1 ] -singleValue $pdu
-                        } else {
-                            Deputs Step53
-                            ixNet setA [ lindex $fieldList 1 ] -singleValue 0x$pdu
-                        }
+                        #if { [ regexp -nocase {^0x} $value ] } {
+                        #    Deputs Step51
+                        #    ixNet setA [ lindex $fieldList 1 ] -singleValue $pdu
+                        #} else {
+                        #    Deputs Step53
+                        #    ixNet setA [ lindex $fieldList 1 ] -singleValue 0x$pdu
+                        #}
+                        ixNet setA [ lindex $fieldList 1 ] -valueType valueList
+                        ixNet setA [ lindex $fieldList 1 ] -valueList $pdu
+                        ixNet commit
                     }
                     Deputs Step60
                     ixNet commit
@@ -1997,15 +1994,12 @@ body Traffic::config { args  } {
     } 
     
     if { [ info exists payload ] } {
-
 		foreach configElement $highLevelStream {
 			ixNet setM $configElement/framePayload \
 				-customRepeat true \
 				-type custom \
-				-customPattern $payload
-
+				-customPattern $payload 
 		}
-
     }
 	  
     if { [ info exists load_unit ] } {
@@ -2175,7 +2169,7 @@ body Traffic::config { args  } {
             Deputs "dstMac: [ixNet getA $dst -singleValue]"
             Deputs "srcMac: [ixNet getA $src -startValue]"
             Deputs "dstMac: [ixNet getA $dst -startValue]"
-			set regenerate 0
+			
 			if { [ixNet getA $dst -singleValue] == "00:00:00:00:00:00" &&
 			[ixNet getA $dst -startValue] == "00:00:00:00:00:00" &&
 			[ llength [ixNet getA $dst -valueList] ] == 0 } {
@@ -2186,7 +2180,7 @@ body Traffic::config { args  } {
 					ixNet setM $dst -valueType valueList -valueList "00:00:00:00:00:02"
 				}
 				
-				set regenerate 1
+				set regenerate true
 			}
 			if { [ixNet getA $src -singleValue] == "00:00:00:00:00:00" &&
 			[ixNet getA $src -startValue] == "00:00:00:00:00:00" &&
@@ -2197,7 +2191,7 @@ body Traffic::config { args  } {
 				} else {
 					ixNet setM $src -valueType valueList -valueList "00:00:00:00:00:01"
 				}
-				set regenerate 1
+				set regenerate true
 			}
 			
 			if { $regenerate } {
@@ -2604,6 +2598,7 @@ body Traffic::get_stats { args } {
     Deputs "caption list:$captionList"
 
     set traNameIndex            [ lsearch -exact $captionList {Traffic Item} ]
+    set rxPortIndex             [ lsearch -exact $captionList {Rx Port} ]
     set txFramesIndex           [ lsearch -exact $captionList {Tx Frames} ]
     set rxFramesIndex           [ lsearch -exact $captionList {Rx Frames} ]
     set aveLatencyIndex         [ lsearch -exact $captionList {Store-Forward Avg Latency (ns)} ]
@@ -2634,6 +2629,9 @@ body Traffic::get_stats { args } {
         Deputs "row:$row"
 		if { [ info exists rx_port ] == 0 } {
 			if { [ lindex $row $traNameIndex ] != $this } {
+				continue
+			}
+            if { [ lindex $row $rxPortIndex ] != $rx_port && [ lindex $row $rxPortIndex ] != ::$rx_port } {
 				continue
 			}
 		}
@@ -3765,14 +3763,11 @@ body SingleVlanHdr::config { args } {
 
 }
 body VlanHdr::config { args } {
-    
     global errorInfo
     global errNumber
 
-
     set tag "body VlanHdr::config [info script]"
     Deputs "----- TAG: $tag -----"
-
 
     set id1         100
     set id1_num     1

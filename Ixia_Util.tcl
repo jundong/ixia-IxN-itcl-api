@@ -445,12 +445,15 @@ proc IsHex {value} {
     }
     set strLen  [ string length $value ]
     for { set index 0 } { $index < $strLen } { incr index } {
-        set checkChar   [ string index $value $index ]
-        if { [ regexp -nocase {[0-9a-f]} $checkChar ] } {
-            continue
-        } else {
-            return 0
-        }
+      set checkChar   [ string index $value $index ]
+      if { $checkChar == " " } {
+         continue
+      }
+      if { [ regexp -nocase {[0-9a-f]} $checkChar ] } {
+          continue
+      } else {
+          return 0
+      }
     }
     return 1
 }

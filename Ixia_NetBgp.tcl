@@ -563,7 +563,7 @@ Deputs "----- TAG: $tag -----"
 		global errNumber
 		
 		set tag "body Vpn::reborn [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 		if { [ catch {
 			set hBgp   [ $bgpObj cget -handle ]

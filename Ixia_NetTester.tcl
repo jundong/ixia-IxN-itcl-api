@@ -219,9 +219,10 @@ proc Tester::start_router {} {
 
 proc Tester::stop_router {} {
     set tag "proc Tester::stop_router [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     
-	ixTclNet::StopProtocols
+	#ixTclNet::StopProtocols
+    ixNet exec stopAllProtocols
     return [ GetStandardReturnHeader ]
 }
 
@@ -243,7 +244,7 @@ Deputs "----- TAG: $tag -----"
 
 proc Tester::stop_routers { router } {
     set tag "proc Tester::stop_routers [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     
 		foreach rt $router {
 			if { [ $rt isa EmulationObject ] == 0 } {
@@ -251,7 +252,7 @@ Deputs "----- TAG: $tag -----"
 			}
 		}
 		
-		foreach rt $router {
+		foreach rt $router { 
 			$rt stop
 		}
 		return [ GetStandardReturnHeader ]

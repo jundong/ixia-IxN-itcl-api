@@ -1087,6 +1087,7 @@ body Traffic::config { args  } {
                     } else {
                         set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                         lappend srcPortHandle [ $srcObj cget -hPort ]
+                        set trafficType [ $srcObj cget -type ]
                     }
                     set trafficType [ $srcObj cget -type ]
                 } elseif { [ $srcObj isa Host ] } {
@@ -1169,6 +1170,7 @@ body Traffic::config { args  } {
                         Deputs "route block handle:[$dstObj cget -handle]"				
                         set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
                         set dstPortHandle [ $dstObj cget -hPort ]
+                        set trafficType [ $dstObj cget -type ]
                     }
                 } elseif { [ $dstObj isa Host ] } {
                     set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
@@ -2548,11 +2550,8 @@ body Traffic::GetQuickItem {} {
     return ""
 }
 body Traffic::get_stats { args } {
-
 	set tracking none
-	
     # param collection --
-
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
@@ -2627,11 +2626,13 @@ body Traffic::get_stats { args } {
     foreach row $stats {
         eval {set row} $row
         Deputs "row:$row"
-		if { [ info exists rx_port ] == 0 } {
+		if { [ info exists rx_port ] } {
+            Deputs "rx_port:$rx_port, rxPortIndex:$rxPortIndex, traNameIndex:$traNameIndex, this:$this"
 			if { [ lindex $row $traNameIndex ] != $this } {
 				continue
 			}
-            if { [ lindex $row $rxPortIndex ] != $rx_port && [ lindex $row $rxPortIndex ] != ::$rx_port } {
+            
+            if { [ lindex $row $rxPortIndex ] != $rx_port && [ lindex $row $rxPortIndex ] != "::$rx_port" } {
 				continue
 			}
 		}

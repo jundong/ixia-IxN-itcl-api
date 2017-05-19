@@ -134,7 +134,7 @@ Deputs "Args:$args "
 	ixNet setM $handle -enabled True
 	
 	if { [ info exists router_id ] } {
-Deputs "router_id:$router_id"	
+        Deputs "router_id:$router_id"	
 		ixNet setA $handle -routerId $router_id
 		ixNet commit
 	}	

@@ -2626,12 +2626,10 @@ body Traffic::get_stats { args } {
     foreach row $stats {
         eval {set row} $row
         Deputs "row:$row"
-		if { [ info exists rx_port ] } {
-            Deputs "rx_port:$rx_port, rxPortIndex:$rxPortIndex, traNameIndex:$traNameIndex, this:$this"
-			if { [ lindex $row $traNameIndex ] != $this } {
-				continue
-			}
-            
+        if { [ lindex $row $traNameIndex ] != $this } {
+            continue
+        }
+		if { [ info exists rx_port ] } {            
             if { [ lindex $row $rxPortIndex ] != $rx_port && [ lindex $row $rxPortIndex ] != "::$rx_port" } {
 				continue
 			}
@@ -3214,65 +3212,66 @@ Deputs "ret:$ret"
 
 body Traffic::CreatePerPortView { rxPort } {
     set tag "body Traffic::CreatePerPortView [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
     set root [ixNet getRoot]
     set customView          [ ixNet add $root/statistics view ]
     ixNet setM  $customView -caption "trafficPerPortView($this:$rxPort)" -type layer23TrafficFlow  -visible true
     ixNet commit
     set customView          [ ixNet remapIds $customView ]
-Deputs "view:$customView"
-    
-Deputs "available item: [ixNet getL $customView availableTrafficItemFilter]"
-Deputs "available port: [ixNet getL $customView availablePortFilter]"
- 
-Deputs "handle:$handle obj:$this" 
+    Deputs "view:$customView"
+        
+    Deputs "available item: [ixNet getL $customView availableTrafficItemFilter]"
+    Deputs "available port: [ixNet getL $customView availablePortFilter]"
+     
+    Deputs "handle:$handle obj:$this" 
 	set itemFId	[ixNet getF $customView availableTrafficItemFilter -name $this]
-Deputs "item filtered Id:$itemFId"
+    Deputs "item filtered Id:$itemFId"
     ixNet setA $customView/layer23TrafficItemFilter -trafficItemFilterIds $itemFId
     
     set connectionInfo [ ixNet getA [$rxPort cget -handle] -connectionInfo ]
-Deputs "connectionInfo :$connectionInfo"
+    Deputs "connectionInfo :$connectionInfo"
     regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-Deputs "chas:$chassis card:$card port$port"
-Deputs "filter name: ${chassis}/Card${card}/Port${port}"
+    Deputs "chas:$chassis card:$card port$port"
+    Deputs "filter name: ${chassis}/Card${card}/Port${port}"
 	set filteredId	[ixNet getF $customView availablePortFilter -name "${chassis}/Card${card}/Port${port}" ]
-Deputs "filteredId:$filteredId"
+    Deputs "filteredId:$filteredId"
     ixNet setA $customView/layer23TrafficPortFilter -portFilterIds [ list $filteredId ]
     
     ixNet commit
-Deputs "stats :[ ixNet getL $customView statistic ]"
+    Deputs "stats :[ ixNet getL $customView statistic ]"
     foreach s [ixNet getL $customView statistic] {
 	   ixNet setA $s -enabled true
     }
-Deputs "stats view enabled..."
+    Deputs "stats view enabled..."
     ixNet setA $customView -enabled true
-Deputs "custom view enabled"
+    Deputs "custom view enabled"
     ixNet commit
     
     return $customView
 }
 body Traffic::CreatePerPrecedenceView { } {
     set tag "body Traffic::CreatePerPrecedenceView [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
     set root [ixNet getRoot]
     set customView          [ ixNet add $root/statistics view ]
     ixNet setM  $customView -caption "trafficPerPrecedenceView($this)" -type layer23TrafficFlow  -visible true
+    Deputs "caption:trafficPerPrecedenceView($this)"
     ixNet commit
     set customView          [ ixNet remapIds $customView ]
-Deputs "view:$customView"
-    
-Deputs "available filter: [ixNet getL $customView availableTrackingFilter]"
- 
-Deputs "handle:$handle obj:$this" 
+    Deputs "view:$customView"
+        
+    Deputs "available filter: [ixNet getL $customView availableTrackingFilter]"
+     
+    Deputs "handle:$handle obj:$this" 
 	set itemFId	[ixNet getF $customView availableTrafficItemFilter -name $this]
 Deputs "item filtered Id:$itemFId"
     ixNet setA $customView/layer23TrafficItemFilter -trafficItemFilterIds $itemFId
 Deputs "handle:$handle obj:$this" 
 	set itemFId	[ixNet getF $customView availableTrackingFilter -name "IPv4 :Precedence"]
 Deputs "item filtered Id:$itemFId"
-	set filter0 [ ixNet add $customView/layer23TrafficFlowFilter trackingFilter ]
+	set filter [ ixNet add $customView/layer23TrafficFlowFilter trackingFilter ]
     ixNet setM $filter \
 		-trackingFilterId $itemFId \
 		-value [ list 0 1 2 3 4 5 6 7 ] \
@@ -3299,14 +3298,14 @@ Deputs "----- TAG: $tag -----"
     ixNet setM  $customView -caption "trafficPerPortView($this)" -type layer23TrafficFlow  -visible true
     ixNet commit
     set customView          [ ixNet remapIds $customView ]
-Deputs "view:$customView"
-    
-Deputs "available item: [ixNet getL $customView availableTrafficItemFilter]"
-Deputs "available port: [ixNet getL $customView availablePortFilter]"
+    Deputs "view:$customView"
+        
+    Deputs "available item: [ixNet getL $customView availableTrafficItemFilter]"
+    Deputs "available port: [ixNet getL $customView availablePortFilter]"
  
-Deputs "handle:$handle obj:$this" 
+    Deputs "handle:$handle obj:$this" 
 	set itemFId	[ixNet getF $customView availableTrafficItemFilter -name $this]
-Deputs "item filtered Id:$itemFId"
+    Deputs "item filtered Id:$itemFId"
     ixNet setA $customView/layer23TrafficItemFilter -trafficItemFilterIds $itemFId    
     ixNet setA $customView/layer23TrafficPortFilter -portFilterIds [ixNet getL $customView availablePortFilter]
     

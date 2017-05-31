@@ -766,14 +766,6 @@ proc GetPrefixV4Step { pfx { step 1 } } {
 	
 }
 
-proc DecToHex { value } {
-   set value [format "%x" $value]
-   if { [ expr [ string length $value ] % 2 ] != 0 } {
-      set value 0$value
-   }
-   return $value
-}
-
 proc IncrMacAddr { mac1 { mac2 00:00:00:00:00:01 } } {
    if { [ string is integer $mac2 ] } {
       set hexVal [ DecToHex $mac2 ]
@@ -866,13 +858,15 @@ proc HexToDec { value } {
    scan $value %x dec
    return $dec
 }
+
 proc DecToHex { value } {
    set value [format "%x" $value]
-   if { [ expr [ string length $value ] / 2 ] != 0 } {
+   if { [ expr [ string length $value ] % 2 ] != 0 } {
       set value 0$value
    }
    return $value
 }
+
 proc BinToDec {value} {
 	set binary_vlaue $value
 	binary scan [binary format B* [format %032s $binary_vlaue]] I1 decimal_value

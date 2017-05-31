@@ -2113,14 +2113,30 @@ body Host::config { args } {
 		ixNet commit
 	} else {
 		for { set index 0 } { $index < $count } { incr index } {
-            set int [lindex [ixNet getList $hPort interface] $index]
-            if { $int != "" } {
-                if { [llength [ ixNet getL $int ipv4 ]] != 0 } {
-                    set int [ ixNet add $hPort interface ]
+            set int ""
+            if { [llength $handle] == 0 } {
+                set tmpInt [lindex [ixNet getList $hPort interface] 0]
+                if { $tmpInt != "" } {
+                    if { [llength [ ixNet getL $tmpInt ipv4 ]] == 0 } {
+                        set int $tmpInt
+                    }
                 }
             } else {
-                set int [ ixNet add $hPort interface ]
+                set int [lindex $handle $index]
             }
+            #set int [lindex [ixNet getList $hPort interface] $index]
+            #if { $int != "" } {
+            #    if { [llength [ ixNet getL $int ipv4 ]] != 0 } {
+            #        set int [ ixNet add $hPort interface ]
+            #    }
+            #} else {
+            #    set int [ ixNet add $hPort interface ]
+            #}
+            if { $int == "" } {
+                set int [ ixNet add $hPort interface ]
+                ixNet commit
+                set int [ixNet remapIds $int]
+            } 
 			if { $unconnected } {
                 Deputs "unconncted:$unconnected"
                 Deputs "int:$int"		
@@ -2128,8 +2144,10 @@ body Host::config { args } {
 			}
 			ixNet setA $int -description $this
 			ixNet commit
-			set int [ixNet remapIds $int]
-			lappend handle $int
+            
+            if { [lsearch $handle $int ] == -1 } {
+                lappend handle $int
+            }
 
             Deputs "int:$int"	
 			if { [ info exists ipv4_addr ] } {
@@ -2171,49 +2189,41 @@ body Host::config { args } {
 				}
 	Deputs "ipv6 addr incr: $ipv6_addr"			
 			}
-Deputs "config mac"
+            Deputs "config mac"
 			if { [ info exists src_mac ] } {
 				ixNet setM $int/ethernet \
 						-macAddress $src_mac 
 				ixNet commit
 				set src_mac [ IncrMacAddr $src_mac $src_mac_step ]
 			}
-Deputs "config vlan1"
+            Deputs "config vlan1"
 			if { [ info exists vlan_id1 ] } {
-				set vlanId	$vlan_id1
-				
 				ixNet setM $int/vlan \
 					-count 1 \
 					-vlanEnable $enable_vlan \
-					-vlanId $vlanId
+					-vlanId $vlan_id1
 				ixNet commit
-				incr vlan_id1 $vlan_id1_step
+                
+                Deputs "config vlan2"
+                if { [ info exists vlan_id2 ] } {
+                    set vlanId	"${vlan_id1},${vlan_id2}"
+                
+                    ixNet setM $int/vlan \
+                        -count 2 \
+                        -vlanEnable $enable_vlan \
+                        -vlanId $vlanId
+                    ixNet commit
+                    incr vlan_id2 $vlan_id2_step
+                }
+                incr vlan_id1 $vlan_id1_step
 			}
 			
-Deputs "config vlan2"
-			if { [ info exists vlan_id2 ] } {
-				set vlanId	$vlan_id2
-
-				set vlanId1	[ ixNet getA $int/vlan -vlanId ]
-				set vlanId	"${vlanId1},${vlanId}"
-			
-				ixNet setM $int/vlan \
-					-count 2 \
-					-vlanEnable $enable_vlan \
-					-vlanId $vlanId
-				ixNet commit
-				incr vlan_id2 $vlan_id2_step
-			}
-			
-Deputs "enable interface"
+            Deputs "enable interface"
 			if { [ info exists enabled ] } {
 				ixNet setA $int -enabled $enabled
 				ixNet commit			
 			}
-		}
-		
-
-		
+		}	
 	}
 	
 	Deputs "static $static"

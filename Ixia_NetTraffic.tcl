@@ -4586,8 +4586,8 @@ Deputs "----- TAG: $tag -----"
 	set darepeat 1
 	set sarepeat 1
     set EType [ list Fixed Random Incrementing Decrementing ]
-Deputs Step10
-# param collection
+    Deputs Step10
+    # param collection
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {

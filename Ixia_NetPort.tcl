@@ -1332,7 +1332,7 @@ Deputs "Args:$args "
 
 body Port::reset {} {
     set tag "body Port::reset [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
     ixNet exec setFactoryDefaults $handle
     ixNet commit
 	return [ GetStandardReturnHeader ]

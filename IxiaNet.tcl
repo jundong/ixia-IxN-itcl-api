@@ -626,6 +626,16 @@ if { [ catch {
 	} tbcErr ] } {
 		puts "load package fail...$err $tbcErr"
 	}
+}
+puts "load package Ixia_NetFlow..."
+if { [ catch {
+	source [file join $currDir Ixia_NetFlow.tcl]
+} err ] } {
+	if { [ catch {
+			source [file join $currDir Ixia_NetFlow.tbc]
+	} tbcErr ] } {
+		puts "load package fail...$err $tbcErr"
+	}
 } 
 puts "load package Ixia_NetDhcp..."
 if { [ catch {

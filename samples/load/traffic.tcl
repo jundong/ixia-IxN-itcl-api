@@ -1,10 +1,11 @@
-lappend auto_path [file dirname [file dirname [file dirname [info script]]]]
-
+#lappend auto_path [file dirname [file dirname [file dirname [info script]]]]
+lappend auto_path {C:\Ixia\Workspace\ixia-IxN-itcl-api}
 package req IxiaNet
-set configfile "C:/Ixia/Configs/IPoE.ixncfg"
+IxDebugOn
+set configfile {C:\Ixia\Workspace\ixia-IxN-itcl-api\samples\load\B2B_2port.ixncfg}
 Login "localhost/8009" 1 $configfile
 #Login "localhost/8009" 1
-IxDebugOn
+
 Port @portwithname11 "172.16.174.128/1/1"
 IPoEHost @ipoe_host("IP-R2") @portwithname11
 Traffic @trafficwithname("t1") @portwithname11

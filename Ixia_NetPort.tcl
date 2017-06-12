@@ -1990,6 +1990,20 @@ body Host::config { args } {
             -vlan_pri2 {
                 set vlan_pri2 $value
             }
+            -ipaddr {
+                if { [IsIPv4Address $value] } {
+                    set ipv4_addr $value
+                } else {
+                    set ipv6_addr $value
+                }
+            }
+            -ipaddr_step {
+                if { [IsIPv4Address $value] } {
+                    set ipv4_addr_step $value
+                } else {
+                    set ipv6_addr_step $value
+                }
+            }
             -ipv4_addr {
 				set ipv4_addr $value
             }
@@ -2117,8 +2131,18 @@ body Host::config { args } {
             if { [llength $handle] == 0 } {
                 set tmpInt [lindex [ixNet getList $hPort interface] 0]
                 if { $tmpInt != "" } {
-                    if { [llength [ ixNet getL $tmpInt ipv4 ]] == 0 } {
-                        set int $tmpInt
+                    if { [info exists ipv4_addr] && [info exists ipv6_addr] } {
+                        if { [llength [ ixNet getL $tmpInt ipv4 ]] == 0 && [llength [ ixNet getL $tmpInt ipv6 ]] == 0 } {
+                            set int $tmpInt
+                        } 
+                    } elseif { [info exists ipv4_addr] } {
+                        if { [llength [ ixNet getL $tmpInt ipv4 ]] == 0 } {
+                            set int $tmpInt
+                        } 
+                    } elseif { [info exists ipv6_addr] } {
+                        if { [llength [ ixNet getL $tmpInt ipv6 ]] == 0 } {
+                            set int $tmpInt
+                        }
                     }
                 }
             } else {

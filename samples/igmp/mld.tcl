@@ -25,7 +25,8 @@ Port @tester_to_dta4 192.168.0.21/1/12
  MulticastGroup @tester.multicast_group(3)
  @tester.multicast_group(3) config -group_ip "FF03:0002::1" -group_num "1" -group_step "1"
  MldHost @tester_to_dta3.mld_host @tester_to_dta3
- @tester_to_dta3.mld_host config -ipv4_gw "2200:0002::1" -ipv6_addr "2200:0002::2" -outer_vlan_enable "true" -outer_vlan_step "1" -version "v1" -outer_vlan_id "2"
+ @tester_to_dta3.mld_host config -ipv6_gw "2200:0002::1" -ipv6_addr "2200:0002::2" -outer_vlan_enable "true" -outer_vlan_step "1" -version "v1" -outer_vlan_id "2"
+
  @tester_to_dta3.mld_host join_group -group "@tester.multicast_group(3)"
  Traffic @tester_to_dta1.traffic(1) @tester_to_dta1
  

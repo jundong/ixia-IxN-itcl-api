@@ -574,8 +574,30 @@ proc IncrementIPAddr { IP prefixLen { num 1 } } {
     return [format %u 0x$A].[format %u 0x$B].[format %u 0x$C].[format %u 0x$D]
 }
 proc IncrementIPv6Addr { IP prefixLen { num 1 } } {
-Deputs "pfx len:$prefixLen IP:$IP num:$num"
-	
+   Deputs "pfx len:$prefixLen IP:$IP num:$num"
+   set ret $IP
+   if { [IsInt $num] } {
+      set ret [IncrementIPv6AddrNum $IP $prefixLen $num]
+   } else {
+      set step [IncrementIPv6AddrNum $num 128 0]
+      set intSplit [split $step :]
+      array set stepArr [list]
+      for {set i 0} {$i < [llength $intSplit]} {incr i} {
+         set prefix [expr 16 * (1 + $i)]
+         if { [lindex $intSplit $i] != 0 } {
+            set stepArr($prefix) [lindex $intSplit $i]
+         }
+      }
+      
+      foreach {key val} [array get stepArr] {
+         set ret [IncrementIPv6AddrNum $ret $key $val]
+      }
+   }
+   return $ret
+}
+
+proc IncrementIPv6AddrNum { IP prefixLen { num 1 } } {
+   Deputs "pfx len:$prefixLen IP:$IP num:$num"
 	if { [ string first "::" $IP ] >= 0 } {
 		while { [ llength [ split $IP ":" ] ] < 8 } {
 			set colIndex [ string first "::" $IP ]

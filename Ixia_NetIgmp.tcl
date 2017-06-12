@@ -17,7 +17,7 @@ class IgmpHost {
     constructor { port } {}
 	method reborn {} {
     set tag "body IgmpHost::reborn [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 		if { [ catch {
 			set hPort   [ $portObj cget -handle ]
 		} ] } {
@@ -120,12 +120,12 @@ body IgmpHost::config { args } {
     global errorInfo
     global errNumber
     set tag "body IgmpHost::config [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 	if { $handle == "" } {
 		reborn
 	}
-#param collection
-Deputs "Args:$args "
+	#param collection
+	Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -841,7 +841,7 @@ class MldHost {
 	method join_group { args } {}
 	method reborn {} {
     set tag "body MldHost::reborn [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		if { [ catch {
 			set hPort   [ $portObj cget -handle ]
 		} ] } {
@@ -853,17 +853,15 @@ Deputs "----- TAG: $tag -----"
 		ixNet commit
 
 		set handle [ ixNet add $hPort/protocols/mld host ]
-Deputs "handle:$handle"		
+        ixNet commit
 		set handle [ ixNet remapIds $handle ]
-	
+        Deputs "handle:$handle, this:$this"	
 		ixNet setA $handle \
 			-name $this \
 			-enabled True
 		ixNet commit
-
-		
+        Deputs "qwertyuiop"	
 		set protocol mld
-
 	}
 	method config { args } {
 		eval chain $args -ip_version ipv6 

@@ -2578,8 +2578,8 @@ Deputs "----- TAG: $tag -----"
         ixNet setA $handle/dhcpServerRange -ipType IPv6
         ixNet commit    	
     }
-#param collection
-Deputs "Args:$args "
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -2590,14 +2590,12 @@ Deputs "Args:$args "
 	}
 
 	if { [ info exists ia_type ] } {
-	
 		ixNet setA $handle/dhcpServerRange -dhcp6IaType $ia_type
 	}
 	
 	ixNet commit
 	
     return [GetStandardReturnHeader]    
-
 }
 
 class DhcpDualStackHost {

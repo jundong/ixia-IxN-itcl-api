@@ -51,6 +51,7 @@
 #		23. add remove_all_stream proc
 
 class Tester {
+
     proc constructor {} {}
     proc apply_traffic {} {}
     proc start_traffic { { restartCaptureJudgement 1 } } {}
@@ -70,7 +71,6 @@ class Tester {
     proc getAllTx {} {}
     proc isLossFrames {} {}
     proc saveResults { args } {}
-    proc config_global { args } {}
 }
 
 proc Tester::getAllTx {} {
@@ -533,7 +533,7 @@ Deputs $err
 
 proc Tester::apply_traffic {} {
 	set tag "proc Tester::apply_traffic [info script]"
-    Deputs "----- TAG: $tag -----"
+  Deputs "----- TAG: $tag -----"
 	ixTclNet::ApplyTraffic
     
 	set root [ixNet getRoot]
@@ -565,7 +565,7 @@ Deputs "Wait for generate traffic"
 
 proc Tester::synchronize {} {
     set tag "proc Tester::synchronize [info script]"
-    Deputs "----- TAG: $tag -----"
+Deputs "----- TAG: $tag -----"
 
 #	set root [ixNet getRoot]
 #	set it_handles [ ixNet getL $root/traffic trafficItem ]
@@ -581,9 +581,9 @@ proc Tester::synchronize {} {
 }
 
 proc Tester::clear_traffic_stats {} {
-    set tag "proc Tester::synchronize [info script]"
+  set tag "proc Tester::clear_traffic_stats [info script]"
 	Deputs "----- TAG: $tag -----"
-	ixNet exec clearStats
+	catch { ixNet exec clearStats }
 	return [ GetStandardReturnHeader ]
 }
 
@@ -824,42 +824,6 @@ proc Tester::saveResults { args } {
         puts $fid "Total Frame Loss"
         puts $fid $lossFrames
         close $fid
-    }
-    return [ GetStandardReturnHeader ]
-}
-
-##################################################
-#args:
-#   -pollinterval£º
-#eg. Tester::config_global -pollinterval 2
-###################################################
-proc Tester::config_global { args } {
-    set tag "proc Tester::config_global [info script]"
-    Deputs "----- TAG: $tag -----"
-
-	Deputs "Args:$args "
-	foreach { key value } $args {
-	    set key [string tolower $key]
-	    switch -exact -- $key {
-			-pollinterval {
-				set pollinterval $value
-            }
-        }
-    }
-    
-    ixNet exec releaseAllPorts
-    set root [ixNet getRoot]
-    if { [ info exists pollinterval ] } {
-        ixNet setA $root/statistics -pollInterval $pollinterval
-        ixNet setM $root/statistics/autoRefresh -minRefreshInterval $pollinterval -enabled true
-        ixNet commit
-    }
-    
-    foreach obj [find objects] {
-        if {[$obj isa Port]} {
-            set location [$obj cget -location]
-            catch { $obj Reconnect $location }
-        }
     }
     return [ GetStandardReturnHeader ]
 }

@@ -1047,7 +1047,7 @@ body Traffic::config { args  } {
                 set srcObj [ GetObject $srcEndpoint ]
                 # Deputs "srcObj:$srcObj"			
                 if { $srcObj == "" } {
-                    Deputs "illegal object...$srcObj"
+                    Deputs "illegal object...$srcEndpoint"
                     set srcObj $portObj
                     # error "$errNumber(1) key:src value:$src (Not an object)"                
                 }
@@ -1112,6 +1112,23 @@ body Traffic::config { args  } {
                     set trafficType "ipv4"
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
                     lappend srcPortHandle [ $srcObj cget -hPort ]
+                } elseif { [$srcObj isa DeviceGroup] } {
+                	if { $trafficType == "ipv4" } {
+                		if { [$srcObj cget -type] == "IPV4" } {
+                			set srcHandle [ concat $srcHandle [ $srcObj cget -handle ]]
+                		} else {
+                			set srcHandle [ concat $srcHandle [ $srcObj cget -bgpIpv4NetworkGroup ]]
+                		}
+                	} elseif { $trafficType == "ipv6" } {
+                	if { [$srcObj cget -type] == "IPV6" } {
+                			set srcHandle [ concat $srcHandle [ $srcObj cget -handle ]]
+                		} else {
+											set srcHandle [ concat $srcHandle [ $srcObj cget -bgpIpv6NetworkGroup ]]
+										}
+                	}
+              		foreach p [$srcObj cget -portObj] {
+              			lappend srcPortHandle [ $p cget -handle ]
+              		}
                 } else {
                     Deputs Step120
                     set srcHandle [ concat $srcHandle [ $srcObj cget -handle ] ]
@@ -1129,7 +1146,7 @@ body Traffic::config { args  } {
                 # Deputs "dstObj:$dstObj"			
                 if { $dstObj == "" } {
                     Deputs "illegal object...$dstEndpoint"
-                    error "$errNumber(1) key:dst value:$dst"                
+                    set dstObj $portObj             
                 }
                 if { ( [ $dstObj isa Port ] == 0 ) && ( [ $dstObj isa EmulationObject ] == 0 ) && ( [ $dstObj isa Host ] == 0 ) } {
                     Deputs "illegal object...$dst"
@@ -1190,6 +1207,23 @@ body Traffic::config { args  } {
                     set trafficType "ipv4"
                     set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
                     lappend dstPortHandle [ $dstObj cget -hPort ]
+                } elseif { [$dstObj isa DeviceGroup] } {
+                	if { $trafficType == "ipv4" } {
+                		if { [$srcObj cget -type] == "IPV4" } {
+                			set dstHandle [ concat $dstHandle [ $dstObj cget -handle ]]
+                		} else {                	
+                			set dstHandle [ concat $dstHandle [ $dstObj cget -bgpIpv4NetworkGroup ]]  
+                		}              		
+                	} elseif { $trafficType == "ipv6" } {
+                		if { [$srcObj cget -type] == "IPV6" } {
+                			set dstHandle [ concat $dstHandle [ $dstObj cget -handle ]]
+                		} else {                   	
+											set dstHandle [ concat $dstHandle [ $dstObj cget -bgpIpv6NetworkGroup ]]
+										}
+                	}
+              		foreach p [$dstObj cget -portObj] {
+              			lappend dstPortHandle [ $p cget -handle ]
+              		}                	
                 } else {
                     set dstHandle [ concat $dstHandle [ $dstObj cget -handle ] ]
                     lappend dstPortHandle [ $dstObj cget -hPort ]
@@ -2667,7 +2701,7 @@ body Traffic::get_stats { args } {
 		if { $statsVal == "" } {
 			set statsVal	"NA"
 		} else {
-			set statsVal 	[ expr $statsVal / 1000 ] 
+			set statsVal 	[ expr $statsVal / 1000.0 ] 
 		}
         Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
@@ -2693,7 +2727,7 @@ body Traffic::get_stats { args } {
 		if { $statsVal == "" } {
 			set statsVal	"NA"
 		} else {
-			set statsVal 	[ expr $statsVal / 1000 ] 
+			set statsVal 	[ expr $statsVal / 1000.0 ] 
 		}
 Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
@@ -2709,7 +2743,7 @@ Deputs "stats val:$statsVal"
 		if { $statsVal == "" } {
 			set statsVal	"NA"
 		} else {
-			set statsVal 	[ expr $statsVal / 1000 ] 
+			set statsVal 	[ expr $statsVal / 1000.0 ] 
 		}
 Deputs "stats val:$statsVal"
 	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
@@ -4586,8 +4620,8 @@ Deputs "----- TAG: $tag -----"
 	set darepeat 1
 	set sarepeat 1
     set EType [ list Fixed Random Incrementing Decrementing ]
-    Deputs Step10
-    # param collection
+Deputs Step10
+# param collection
     foreach { key value } $args {
 	   set key [string tolower $key]
 	   switch -exact -- $key {
@@ -4709,7 +4743,7 @@ Deputs "Dst addr num: $trans"
 						set damode Random
 					}
 					list {
-						set damode Random
+						set damode List
 					}
 				}
 			}       
@@ -4717,7 +4751,7 @@ Deputs "Dst addr num: $trans"
     }
 
     set pro [ string tolower $protocol ]
-Deputs "Pro: $pro"
+		Deputs "Pro: $pro"
     if { $pro != "ipv6" } {
 	   error "$errNumber(3) key:protocol value:$pro"
     }

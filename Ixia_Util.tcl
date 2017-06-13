@@ -574,30 +574,8 @@ proc IncrementIPAddr { IP prefixLen { num 1 } } {
     return [format %u 0x$A].[format %u 0x$B].[format %u 0x$C].[format %u 0x$D]
 }
 proc IncrementIPv6Addr { IP prefixLen { num 1 } } {
-   Deputs "pfx len:$prefixLen IP:$IP num:$num"
-   set ret $IP
-   if { [IsInt $num] } {
-      set ret [IncrementIPv6AddrNum $IP $prefixLen $num]
-   } else {
-      set step [IncrementIPv6AddrNum $num 128 0]
-      set intSplit [split $step :]
-      array set stepArr [list]
-      for {set i 0} {$i < [llength $intSplit]} {incr i} {
-         set prefix [expr 16 * (1 + $i)]
-         if { [lindex $intSplit $i] != 0 } {
-            set stepArr($prefix) [lindex $intSplit $i]
-         }
-      }
-      
-      foreach {key val} [array get stepArr] {
-         set ret [IncrementIPv6AddrNum $ret $key $val]
-      }
-   }
-   return $ret
-}
-
-proc IncrementIPv6AddrNum { IP prefixLen { num 1 } } {
-   Deputs "pfx len:$prefixLen IP:$IP num:$num"
+Deputs "pfx len:$prefixLen IP:$IP num:$num"
+	
 	if { [ string first "::" $IP ] >= 0 } {
 		while { [ llength [ split $IP ":" ] ] < 8 } {
 			set colIndex [ string first "::" $IP ]
@@ -788,9 +766,20 @@ proc GetPrefixV4Step { pfx { step 1 } } {
 	
 }
 
+proc DecToHex { value } {
+   set value [format "%x" $value]
+   if { [ expr [ string length $value ] % 2 ] != 0 } {
+      set value 0$value
+   }
+   return $value
+}
+
 proc IncrMacAddr { mac1 { mac2 00:00:00:00:00:01 } } {
    if { [ string is integer $mac2 ] } {
       set hexVal [ DecToHex $mac2 ]
+      if { [ expr [ string length $hexVal] % 2 ] != 0 } {
+      	set hexVal 0$hexVal
+      }
       set len [ expr [ string length $hexVal] / 2 ]
       set macStr ""
       for { set i 0 } { $i < [ expr 6 - $len] } { incr i } {
@@ -880,15 +869,13 @@ proc HexToDec { value } {
    scan $value %x dec
    return $dec
 }
-
 proc DecToHex { value } {
    set value [format "%x" $value]
-   if { [ expr [ string length $value ] % 2 ] != 0 } {
+   if { [ expr [ string length $value ] / 2 ] != 0 } {
       set value 0$value
    }
    return $value
 }
-
 proc BinToDec {value} {
 	set binary_vlaue $value
 	binary scan [binary format B* [format %032s $binary_vlaue]] I1 decimal_value
@@ -938,8 +925,11 @@ proc PutsFormatCp { args } {
 # Get key value from Huawei defined stats
 proc GetStatsFromReturn { stats key } {
 	set regStr "\{$key:(\\d+)\}"
+	set regStr2 "\{$key:(\\d+\.\\d+)\}"
 	Deputs "the reg key is: $key"
-	if { [ eval regexp $regStr {$stats} match val ] } {
+	if { [ eval regexp $regStr2 {$stats} match val ] } {
+		return $val
+	} elseif { [ eval regexp $regStr {$stats} match val ] } {
 		return $val
 	} else {
 		return ""

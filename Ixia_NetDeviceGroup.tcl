@@ -43,88 +43,22 @@ class DeviceGroup {
 	# -- port can be a list, but one port recommended
 	# -- template
 	# -- 	-enum: BGP4_DUAL L3VPN_PE	
-	constructor { port { template null } } {
+	constructor { port { template null } {topo null} } {
+		set topology $topo
 		set portObj $port
 		set type [ string toupper $template ]
-		reborn
+		reborn $topology
 	}
 	
-	method reborn {} {}
-	method init {} {
-		switch $type {
-			BGP4_DUAL {
-				set ethernet [ixNet add $handle ethernet]
-				ixNet commit
-				set ethernet [ixNet remapIds $ethernet]
-				set vlan [lindex [ixNet getL $ethernet vlan] 0]
-				set ipv4 	 [ixNet add $ethernet ipv4]
-				ixNet commit
-				set ipv4 [ixNet remapIds $ipv4]
-				set ipv6	 [ixNet add $ethernet ipv6]
-				ixNet commit
-				set ipv6 [ixNet remapIds $ipv6]
-				set bgpIpv4Peer [ixNet add $ipv4 bgpIpv4Peer]
-				ixNet commit
-				set bgpIpv4Peer [ixNet remapIds $bgpIpv4Peer]
-				set bgpIpv6Peer [ixNet add $ipv6 bgpIpv6Peer]
-				ixNet commit
-				set bgpIpv6Peer [ixNet remapIds $bgpIpv6Peer ]
-				set bgpIpv4NetworkGroup [ixNet add $handle networkGroup]
-				set bgpIpv6NetworkGroup [ixNet add $handle networkGroup]
-				ixNet commit
-				set bgpIpv4NetworkGroup [ixNet remapIds $bgpIpv4NetworkGroup]
-				set bgpIpv6NetworkGroup [ixNet remapIds $bgpIpv6NetworkGroup]
-				set ipv4PrefixPools [ ixNet add $bgpIpv4NetworkGroup ipv4PrefixPools ]
-				set ipv6PrefixPools [ ixNet add $bgpIpv6NetworkGroup ipv6PrefixPools ]
-				ixNet commit
-				set ipv4PrefixPools [ixNet remapIds $ipv4PrefixPools]
-				set ipv6PrefixPools [ixNet remapIds $ipv6PrefixPools]
-				set bgpIPRouteProperty 		[ ixNet getL $ipv4PrefixPools bgpIPRouteProperty ]
-				set bgpV6IPRouteProperty 	[ ixNet getL $ipv6PrefixPools bgpV6IPRouteProperty ]
-				SetMultipleValue [ ixNet getL $ipv4PrefixPools bgpV6IPRouteProperty ] -active false
-				SetMultipleValue [ ixNet getL $ipv6PrefixPools bgpIPRouteProperty ] -active false
-				
-			}
-			BGP4 {
-				set ethernet [ixNet add $handle ethernet]
-				ixNet commit
-				set vlan [lindex [ixNet getL $ethernet vlan] 0]
-				set ipv4 	 [ixNet add $ethernet ipv4]
-				ixNet commit
-				set bgpIpv4Peer [ixNet add $ipv4 bgpIpv4Peer]
-				ixNet commit
-				set bgpIpv4NetworkGroup [ixNet add $handle networkGroup]
-				ixNet commit
-				set ipv4PrefixPools [ ixNet add $bgpIpv4NetworkGroup ipv4PrefixPools ]
-				ixNet commit
-			}
-			IPV4 {
-				set ethernet [ixNet add $handle ethernet]
-				ixNet commit
-				set vlan [lindex [ixNet getL $ethernet vlan] 0]
-				set ipv4 	 [ixNet add $ethernet ipv4]
-				ixNet commit		
-			}
-			IPV6 {
-				set ethernet [ixNet add $handle ethernet]
-				ixNet commit
-				set vlan [lindex [ixNet getL $ethernet vlan] 0]
-				set ipv6	 [ixNet add $ethernet ipv6]
-				ixNet commit
-			}
-			L3VPN_PE {
-			}
-		}
-		ixNet setA $topology -name ${type}_$this
-		ixNet commit
-	}
+	method reborn { {topo null} } {}
+	method init {} {}
 	method config { args } 
-	proc SetMultipleValue { obj key value { step 0 } } {
+	proc SetMultipleValue { obj key value { step 0 } { type "" } } {
 		global errorInfo
 		global errNumber
 		set tag "body DeviceGroup::SetMultipleValue [info script]"
 		Deputs "----- TAG: $tag -----"
-		Deputs "obj:$obj key:$key val:$value step:$step"
+		Deputs "obj:$obj key:$key val:$value step:$step type: $type"
 		set mv [ ixNet getA $obj $key ]
 		Deputs "mv:$mv"
 		if { $step != 0 } {
@@ -143,20 +77,52 @@ class DeviceGroup {
 			}
 		}
 		
-		ixNet setM $mv/counter \
-			-start $value \
-			-step $step
-		if { [ catch {
-			Deputs Step20		
-			ixNet commit
-		} ] } {
-			Deputs Step30		
-			ixNet setA $mv/singleValue -value $value
-			catch {
-				Deputs Step40			
-				ixNet commit
+		if { $type == "custom" } { 
+			if { [llength [ixNet getL $mv custom]] == 0 } {
+				set custom [ixNet add $mv "custom"]
+				ixNet commit 
+			} else {
+				set custom [lindex [ixNet getL $mv custom] 0]
 			}
-		}
+			Deputs "start: [lindex $value 0]"
+			ixNet setM $custom -step 0  -start [lindex $value 0]
+			ixNet commit
+			
+			if { [llength [ixNet getL $custom increment]] == 0 } {
+				set increment1 [ixNet add $custom "increment"]
+				ixNet commit 
+			} else {
+				set increment1 [lindex [ixNet getL $custom increment] 0]
+			}
+			Deputs "count: [lindex $value 3], value: [lindex $value 1]"
+			ixNet setM $increment1 -count [lindex $value 3]  -value [lindex $value 1]
+			ixNet commit
+			
+			if { [llength [ixNet getL $increment1 increment]] == 0 } {
+				set increment2 [ixNet add $increment1 "increment"]
+				ixNet commit 
+			} else {
+				set increment2 [lindex [ixNet getL $increment1 increment] 0]
+			}
+			Deputs "count: [lindex $value 2], value: 0"
+			ixNet setM $increment2 -count [lindex $value 2]  -value 0
+			ixNet commit
+		} else {
+			ixNet setM $mv/counter \
+				-start $value \
+				-step $step
+			if { [ catch {
+				Deputs Step20		
+				ixNet commit
+			} ] } {
+				Deputs Step30		
+				ixNet setA $mv/singleValue -value $value
+				catch {
+					Deputs Step40			
+					ixNet commit
+				}
+			}
+		} 
 	}
 	method config_ethernet { args } {}
 	method config_vlan { args } {}
@@ -253,51 +219,128 @@ class DeviceGroup {
 
 }
 
-body DeviceGroup::reborn {} {
+body DeviceGroup::reborn { {topo null} } {
 	global errorInfo
 	global errNumber
 	set tag "body DeviceGroup::reborn [info script]"
 	Deputs "----- TAG: $tag -----"
 	set root [ixNet getRoot]
-	set topology [ixNet add $root topology]
 	set vPortList [ list ]
 	foreach vport $portObj {
 		set vport [ $vport cget -handle ]
 		lappend vPortList $vport
+	}	
+	if { $topo == "null" } {
+		set topology [ixNet add $root topology]
+		ixNet setM $topology \
+			-vports $vPortList
+		ixNet commit
+		set topology [ixNet remapIds $topology]
+	} else {
+		set topology $topo
 	}
-	ixNet setM $topology \
-		-vports $vPortList
-	ixNet commit
+	Deputs "topology: $topology"
+	#ixNet setA $topology -name ${type}_$this
 	
 	set hPort $vPortList
 	
 	set handle [ixNet add $topology deviceGroup]
 	ixNet setA $handle -name $this
 	ixNet commit	
-
+	set handle [ixNet remapIds $handle]
+	Deputs "handle: $handle"
+	
 	if { $type != "NULL" } {
 		init
 	}
-    
 	return [GetStandardReturnHeader]
 
 }
 
+body DeviceGroup::init {} {
+	set tag "body DeviceGroup::init [info script]"
+	Deputs "----- TAG: $tag -----"
+	switch $type {
+		BGP4_DUAL {
+			set ethernet [ixNet add $handle ethernet]
+			ixNet commit
+			set ethernet [ixNet remapIds $ethernet]
+			set vlan [lindex [ixNet getL $ethernet vlan] 0]
+			set ipv4 	 [ixNet add $ethernet ipv4]
+			ixNet commit
+			set ipv4 [ixNet remapIds $ipv4]
+			set ipv6	 [ixNet add $ethernet ipv6]
+			ixNet commit
+			set ipv6 [ixNet remapIds $ipv6]
+			set bgpIpv4Peer [ixNet add $ipv4 bgpIpv4Peer]
+			ixNet commit
+			set bgpIpv4Peer [ixNet remapIds $bgpIpv4Peer]
+			set bgpIpv6Peer [ixNet add $ipv6 bgpIpv6Peer]
+			ixNet commit
+			set bgpIpv6Peer [ixNet remapIds $bgpIpv6Peer ]
+			set bgpIpv4NetworkGroup [ixNet add $handle networkGroup]
+			set bgpIpv6NetworkGroup [ixNet add $handle networkGroup]
+			ixNet commit
+			set bgpIpv4NetworkGroup [ixNet remapIds $bgpIpv4NetworkGroup]
+			set bgpIpv6NetworkGroup [ixNet remapIds $bgpIpv6NetworkGroup]
+			set ipv4PrefixPools [ ixNet add $bgpIpv4NetworkGroup ipv4PrefixPools ]
+			set ipv6PrefixPools [ ixNet add $bgpIpv6NetworkGroup ipv6PrefixPools ]
+			ixNet commit
+			set ipv4PrefixPools [ixNet remapIds $ipv4PrefixPools]
+			set ipv6PrefixPools [ixNet remapIds $ipv6PrefixPools]
+			set bgpIPRouteProperty 		[ ixNet getL $ipv4PrefixPools bgpIPRouteProperty ]
+			set bgpV6IPRouteProperty 	[ ixNet getL $ipv6PrefixPools bgpV6IPRouteProperty ]
+			SetMultipleValue [ ixNet getL $ipv4PrefixPools bgpV6IPRouteProperty ] -active false
+			SetMultipleValue [ ixNet getL $ipv6PrefixPools bgpIPRouteProperty ] -active false
+			
+		}
+		BGP4 {
+			set ethernet [ixNet add $handle ethernet]
+			ixNet commit
+			set vlan [lindex [ixNet getL $ethernet vlan] 0]
+			set ipv4 	 [ixNet add $ethernet ipv4]
+			ixNet commit
+			set bgpIpv4Peer [ixNet add $ipv4 bgpIpv4Peer]
+			ixNet commit
+			set bgpIpv4NetworkGroup [ixNet add $handle networkGroup]
+			ixNet commit
+			set ipv4PrefixPools [ ixNet add $bgpIpv4NetworkGroup ipv4PrefixPools ]
+			ixNet commit
+		}
+		IPV4 {
+			set ethernet [ixNet add $handle ethernet]
+			ixNet commit
+			set vlan [lindex [ixNet getL $ethernet vlan] 0]
+			set ipv4 	 [ixNet add $ethernet ipv4]
+			ixNet commit		
+		}
+		IPV6 {
+			set ethernet [ixNet add $handle ethernet]
+			ixNet commit
+			set vlan [lindex [ixNet getL $ethernet vlan] 0]
+			set ipv6	 [ixNet add $ethernet ipv6]
+			ixNet commit
+		}
+		L3VPN_PE {
+		}
+	}
+	ixNet commit
+}
+	
 # ---------------------------------
 # -- count
 # --	-INT
 # -- router_id
 # --	-IP
 body DeviceGroup::config { args } {
-    global errorInfo
-    global errNumber
-    set tag "body DeviceGroup::config [info script]"
+  global errorInfo
+  global errNumber
+  set tag "body DeviceGroup::config [info script]"
 	Deputs "----- TAG: $tag -----"
-
 	if { $handle == "" } {
 		reborn
 	}
-	
+
 	set count 1
 	#param collection
 	Deputs "Args:$args "
@@ -431,6 +474,12 @@ Deputs "Args:$args "
 				}
 			}
 			-priority {
+				set priority $value
+				continue
+			}
+			-priority_type {
+				set priorityMode $value
+				continue
 			}
 			-vlan_id -
 			-vlan_id1 -
@@ -456,6 +505,9 @@ Deputs "Args:$args "
 		set kvList($key) $value
     }
 	
+	if { [info exists priorityMode] } {
+		SetMultipleValue $vlan -priority $priority 0 $priorityMode
+	}
 	foreach key [array names kvList] {
 		switch -exact -- $key {
 			-vlanId {
@@ -829,6 +881,7 @@ Deputs "Args:$args "
 				-prefix_len $prefix_len
 		]
 		
+		set handle [ixNet remapIds $handle]
 		$route_block configure -handle $handle
 	}
 	

@@ -1942,7 +1942,7 @@ body Host::config { args } {
 	set ipv6_gw			3ffe:3210::1
 	set ip_version		ipv4
 	set enabled 		True
-	set unconnected		0
+    set unconnected		0
 	set static 0
     set enable_vlan true
 	
@@ -2158,16 +2158,17 @@ body Host::config { args } {
             #}
             if { $int == "" } {
                 set int [ ixNet add $hPort interface ]
-                ixNet commit
-                set int [ixNet remapIds $int]
-            } 
-			if { $unconnected } {
+
+            }
+            if { $unconnected } {
                 Deputs "unconncted:$unconnected"
                 Deputs "int:$int"		
-				ixNet setA $int -type routed
-			}
+                ixNet setA $int -type routed
+            }
+
 			ixNet setA $int -description $this
-			ixNet commit
+            ixNet commit
+            set int [ixNet remapIds $int]
             
             if { [lsearch $handle $int ] == -1 } {
                 lappend handle $int
@@ -2256,7 +2257,7 @@ body Host::config { args } {
 
 body Host::ping { args } {
     set tag "body Host::ping [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	global errNumber
 
@@ -2264,8 +2265,8 @@ Deputs "----- TAG: $tag -----"
 	set interval 	1000
 	set flag 		1
 
-#param collection
-Deputs "Args:$args "
+    #param collection
+    Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {

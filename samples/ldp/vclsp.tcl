@@ -17,15 +17,15 @@ Ipv4PrefixLsp @tester_to_dta1.ldp(1).prefix_lsp(1) @tester_to_dta1.ldp(1)
 @tester_to_dta1.ldp(1).prefix_lsp(1) config -route_block "@tester.route_block(1)"
 VcLsp @tester_to_dta1.ldp(1).vc_lsp @tester_to_dta1.ldp(1)
 @tester_to_dta1.ldp(1).vc_lsp config \
-        -requested_vlan_id_start "1" \
-        -if_mtu "9600" \
-        -requested_vlan_id_step "1" \
-        -mac_start "00:00:00:01:00:00" \
-        -requested_vlan_id_count "1" \
-        -encap "LDP_LSP_ENCAP_ETHERNET_VPLS" \
-        -mac_num "1" \
-        -vc_id_start "1" \
-        -peer_address "170.170.170.170" 
+    -requested_vlan_id_start "1" \
+    -if_mtu "9600" \
+    -requested_vlan_id_step "1" \
+    -mac_start "00:00:00:01:00:00" \
+    -requested_vlan_id_count "1" \
+    -encap "LDP_LSP_ENCAP_ETHERNET_VPLS" \
+    -mac_num "1" \
+    -vc_id_start "1" \
+    -peer_address "170.170.170.170"
 
 @tester_to_dta2 config -location "190.2.152.82/5/6" -dut_ip "201.13.14.1" -intf_ip "201.13.14.2"
 Ospfv2Session @tester_to_dta2.ospf(2) @tester_to_dta2

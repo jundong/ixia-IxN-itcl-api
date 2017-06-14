@@ -679,7 +679,7 @@ body VcLsp::config { args } {
 				set ixencap atmvpc
 			}
 			LDP_LSP_ENCAP_ETHERNET_VPLS {
-				set ixencap ethernet
+				set ixencap vlan
 			}
 		}
 		ixNet setA $handle -type $ixencap

@@ -467,7 +467,7 @@ Deputs "----- TAG: $tag -----"
 }
 body DhcpHost::renew {} {
     set tag "body DhcpHost::renew [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 	if { [ catch {
 		ixNet exec dhcpClientRenew $handle
 	} ] } {
@@ -1522,9 +1522,8 @@ class Dhcpv6Host {
 	method get_summary_stats {} {}
 	method get_detailed_stats {} {}
 	method reborn { { onStack null } } {
-	
 		set tag "body Dhcpv6Host::reborn [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 	
 		chain $onStack
 		ixNet setA $handle/dhcpRange -ipType IPv6

@@ -96,7 +96,7 @@ class ProtocolStackObject {
     
     method reborn { { onStack null } } {
 		set tag "body ProtocolStackObject::reborn [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
 		if { [ info exists hPort ] == 0 } {
 			if { [ catch {
 				set hPort   [ $portObj cget -handle ]
@@ -106,7 +106,7 @@ Deputs "----- TAG: $tag -----"
 		}
 		
 		if { $onStack == "null" } {
-Deputs "new ethernet stack"
+            Deputs "new ethernet stack"
 			#-- add ethernet stack
 			set sg_ethernet [ixNet add $hPort/protocolStack ethernet]
 			ixNet setMultiAttrs $sg_ethernet \
@@ -122,14 +122,14 @@ Deputs "new ethernet stack"
 		global errorInfo
 		global errNumber
 		set tag "body ProtocolStackObject::ctor [info script]"
-Deputs "----- TAG: $tag -----"
+        Deputs "----- TAG: $tag -----"
         set portObj [ GetObject $port ]
         if { [ catch {
         	set hPort   [ $portObj cget -handle ]
         } ] } {
         	error "$errNumber(1) Port Object in DhcpHost ctor"
         }
-Deputs "onStack:$onStack"        
+        Deputs "onStack:$onStack"        
 		if { $onStack != "null" } {
 			reborn $onStack
 		} else {

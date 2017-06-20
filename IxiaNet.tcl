@@ -646,6 +646,16 @@ if { [ catch {
 	} tbcErr ] } {
 		puts "load package fail...$err $tbcErr"
 	}
+}
+puts "load package Ixia_NetDhcpPD..."
+if { [ catch {
+	source [file join $currDir Ixia_NetDhcpPD.tcl]
+} err ] } {
+	if { [ catch {
+			source [file join $currDir Ixia_NetDhcpPD.tbc]
+	} tbcErr ] } {
+		puts "load package fail...$err $tbcErr"
+	}
 } 
 puts "load package Ixia_NetIgmp..."
 if { [ catch {

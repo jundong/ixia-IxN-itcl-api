@@ -11,12 +11,13 @@ class DhcpPDHost {
     
     #public variable type
 	#public variable stack
-    public variable hIgmp
     public variable optionSet
     
     public variable rangeStats
     public variable hostCnt
-    public variable hDhcp
+    public variable hPppox
+	public variable hDhcp
+	public variable hDhcpv6PdClient
     public variable requestDuration
 	
 	public variable statsView
@@ -28,68 +29,18 @@ class DhcpPDHost {
 		    
 	    array set rangeStats [list]
 	    if { $onStack == "null" } {
-			Deputs "new dhcp endpoint"
 			chain 
-			set sg_ethernet $stack
-			#-- add dhcp endpoint stack
-			set sg_dhcpEndpoint [ixNet add $sg_ethernet dhcpEndpoint]
-			ixNet setA $sg_dhcpEndpoint -name $this
-			ixNet commit
-			set sg_dhcpEndpoint [lindex [ixNet remapIds $sg_dhcpEndpoint] 0]
-			set hDhcp $sg_dhcpEndpoint
 		} else {
 			Deputs "based on existing stack:$onStack"		
 			set hDhcp $onStack
 		}
 	
-	    #-- add range
-	    set sg_range [ixNet add $hDhcp range]
-	    ixNet setMultiAttrs $sg_range/macRange \
-	     -enabled True 
-	
-	    ixNet setMultiAttrs $sg_range/vlanRange \
-	     -enabled False \
-	
-	    ixNet setMultiAttrs $sg_range/dhcpRange \
-	     -enabled True \
-	     -count 1
-	
-	    ixNet commit
-	    set sg_range [ixNet remapIds $sg_range]
-	
-	    set handle $sg_range
-		
-		#-- add option set
-		set root [ixNet getRoot]
-		set globalSetting [ ixNet getL $root/globals/protocolStack dhcpGlobals ]
-		set optionSet [ ixNet add $globalSetting dhcpOptionSet ]
-		ixNet setA $optionSet -name "${this}_OptionSet"
-		ixNet commit
-		set optionSet [ixNet remapIds $optionSet]
-        Deputs "option:$optionSet"
-        Deputs "[ixNet getA $handle/dhcpRange -clientOptionSet]"
-        Deputs "ixNet setA $handle/dhcpRange -clientOptionSet $optionSet"
-		ixNet setA $handle/dhcpRange -clientOptionSet $optionSet
-		ixNet commit
-		ixNet setA $handle/dhcpRange -clientOptionSet $optionSet
-		ixNet commit
-		
-	    #set trafficObj 
-	    set igmpObj ""
-	    
-		#disable all the interface defined on port
-		#foreach int [ ixNet getL $hPort interface ] {
-		#	ixNet setA $int -enabled false
-		#}
-		ixNet commit
     }
 	
     method config { args } {}
     method request {} {}
     method release {} {}
     method renew {} {}
-    method abort {} {}
-    method retry {} {}
     method resume {} {}
     method pause {} {}
     method rebind {} {}
@@ -195,10 +146,11 @@ body DhcpPDHost::config { args } {
 	
 	#param collection
 	Deputs "Args:$args "
+	set hOuterVlan [lindex [ixNet getL $handle/vlanRange vlanIdInfo] 0]
+	set hInnerVlan [lindex [ixNet getL $handle/vlanRange vlanIdInfo] 1]
     foreach { key value } $args {
         set key [string tolower $key]
-        switch -exact -- $key {
-            
+        switch -exact -- $key { 
             -count {
                 if { [ string is integer $value ] && ( $value <= 65535 ) } {
                     set count $value
@@ -207,234 +159,127 @@ body DhcpPDHost::config { args } {
                     error "$errNumber(1) key:$key value:$value"
                 }
             }
-            -circuit_id {
-                set circuit_id  $value
-            }
-            -enable_circuit_id {
-                set trans [ BoolTrans $value ]
-                if { $trans == "1" || $trans == "0" } {
-                    set enable_circuit_id $trans
-                } else {
-                    error "$errNumber(1) key:$key value:$value"
-                }
-            }
-            -enable_relay_agent {
-                set trans [ BoolTrans $value ]
-                if { $trans == "1" || $trans == "0" } {
-                    set enable_relay_agent $trans
-                } else {
-                    error "$errNumber(1) key:$key value:$value"
-                }
-            }
-            -enable_remote_id {
-                set trans [ BoolTrans $value ]
-                if { $trans == "1" || $trans == "0" } {
-                    set enable_remote_id $trans
-                } else {
-                    error "$errNumber(1) key:$key value:$value"
-                }
-            }
-            -relay_pool_ipv4_addr -
-            -relay_agent_ipv4_addr {
-                if { [ IsIPv4Address $value ] } {
-                    set relay_agent_ipv4_addr $value
-                    set enable_relay_agent 1
-                } else {
-                    error "$errNumber(1) key:$key value:$value"
-                }                
-            }
-            -relay_pool_ipv4_addr_step -
-            -relay_agent_ipv4_addr_step {
-                if { [ IsIPv4Address $value ] } {
-                    set relay_agent_ipv4_addr_step $value
-                } else {
-                    error "$errNumber(1) key:$key value:$value"
-                }                
-            }
-            -relay_server_ipv4_addr {
-                if { [ IsIPv4Address $value ] } {
-                    set relay_server_ipv4_addr $value
-                } else {
-                    error "$errNumber(1) key:$key value:$value"
-                }                
-            }
-		   
-		   -relay_client_mac_addr_start {
-			  
-		   }
-		   
-		   -relay_client_mac_addr_step {
-			   
-		   }
-		   
-            -remote_id {
-                set remote_id $value
-            }
-            -enable_auto_retry {
-                set trans [ BoolTrans $value ]
-                if { $trans == "1" } {
-                } elseif { $trans == "0" } {
-                    set retry_attempts 0
-                } else {
-                    error "$errNumber(1) key:$key value:$value"
-                }
-            }
-            -retry_attempts {
-                if { [ string is integer $value ] && ( $value >= 0 ) } {
-                    set retry_attempts $value
-                } else {
-                    error "$errNumber(1) key:$key value:$value"
-                }
-            }
-
-            -suggest_lease {
-                if { [ string is integer $value ] && ( $value > 0 ) } {
-                    set suggest_lease $value
-                } else {
-                    error "$errNumber(1) key:$key value:$value"
-                }
-            }
-		   
-		  -use_broadcast_flag {
-			  set use_broadcast_flag $value
+		  -outer_vlan_enable {
+			set outer_vlan_enable $value
+			ixNet setA $hOuterVlan -enabled $value
 		  }
-		   
-		  -relay_server_ipv4_addr_step {
-			  set relay_server_ipv4_addr_step $value
+		  -outer_vlan_id {
+			set outer_vlan_enable $value
+			ixNet setA $hOuterVlan -firstId $value
+		  }
+		  -oute_vlan_step {
+			set outer_vlan_enable $value
+			ixNet setA $hOuterVlan -incrementStep $value
+		  }
+		  -outer_vlan_num {
+			set outer_vlan_enable $value
+			ixNet setA $hOuterVlan -uniqueCount $value
+		  }
+		  -outer_vlan_priority {
+			set outer_vlan_enable $value
+			ixNet setA $hOuterVlan -priority $value
+		  }
+		  -outer_vlan_cfi {
+			set outer_vlan_enable $value
+		  }
+		  -inner_vlan_enable {
+			set inner_vlan_enable $value
+			ixNet setA $hInnerVlan -enabled $value
+		  }
+		  -inner_vlan_id {
+			set inner_vlan_enable $value
+			ixNet setA $hInnerVlan -firstId $value
+		  }
+		  -inner_vlan_step {
+			set inner_vlan_enable $value
+			ixNet setA $hInnerVlan -incrementStep $value
+		  }
+		  -inner_vlan_num {
+			set inner_vlan_enable $value
+			ixNet setA $hInnerVlan -uniqueCount $value
+		  }
+		  -inner_vlan_priority {
+			set inner_vlan_enable $value
+			ixNet setA $hInnerVlan -priority $value
+		  }
+		  -inner_vlan_cfi {
+			set inner_vlan_enable $value
 		  }
         }
     }
 	set range $handle
     if { [ info exists count ] } {
-        ixNet setA $range/dhcpRange -count $count
+        ixNet setA $range/dhcpHostsRange -count $count
     }
-    if { [ info exists enable_circuit_id ] } {
-        ixNet setA $range/dhcpRange -relayUseCircuitId $enable_circuit_id        
-    }
-    if { [ info exists circuit_id ] } {
-        ixNet setA $range/dhcpRange -relayCircuitId $circuit_id
-    }
-    if { [ info exists enable_relay_agent ] } {
-        ixNet setA $range/dhcpRange -useRelayAgent $enable_relay_agent
-    }
-
-    if { [ info exists use_broadcast_flag ] } {
-	    ixNet setA $range/dhcpRange -dhcp4Broadcast $use_broadcast_flag
-    }
-    if { [ info exists relay_server_ipv4_addr_step ] } {
-	    ixNet setA $range/dhcpRange -relayAddressIncrement $relay_server_ipv4_addr_step
-    }
-    if { [ info exists relay_agent_ipv4_addr ] } {
-        ixNet setA $range/dhcpRange -relayFirstAddress $relay_agent_ipv4_addr
-    }
-    if { [ info exists relay_agent_ipv4_addr_step ] } {
-        ixNet setA $range/dhcpRange -relayAddressIncrement $relay_agent_ipv4_addr_step        
-    }
-    if { [ info exists relay_server_ipv4_addr ] } {
-        ixNet setA $range/dhcpRange -relayDestination $relay_server_ipv4_addr
-        ixNet setA $range/dhcpRange -relayGateway $relay_server_ipv4_addr
-    }
-    if { [ info exists remote_id ] } {
-        ixNet setA $range/dhcpRange -relayRemoteId $remote_id
-    }
-    if { [ info exists retry_attempts ] } {
-        set root [ixNet getRoot]
-        ixNet setA [ ixNet getList $root/globals/protocolStack dhcpGlobals ] -dhcp4NumRetry $retry_attempts
-    }
-
-    if { [ info exists suggest_lease ] } {
-		set root [ixNet getRoot]
-		set global [ ixNet getL $root/globals/protocolStack dhcpGlobals ]
-		ixNet setA $global -dhcp4AddrLeaseTime $suggest_lease
-	}
     ixNet commit
     return [GetStandardReturnHeader]
 }
 body DhcpPDHost::request {} {
-# IxDebugOn
     set tag "body DhcpPDHost::request [info script]"
-Deputs "----- TAG: $tag -----"
-Deputs "handle :$handle"
+	Deputs "----- TAG: $tag -----"
+	Deputs "handle :$handle"
 	# after 3000
 	set requestTimestamp [ clock seconds ]
     if { [ catch {
     	ixNet exec start $handle
     } err ] } {
-Deputs "err:$err"
+		Deputs "err:$err"
 		after 3000
 		set requestTimestamp [ clock seconds ]
 		ixNet exec start $handle
     }
-# IxDebugOff	
 	set completeTimestamp [ clock seconds ]
 	set requestDuration [ expr $completeTimestamp - $requestTimestamp ]
-#-- make sure the stats will be updated
+	#-- make sure the stats will be updated
     return [GetStandardReturnHeader]
 }
 body DhcpPDHost::release {} {
     set tag "body DhcpPDHost::release [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
     ixNet exec stop $handle
 	#ixNet exec dhcpClientClearStats $hDhcp
 	ixNet commit
     return [GetStandardReturnHeader]
 }
-body DhcpPDHost::abort {} {
-    set tag "body DhcpPDHost::abort [info script]"
-Deputs "----- TAG: $tag -----"
-	ixNet exec abort $hDhcp
-	ixNet commit
-    return [GetStandardReturnHeader]
-}
 body DhcpPDHost::renew {} {
     set tag "body DhcpPDHost::renew [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 	if { [ catch {
-		ixNet exec dhcpClientRenew $handle
+		ixNet exec dhcpv6PdClientRenew $hDhcpv6PdClient
 	} ] } {
-		return [GetErrorReturnHeader "Supported only on IxNetwork 6.30 or above."]		
+		return [GetErrorReturnHeader "Unsupported functionality."]		
 	}
-    return [GetErrorReturnHeader "Unsupported functionality."]
-}
-body DhcpPDHost::retry {} {
-    set tag "body DhcpPDHost::retry [info script]"
-Deputs "----- TAG: $tag -----"
-	if { [ catch {
-		ixNet exec dhcpClientRetry $handle
-	} ] } {
-		return [GetErrorReturnHeader "Supported only on IxNetwork 6.30 or above."]		
-	}
-    return [GetErrorReturnHeader "Unsupported functionality."]
+    return [GetStandardReturnHeader]
 }
 body DhcpPDHost::resume {} {
     set tag "body DhcpPDHost::resume [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 	if { [ catch {
-		ixNet exec dhcpClientResume $handle
+		ixNet exec dhcpHostsResume $handle
 	} ] } {
-		return [GetErrorReturnHeader "Supported only on IxNetwork 6.30 or above."]		
+		return [GetErrorReturnHeader "Unsupported functionality."]		
 	}
-    return [GetErrorReturnHeader "Unsupported functionality."]
+    return [GetStandardReturnHeader]
 }
 body DhcpPDHost::pause {} {
     set tag "body DhcpPDHost::pause [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 	if { [ catch {
-		ixNet exec dhcpClientPause $handle
+		ixNet exec dhcpHostsPause $handle
 	} ] } {
-		return [GetErrorReturnHeader "Supported only on IxNetwork 6.30 or above."]		
+		return [GetErrorReturnHeader "Unsupported functionality."]		
 	}
-    return [GetErrorReturnHeader "Unsupported functionality."]
+    return [GetStandardReturnHeader]
 }
 body DhcpPDHost::rebind {} {
     set tag "body DhcpPDHost::rebind [info script]"
-Deputs "----- TAG: $tag -----"
+	Deputs "----- TAG: $tag -----"
 	if { [ catch {
-		ixNet exec dhcpClientRebind $handle
+		ixNet exec dhcpv6PdClientRebind $hDhcpv6PdClient
 	} ] } {
-		return [GetErrorReturnHeader "Supported only on IxNetwork 6.30 or above."]		
+		return [GetErrorReturnHeader "Unsupported functionality."]		
 	}
-    return [GetErrorReturnHeader "Unsupported functionality."]
+    return [GetStandardReturnHeader]
 }
 body DhcpPDHost::wait_request_complete { args } {
     set tag "body DhcpPDHost::wait_request_complete [info script]"
@@ -1130,47 +975,6 @@ Deputs "request list:$reqList"
 	
 	return [ GetStandardReturnHeader ]
 }
-body DhcpPDHost::set_igmp_over_dhcp { args } {
-
-    global errorInfo
-    global errNumber
-	
-    set tag "body DhcpPDHost::set_igmp_over_dhcp [info script]"
-Deputs "----- TAG: $tag -----"
-
-	if { [ info exists hIgmp ] } {
-		if { [ ixNet exists $hIgmp ] } {
-			return
-		}
-	}
-
-	if { [ catch {
-		set hPort   [ $portObj cget -handle ]
-	} ] } {
-		error "$errNumber(1) Port Object in DhcpPDHost ctor"
-	}
-	
-	#-- add igmp host
-	set host [ ixNet add $hPort/protocols/igmp host ]
-	ixNet setMultiAttrs $host \
-		-enabled True \
-		-interfaceType DHCP \
-		-interfaces $handle 
-	
-	ixNet commit
-	set host [ixNet remapIds $host]	
-
-	set hIgmp $host
-}
-body DhcpPDHost::unset_igmp_over_dhcp {} {
-
-	if { [ info exists hIgmp ] } {
-		if { [ ixNet exists $hIgmp ] } {
-			ixNet remove $hIgmp
-			ixNet commit
-		}
-	}
-}
 body DhcpPDHost::get_port_summary_stats { view } {
     set tag "body DhcpPDHost::get_port_summary_stats [info script]"
 	Deputs "----- TAG: $tag -----"
@@ -1344,116 +1148,156 @@ body DhcpPDHost::get_port_summary_stats { view } {
 }
 
 
-class Dhcpv6Host {
+class DhcpPDoPppHost {
 
 	inherit DhcpPDHost
 
 	constructor { port { onStack null } } { chain $port $onStack } {}
 	
+    method retry {} {}
+    method resume {} {}
+    method pause {} {}
+	method cancel {} {}
 	method config { args } {}
-	method set_igmp_over_dhcp { args } {}
 	method get_port_summary_stats {} {}
 	method get_summary_stats {} {}
 	method get_detailed_stats {} {}
 	method reborn { { onStack null } } {
-		set tag "body Dhcpv6Host::reborn [info script]"
+		set tag "body DhcpPDoPppHost::reborn [info script]"
         Deputs "----- TAG: $tag -----"
+		
+	    if { $onStack == "null" } {
+			Deputs "new dhcp endpoint"
+			chain $onStack
+			#-- add dhcpPdoPpp endpoint stack
+			set hPppox [ixNet add $stack pppox]
+			ixNet commit
+			set hPppox [lindex [ixNet remapIds $hPppox] 0]
+			
+			set hDhcp [ixNet add $hPppox dhcpoPppClientEndpoint]
+			ixNet commit
+			set hDhcp [lindex [ixNet remapIds $hDhcp] 0]
+		} else {
+			Deputs "based on existing stack:$onStack"		
+			set hDhcp $onStack
+		}
+		
+	    #-- add range
+	    set sg_range [ixNet add $hDhcp range]
+	    ixNet setMultiAttrs $sg_range/macRange \
+			-enabled True 
 	
-		chain $onStack
-		ixNet setA $handle/dhcpRange -ipType IPv6
-		ixNet commit
+	    ixNet setMultiAttrs $sg_range/vlanRange \
+			-enabled False 
+	
+	    ixNet setMultiAttrs $sg_range/pppoxRange \
+			-enabled True \
+			-ncpType IPv6
 
+		set hDhcpv6PdClient [ixNet add $sg_range dhcpv6PdClientRange]
+	    ixNet setMultiAttrs $hDhcpv6PdClient \
+			-enabled True \
+			-ipType IPv6
+		
+	    ixNet setMultiAttrs $sg_range/dhcpHostsRange \
+			-enabled True
+		
+	    ixNet commit
+	    set sg_range [ixNet remapIds $sg_range]
+		set handle $sg_range
+		set hDhcpv6PdClient [lindex [ixNet remapIds $hDhcpv6PdClient] 0]
+		Deputs "hDhcpv6PdClient:$hDhcpv6PdClient"
+		
+		#-- add option set
+		set root [ixNet getRoot]
+		set globalSetting [ ixNet getL $root/globals/protocolStack dhcpv6PdClientGlobals ]
+		set optionSet [ ixNet add $globalSetting dhcpv6PdOptionSet ]
+		ixNet commit
+		set optionSet [ixNet remapIds $optionSet]
+        Deputs "option:$optionSet"
+
+		ixNet setA $hDhcpv6PdClient -clientOptionSet $optionSet
+		ixNet commit
+		ixNet setA $hDhcpv6PdClient -clientOptionSet $optionSet
+		ixNet commit
 		ixNet setA $optionSet -ipType IPv6
+		ixNet commit
+		ixNet setA $handle/dhcpHostsRange -ipType IPv6
 		ixNet commit
 		
 		set statsView {::ixNet::OBJ-/statistics/view:"DHCPv6"}
-
 	}
 }
-body Dhcpv6Host::set_igmp_over_dhcp { args } {
-
-    set tag "body Dhcpv6Host::set_igmp_over_dhcp [info script]"
-Deputs "----- TAG: $tag -----"	
-
-	eval { chain } $args
-
-	ixNet setA $hIgmp -version igmpv3
-	
-	set EAction [ list join leave ]
-	set action join
-
-#param collection
-Deputs "Args:$args "
-    foreach { key value } $args {
-        set key [string tolower $key]
-        switch -exact -- $key {
-            -group {
-				foreach grp $value {
-					if { [ $grp isa MulticastGroup ] == 0 } {
-						error "$errNumber(1) key:$key value:$value"
-					}
-				}
-				set group $value
-			}
-			-action {
-				set value [ string tolower $value ]
-                if { [ lsearch -exact $EAction $value ] >= 0 } {
-                    
-                    set action $value
-                } else {
-					return [GetErrorReturnHeader "Unsupported functionality."]
-                }
-			}
-        }
-    }
-	
-	foreach grp $group {
-		set filter_mode	[ $grp cget -filter_mode ]
-		set source_ip 	[ $grp cget -source_ip ]
-		set source_num [ $grp cget -source_num ]
-		set source_step [ $grp cget -source_step ]
-		set source_modbit	[ $grp cget -source_modbit ]
-		set group_ip 	[ $grp cget -group_ip ]
-		set group_num [ $grp cget -group_num ]
-		set group_step [ $grp cget -group_step ]
-		set group_modbit [ $grp cget -group_modbit ]
-		
-		set hGroup [ ixNet add $hIgmp group ]
-		
-		ixNet setM $hGroup \
-			-sourceMode $filter_mode
-			-groupFrom $group_ip \
-			-incrementStep [ GetPrefixV4Step $group_modbit $group_step ] \
-			-groupCount $group_num
-		
-		set hSrc [ ixNet add $hGroup source ]
-		ixNet setM $hSrc \
-			-sourceRangeCount $source_num \
-			-sourceRangeStart $source_ip
-	
+body DhcpPDoPppHost::retry {} {
+    set tag "body DhcpPDoPppHost::retry [info script]"
+	Deputs "----- TAG: $tag -----"
+	if { [ catch {
+		ixNet exec pppoxRetry $handle
+	} ] } {
+		return [GetErrorReturnHeader "Unsupported functionality."]		
 	}
-	ixNet commit
-	return [ GetStandardReturnHeader ]
-
+    return [GetStandardReturnHeader]
 }
-body Dhcpv6Host::config { args } {
-    set tag "body Dhcpv6Host::config [info script]"
-Deputs "----- TAG: $tag -----"
+body DhcpPDoPppHost::resume {} {
+    set tag "body DhcpPDoPppHost::resume [info script]"
+	Deputs "----- TAG: $tag -----"
+	chain
+	if { [ catch {
+		ixNet exec pppoxResume $handle
+	} ] } {
+		return [GetErrorReturnHeader "Unsupported functionality."]		
+	}
+    return [GetStandardReturnHeader]
+}
+body DhcpPDoPppHost::pause {} {
+    set tag "body DhcpPDoPppHost::pause [info script]"
+	Deputs "----- TAG: $tag -----"
+	chain
+	if { [ catch {
+		ixNet exec pppoxPause $handle
+	} ] } {
+		return [GetErrorReturnHeader "Unsupported functionality."]		
+	}
+    return [GetStandardReturnHeader]
+}
+body DhcpPDoPppHost::cancel {} {
+    set tag "body DhcpPDoPppHost::cancel [info script]"
+	Deputs "----- TAG: $tag -----"
+	if { [ catch {
+		ixNet exec pppoxCancel $handle
+	} ] } {
+		return [GetErrorReturnHeader "Unsupported functionality."]		
+	}
+    return [GetStandardReturnHeader]
+}
+
+body DhcpPDoPppHost::config { args } {
+    set tag "body DhcpPDoPppHost::config [info script]"
+	Deputs "----- TAG: $tag -----"
 	
     eval { chain } $args 
 
-	
     global errorInfo
     global errNumber
     
     set EDuidType [ list llt ll en ]
     set ESession  [ list iana iata iapd iana_iapd ]
-    
-#param collection
-Deputs "Args:$args "
+	set ENCPType [ list ipv4 ipv6 dualstack ipv4v6 ]
+	set EAuth      [ list none auto chap_md5 pap ]
+		
+	#param collection
+	Deputs "Args:$args "
     foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
+			-ncp_type {
+                set value [ string tolower $value ]
+                if { [ lsearch -exact $ENCPType $value ] >= 0 } {
+                    set ncp_type $value
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+			}
             -duid_enterprise {
                 if { [ string is integer $value ] } {
                     set duid_enterprise $value
@@ -1518,58 +1362,111 @@ Deputs "Args:$args "
                     error "$errNumber(1) key:$key value:$value"
                 }                
 			}
+			-authen_type {
+                set value [ string tolower $value ]
+                if { [ lsearch -exact $EAuth $value ] >= 0 } {
+                    set authentication $value
+                } else {
+                    error "$errNumber(1) key:$key value:$value"
+                }
+			}
+			-enable_auth {
+				set enable_auth $value
+			}
+			-user_name {
+				set user_name $value
+			}
+			-password {
+				set password $value
+			}
+			
 		}
     }
 
 
     set range $handle
-    
+    if { [ info exists ncp_type ] } {
+		Deputs "ncp_type: $ncp_type"
+		switch -exact -- $ncp_type {
+			ipv4 {
+				ixNet setA $handle/pppoxRange -ncpType IPv4
+			}
+			ipv6 {
+				ixNet setA $handle/pppoxRange -ncpType IPv6
+			}
+			ipv4v6 -
+			dualstack {
+				ixNet setA $handle/pppoxRange -ncpType DualStack
+			}
+		}
+    }
+	
+	if { [ info exists authentication ] } {
+		switch $authentication {
+			auto {
+				set authentication papOrChap
+			}
+			chap_md5 {
+				set authentication chap
+				if { [ info exists user_name ] } {
+					ixNet setMultiAttrs $handle/pppoxRange \
+						-chapName $user_name
+				}
+				if { [ info exists password ] } {
+					ixNet setMultiAttrs $handle/pppoxRange \
+						-chapSecret $password
+				}			
+			}
+			
+		}
+		ixNet setA $handle/pppoxRange -authType $authentication
+	}
     if { [ info exists duid_type ] } {
-        ixNet setA $range/dhcpRange -dhcp6DuidType "DUID-[ string toupper $duid_type ]"
+        ixNet setA $hDhcpv6PdClient -dhcp6DuidType "DUID-[ string toupper $duid_type ]"
     }
 
     if { [ info exists duid_enterprise ] } {
-        ixNet setA $range/dhcpRange -dhcp6DuidEnterpriseId $duid_enterprise
+        ixNet setA $hDhcpv6PdClient -dhcp6DuidEnterpriseId $duid_enterprise
     }
 
     if { [ info exists duid_start ] } {
-        ixNet setA $range/dhcpRange -dhcp6DuidVendorId $duid_start
+        ixNet setA $hDhcpv6PdClient -dhcp6DuidVendorId $duid_start
     }
     
     if { [ info exists duid_step ] } {
-        ixNet setA $range/dhcpRange -dhcp6DuidVendorIdIncrement $duid_step
+        ixNet setA $hDhcpv6PdClient -dhcp6DuidVendorIdIncrement $duid_step
     }
     
     if { [ info exists t1_timer ] } {
-        ixNet setA $range/dhcpRange -dhcp6IaT1 $t1_timer
+        ixNet setA $hDhcpv6PdClient -dhcp6IaT1 $t1_timer
     }
     
     if { [ info exists t2_timer ] } {
-        ixNet setA $range/dhcpRange -dhcp6IaT2 $t2_timer
+        ixNet setA $hDhcpv6PdClient -dhcp6IaT2 $t2_timer
     }
 
 	if { [ info exists iaid ] } {
-		ixNet setA $range/dhcpRange -dhcp6IaId $iaid
+		ixNet setA $hDhcpv6PdClient -dhcp6IaId $iaid
 	}
 	
 	if { [ info exists session_type ] } {
-        ixNet setA $range/dhcpRange -dhcp6IaType [string toupper $session_type]
+        ixNet setA $hDhcpv6PdClient -dhcp6IaType [string toupper $session_type]
 	}
 
     ixNet  commit
     
     return [GetStandardReturnHeader]    
 }
-body Dhcpv6Host::get_port_summary_stats {} {
-    set tag "body Dhcpv6Host::get_port_summary_stats [info script]"
+body DhcpPDoPppHost::get_port_summary_stats {} {
+    set tag "body DhcpPDoPppHost::get_port_summary_stats [info script]"
 Deputs "----- TAG: $tag -----"
 
 	set view ::ixNet::OBJ-/statistics/view:\"DHCPv6\"
 
 	return [ chain $view ]
 }
-body Dhcpv6Host::get_summary_stats {} {
-    set tag "body DhcpPDHost::get_summary_stats [info script]"
+body DhcpPDoPppHost::get_summary_stats {} {
+    set tag "body DhcpPDoPppHost::get_summary_stats [info script]"
 Deputs "----- TAG: $tag -----"
 
     set root [ixNet getRoot]
@@ -1695,9 +1592,9 @@ Deputs "ret:$ret"
 
     return $ret
 }
-body Dhcpv6Host::get_detailed_stats {} {
+body DhcpPDoPppHost::get_detailed_stats {} {
 
-    set tag "body Dhcpv6Host::get_detailed_stats [info script]"
+    set tag "body DhcpPDoPppHost::get_detailed_stats [info script]"
 Deputs "----- TAG: $tag -----"
 
     set root [ixNet getRoot]
@@ -1811,7 +1708,7 @@ Deputs "ret:$ret"
     return $ret
 }
 
-class DhcpPDServer {
+class DhcpPDoPppServer {
     inherit ProtocolStackObject
     
     public variable type
@@ -1827,10 +1724,10 @@ class DhcpPDServer {
     method get_lease_address {} {}
 
 }
-body DhcpPDServer::reborn { args } {
+body DhcpPDoPppServer::reborn { args } {
     global errNumber
     
-    set tag "body DhcpPDServer::reborn [info script]"
+    set tag "body DhcpPDoPppServer::reborn [info script]"
 Deputs "----- TAG: $tag -----"
 
 	if { [ info exists hPort ] == 0 } {
@@ -1892,8 +1789,8 @@ Deputs "----- TAG: $tag -----"
     set trafficObj $handle
 
 }
-body DhcpPDServer::config { args } {
-    set tag "body DhcpPDServer::config [info script]"
+body DhcpPDoPppServer::config { args } {
+    set tag "body DhcpPDoPppServer::config [info script]"
 Deputs "----- TAG: $tag -----"
     
     global errorInfo
@@ -2046,8 +1943,8 @@ Deputs Step30
     return [GetStandardReturnHeader]    
     
 }
-body DhcpPDServer::start {} {
-    set tag "body DhcpPDServer::start [info script]"
+body DhcpPDoPppServer::start {} {
+    set tag "body DhcpPDoPppServer::start [info script]"
 Deputs "----- TAG: $tag -----"
 	after 3000
 	if { [ catch {
@@ -2058,14 +1955,14 @@ Deputs "----- TAG: $tag -----"
 	}
     return [GetStandardReturnHeader]
 }
-body DhcpPDServer::stop {} {
+body DhcpPDoPppServer::stop {} {
     set tag "body DhcpPDHost::stop [info script]"
 Deputs "----- TAG: $tag -----"
     ixNet exec stop $handle
     return [GetStandardReturnHeader]
 }
-body DhcpPDServer::get_lease_address {} {
-    set tag "body DhcpPDServer::get_lease_address [info script]"
+body DhcpPDoPppServer::get_lease_address {} {
+    set tag "body DhcpPDoPppServer::get_lease_address [info script]"
 Deputs "----- TAG: $tag -----"
 
     set root [ixNet getRoot]
@@ -2120,313 +2017,4 @@ Deputs "page:$addrList"
 	ixNet commit
 	return [GetStandardReturnHeader][ GetStandardReturnBody count [ llength $addrList ] ][ GetStandardReturnBody address "$addrList" ]
 
-}
-
-class Dhcpv4Server {
-    inherit DhcpPDServer
-
-    constructor { port } { chain $port } {}
-	method get_stats {} {}
-	method reborn {} {
-		chain
-        ixNet setA $handle/DhcpPDServerRange -ipType IPv4
-        ixNet commit
-	}
-}
-body Dhcpv4Server::get_stats {} {
-    set tag "body Dhcpv4Server::get_stats [info script]"
-Deputs "----- TAG: $tag -----"
-
-    set root [ixNet getRoot]
-Deputs "root $root"
-Deputs [ixNet getL $root/statistics view]
-    set view [ lindex [ ixNet getF $root/statistics view -caption "DHCPv4 Server" ] 0 ]
-Deputs "view:$view"
-#    eval {set view} $view
-    if { $view == "" } {
-		return [ GetErrorReturnHeader "Can't fetch stats view, please make sure the session starting correctly." ]
-    }
-	
-    set captionList         [ ixNet getA $view/page -columnCaptions ]
-    set rxDiscoverIndex          [ lsearch -exact $captionList {Discovers Received} ]
-Deputs "index:$rxDiscoverIndex"
-    set txOfferIndex          	 [ lsearch -exact $captionList {Offers Sent} ]
-Deputs "index:$txOfferIndex"
-    set rxRequestIndex        	 [ lsearch -exact $captionList {Requests Received} ]
-Deputs "index:$rxRequestIndex"
-    set txACKIndex          	 [ lsearch -exact $captionList {ACKs Sent} ]
-Deputs "index:$txACKIndex"
-    set txNACKIndex          	 [ lsearch -exact $captionList {NACKs Sent} ]
-Deputs "index:$txNACKIndex"
-    set rxDeclineIndex        	 [ lsearch -exact $captionList {Declines Received} ]
-Deputs "index:$rxDeclineIndex"
-    set rxReleaseIndex        	 [ lsearch -exact $captionList {Releases Received} ]
-Deputs "index:$rxReleaseIndex"
-    #set rxInfoReqIndex        	 [ lsearch -exact $captionList {Information-Requests Received} ]
-    set rxInfoReqIndex        	 [ lsearch -exact $captionList {Informs Received} ]
-Deputs "index:$rxInfoReqIndex"
-    set totLeaseIndex        	 [ lsearch -exact $captionList {Total Leases Allocated} ]
-Deputs "index:$totLeaseIndex"
-    set totRenewIndex        	 [ lsearch -exact $captionList {Total Leases Renewed} ]
-Deputs "index:$totRenewIndex"
-    set curLeaseIndex        	 [ lsearch -exact $captionList {Current Leases Allocated} ]
-Deputs "index:$curLeaseIndex"
-
-	set refresh [ ixNet exec refresh $view ]
-Deputs "refresh:$refresh"
-Deputs "after 5 seconds..."
-after 5000
-    set stats [ ixNet getA $view/page -rowValues ]
-Deputs "stats:$stats"
-    foreach row $stats {
-        eval {set row} $row
-Deputs "row:$row"
-	}
-	
-    set ret "Status : true\nLog : \n"
-    
-	set statsItem   "current_bound_count"
-	set statsVal    [ lindex $row $curLeaseIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	
-	set statsItem   "rx_decline_count"
-	set statsVal    [ lindex $row $rxDeclineIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	
-	set statsItem   "rx_discover_count"
-	set statsVal    [ lindex $row $rxDiscoverIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "rx_inform_count"
-	set statsVal    [ lindex $row $rxInfoReqIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "rx_release_count"
-	set statsVal    [ lindex $row $rxReleaseIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "rx_request_count"
-	set statsVal    [ lindex $row $rxRequestIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "total_bound_count"
-	set statsVal    [ lindex $row $totLeaseIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "total_expired_count"
-	set statsVal    NA
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "total_released_count"
-	set statsVal    NA
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "total_renewed_count"
-	set statsVal    [ lindex $row $totRenewIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "tx_ack_count"
-	set statsVal    [ lindex $row $txACKIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "tx_force_renew_count"
-	set statsVal    NA
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "tx_nak_count"
-	set statsVal    [ lindex $row $txNACKIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "tx_offer_count"
-	set statsVal    [ lindex $row $txOfferIndex ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-
-Deputs "ret:$ret"
-    return $ret
-	
-}
-
-class Dhcpv6Server {
-    inherit DhcpPDServer
-
-    constructor { port } { chain $port } {}
-	method get_stats {} {}
-	method config { args } {}
-	method reborn {} {
-		chain
-        ixNet setA $handle/DhcpPDServerRange -ipType IPv6
-        ixNet commit
-	}
-	
-
-}
-body Dhcpv6Server::get_stats {} {
-    set tag "body Dhcpv6Server::get_stats [info script]"
-Deputs "----- TAG: $tag -----"
-
-    set root [ixNet getRoot]
-Deputs "root $root"
-Deputs [ixNet getL $root/statistics view]
-    set view [ lindex [ ixNet getF $root/statistics view -caption "DHCPv6 Server" ] 0 ]
-Deputs "view:$view"
-#    eval {set view} $view
-    if { $view == "" } {
-		return [ GetErrorReturnHeader "Can't fetch stats view, please make sure the session starting correctly." ]
-    }
-
-
-    set captionList         [ ixNet getA $view/page -columnCaptions ]
-    set current_bound_count_index          [ lsearch -exact $captionList {Current Addresses Allocated} ]
-    set rx_rebind_count_index          	 [ lsearch -exact $captionList {Rebinds Received} ]
-    set rx_release_count_index        	 [ lsearch -exact $captionList {Releases Received} ]
-    set rx_renew_count_index          	 [ lsearch -exact $captionList {Renewals Received} ]
-    set rx_request_count_index          	 [ lsearch -exact $captionList {Requests Received} ]
-    set rx_solicit_count_index        	 [ lsearch -exact $captionList {Solicits Received} ]
-    set total_bound_count_index        	 [ lsearch -exact $captionList {Total Addresses Allocated} ]
-    set tx_advertise_count_index        	 [ lsearch -exact $captionList {Advertisements Sent} ]
-    set tx_reply_count_index        	 [ lsearch -exact $captionList {Replies Sent}  ]
-    set rx_info_req_count_index        	 [ lsearch -exact $captionList {Replies Sent}  ]
-
-	set refresh [ ixNet exec refresh $view ]
-Deputs "refresh:$refresh"
-Deputs "after 5 seconds..."
-after 5000
-    set stats [ ixNet getA $view/page -rowValues ]
-Deputs "stats:$stats"
-    foreach row $stats {
-        eval {set row} $row
-Deputs "row:$row"
-	}
-	
-    set ret "Status : true\nLog : \n"
-    
-	set statsItem   "current_bound_count"
-	set statsVal    [ lindex $row $current_bound_count_index ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	
-	set statsItem   "rx_rebind_count"
-	set statsVal    [ lindex $row $rx_rebind_count_index ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	
-	set statsItem   "rx_release_count"
-	set statsVal    [ lindex $row $rx_release_count_index ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	set statsItem   "total_released_count"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	
-
-	set statsItem   "rx_renew_count"
-	set statsVal    [ lindex $row $rx_renew_count_index ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	set statsItem   "total_renewed_count"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "rx_request_count"
-	set statsVal    [ lindex $row $rx_request_count_index ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "rx_solicit_count"
-	set statsVal    [ lindex $row $rx_solicit_count_index ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "total_bound_count"
-	set statsVal    [ lindex $row $total_bound_count_index ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "tx_advertise_count"
-	set statsVal    [ lindex $row $tx_advertise_count_index ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "tx_reply_count"
-	set statsVal    [ lindex $row $tx_reply_count_index ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "tx_reply_count"
-	set statsVal    [ lindex $row $tx_reply_count_index ]
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "total_expired_count"
-	set statsVal    NA
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "tx_reconfigure_count"
-	set statsVal    NA
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "tx_reconfigure_rebind_count"
-	set statsVal    NA
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	set statsItem   "tx_reconfigure_renew_count"
-	set statsVal    NA
-Deputs "stats val:$statsVal"
-	set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-
-Deputs "ret:$ret"
-    return $ret
-	
-
-
-
-}
-body Dhcpv6Server::config { args } {
-    set tag "body Dhcpv6Server::config [info script]"
-Deputs "----- TAG: $tag -----"
-    if { $handle == "" } {
-    	set flagReborn 1
-    } else {
-    	set flagReborn 0
-    }
-    eval { chain } $args 
-    if { $flagReborn } {
-        ixNet setA $handle/DhcpPDServerRange -ipType IPv6
-        ixNet commit    	
-    }
-    #param collection
-    Deputs "Args:$args "
-    foreach { key value } $args {
-        set key [string tolower $key]
-        switch -exact -- $key {
-			-ia_type {
-				set ia_type [ string toupper $value ]
-			}
-		}
-	}
-
-	if { [ info exists ia_type ] } {
-		ixNet setA $handle/DhcpPDServerRange -dhcp6IaType $ia_type
-	}
-	
-	ixNet commit
-	
-    return [GetStandardReturnHeader]    
 }

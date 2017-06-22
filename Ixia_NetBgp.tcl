@@ -51,7 +51,10 @@ body BgpSession::reborn {} {
     }		
     
     ixNet setA $hPort/protocols/bgp -enabled True
-        
+    set usedInterfaces [list ]
+    foreach nei [ ixNet getL $hPort/protocols/bgp neighborRange ] {
+        lappend usedInterfaces [ixNet getA $nei -interfaces]
+    }
     #-- add bgp protocol
     set handle [ ixNet add $hPort/protocols/bgp neighborRange ]
     if { $ip_version == "ipv6" } {
@@ -69,6 +72,9 @@ body BgpSession::reborn {} {
     
     #-- add interface
     set interface [ ixNet getL $hPort interface ]
+    if { [llength $usedInterfaces] == [llength $interface] } {
+        set interface [list ]
+    }
     if { [ llength $interface ] == 0 } {
         set interface [ ixNet add $hPort interface ]
         if { $ip_version == "ipv4" } {

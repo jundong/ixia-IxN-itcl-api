@@ -431,21 +431,20 @@ proc SearchMinFrameSizeByLoad { args } {
                 set inflation $value
             }
             -upstreams {
-                set all_streams [concat $all_streams $upstreams]
                 foreach stream $value {
+                    lappend all_streams $stream
                     lappend upstreams [ $stream cget -handle ]
                 }
             }
             -downstreams {
-                set all_streams [concat $all_streams $downstreams]
-                # Customize values
                 foreach stream $value {
+                    lappend all_streams $stream
                     lappend downstreams [ $stream cget -handle ]
                 }	            
             }
             -streams {
-                set all_streams [concat $all_streams $streams]
                 foreach stream $value {
+                    lappend all_streams $stream
                     lappend streams [ $stream cget -handle ]
                 }	
             }
@@ -460,6 +459,7 @@ proc SearchMinFrameSizeByLoad { args } {
              }
         }
     }
+    Deputs "Input streams: $all_streams"
     # According to inflation to calculate traffic load
     foreach frame_size $frame_size_list {
         set frame_load($frame_size) [expr (($frame_size + 20) * 1.0 / ($frame_size + 20 + $inflation)) * 100]
@@ -534,6 +534,7 @@ proc SearchMinFrameSizeByLoad { args } {
                 $traffic stop
             }
             #Tester::stop_traffic
+            after [expr 10 * 1000]
         } err ] } {
             Deputs "Failed to start/stop traffic"
             break
@@ -588,6 +589,137 @@ proc SearchMinFrameSizeByLoad { args } {
     
     return $ret
 }
+
+proc RunCustomizeSizeByLoad { args } {
+    set tag "proc RunCustomizeSizeByLoad [info script]"
+	Deputs "----- TAG: $tag -----"
+    Deputs "Args:$args "
+    
+    array set frame_load [list ]
+    set upstreams [list]
+    set streams [list]
+    set downstreams [list]
+    set duration [ expr 60 * 1000 ]
+	set percentage 99.98
+    set inflation 0
+    set all_streams [list ]
+	foreach { key value } $args {
+        set key [string tolower $key]
+        switch -exact -- $key {
+            -frame_len {
+                set frame_size_list $value
+            }
+            -inflation {
+                set inflation $value
+            }
+            -upstreams {
+                foreach stream $value {
+                    lappend all_streams $stream
+                    lappend upstreams [ $stream cget -handle ]
+                }
+            }
+            -downstreams {
+                foreach stream $value {
+                    lappend all_streams $stream
+                    lappend downstreams [ $stream cget -handle ]
+                }	            
+            }
+            -streams {
+                foreach stream $value {
+                    lappend all_streams $stream
+                    lappend streams [ $stream cget -handle ]
+                }	
+            }
+            -duration {
+                set duration [ expr 1000 * $value ]
+            }
+            -resultfile {
+                set resultfile $value
+            }
+			-percentage {
+				set percentage $value
+             }
+        }
+    }
+    Deputs "Input streams: $all_streams"
+    # According to inflation to calculate traffic load
+    foreach frame_size $frame_size_list {
+        set frame_load($frame_size) [expr (($frame_size + 20) * 1.0 / ($frame_size + 20 + $inflation)) * 100]
+        Deputs "Frame size: $frame_size, traffic load: $frame_load($frame_size)"
+    }  
+    
+    set isRunning false	
+    foreach frame_size $frame_size_list {
+        if { [llength $streams ] > 0 } {
+            foreach stream $streams {
+                set highLevelStream [ ixNet getL $stream configElement ]
+                set frameSize [ ixNet getL $highLevelStream frameSize ]
+                ixNet setA $frameSize -fixedSize $frame_size
+                ixNet commit 
+                set frameRate [ ixNet getL $highLevelStream frameRate ]
+                
+                ixNet setM $frameRate -rate $frame_load($frame_size) -type percentLineRate
+                ixNet commit
+            }
+        } else {
+            set root [ixNet getRoot]
+            set traffic [ixNet getL $root traffic]
+            foreach trafficItem [ixNet getL $traffic trafficItem] {
+                set highLevelStream [ ixNet getL $trafficItem configElement ]
+                set frameSize [ ixNet getL $highLevelStream frameSize ]
+                ixNet setA $frameSize -fixedSize $frame_size
+                ixNet commit 
+                set frameRate [ ixNet getL $highLevelStream frameRate ]
+                set endpointSet [ ixNet getL $trafficItem endpointSet ]
+                set src [ ixNet getA $endpointSet -sources ]
+                
+                ixNet setM $frameRate -rate $frame_load($frame_size) -type percentLineRate
+                ixNet commit
+                
+                foreach upstream $upstreams {
+                    if { $upstream == [ string range $src 0 [ expr [ string length $upstream ] - 1 ] ] ||
+                         $src == [ string range $upstream 0 [ expr [ string length $src ] - 1 ] ] } {
+                        ixNet setM $frameRate -rate 100 -type percentLineRate
+                        ixNet setA $frameSize -fixedSize [ expr $frame_size + $inflation ]
+                        ixNet commit
+                    } elseif { $upstream == $trafficItem } {
+                       ixNet setM $frameRate -rate 100 -type percentLineRate
+                        ixNet setA $frameSize -fixedSize [ expr $frame_size + $inflation ]
+                        ixNet commit
+                    }
+                }
+            }
+        }
+        ixNet commit
+        
+        if { [ catch {
+            foreach traffic $all_streams {
+                #ixNet exec startStatelessTraffic $traffic
+                $traffic start
+            }
+            #Tester::start_traffic
+            after $duration
+            foreach traffic $all_streams {
+                #ixNet exec stopStatelessTraffic $traffic
+                $traffic stop
+            }
+            after [expr 5 * 1000]
+        } err ] } {
+            Deputs "Failed to start/stop traffic"
+            break
+        }
+        
+        if { !$isRunning } {
+            Tester::saveResults -resultfile $resultfile -frame_size $frame_size -streams $all_streams
+        } else {
+            Tester::saveResults -resultfile $resultfile -frame_size $frame_size -streams $all_streams -append true
+        }
+        set isRunning true
+    }
+    
+    return [ GetStandardReturnHeader ]
+}
+
 set currDir [file dirname [info script]]
 puts "Package Directory $currDir"
 puts "load package Ixia_Util..."

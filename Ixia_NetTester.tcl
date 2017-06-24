@@ -69,7 +69,7 @@ class Tester {
     proc clear_traffic_stats {} {}
     proc get_log { { file default } } {}
     proc getAllTx {} {}
-    proc isLossFrames { streams } {}
+    proc isLossFrames { { streams "" } } {}
     proc saveResults { args } {}
 }
 
@@ -739,12 +739,21 @@ proc Tester::remove_all_stream {} {
 	return [ GetStandardReturnHeader ]
 }
 
-proc Tester::isLossFrames { streams } {
+proc Tester::isLossFrames { { streams "" } } {
     set tag "proc Tester::isLossFrames  [info script]"
 	Deputs "----- TAG: $tag -----"
     
 	set lossFrames 0
-    
+    if { $streams == "" } {
+        if { [llength $streams] == 0 } {
+            set objects [find objects]
+            foreach obj $objects {
+                if { [$obj isa Traffic] } {
+                    lappend streams $obj
+                }
+            }
+        }
+    }
 	foreach obj $streams {
         set traffic_name [ ixNet getA [ $obj cget -handle ] -name ]
         #set traffic_name [ ixNet getA $obj -name ]
@@ -773,6 +782,8 @@ proc Tester::saveResults { args } {
     Deputs "----- TAG: $tag -----"
     
 	Deputs "Args:$args "
+    set appended false
+    set streams [list]
 	foreach { key value } $args {
 	    set key [string tolower $key]
 	    switch -exact -- $key {
@@ -785,13 +796,26 @@ proc Tester::saveResults { args } {
             -streams {
                 set streams $value
             }
+            -append {
+                set appended $value
+            }
         }
     }
     
-    if { [ file exists $resultfile ] } {
-        file delete $resultfile
+    if { !$appended } {
+        if { [ file exists $resultfile ] } {
+            file delete $resultfile
+        }
     }
     
+    if { [llength $streams] == 0 } {
+        set objects [find objects]
+        foreach obj $objects {
+            if { [$obj isa Traffic] } {
+                lappend streams $obj
+            }
+        }
+    }
     set lossFrames 0
     foreach obj $streams {
         set traffic_name [ ixNet getA [ $obj cget -handle ] -name ]

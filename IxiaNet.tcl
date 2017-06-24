@@ -419,6 +419,8 @@ proc SearchMinFrameSizeByLoad { args } {
     set downstreams [list]
     set duration [ expr 60 * 1000 ]
 	set percentage 99.98
+    set inflation 0
+    set all_streams [list ]
 	foreach { key value } $args {
         set key [string tolower $key]
         switch -exact -- $key {
@@ -429,17 +431,20 @@ proc SearchMinFrameSizeByLoad { args } {
                 set inflation $value
             }
             -upstreams {
+                set all_streams [concat $all_streams $upstreams]
                 foreach stream $value {
                     lappend upstreams [ $stream cget -handle ]
                 }
             }
             -downstreams {
+                set all_streams [concat $all_streams $downstreams]
                 # Customize values
                 foreach stream $value {
                     lappend downstreams [ $stream cget -handle ]
                 }	            
             }
             -streams {
+                set all_streams [concat $all_streams $streams]
                 foreach stream $value {
                     lappend streams [ $stream cget -handle ]
                 }	
@@ -518,15 +523,23 @@ proc SearchMinFrameSizeByLoad { args } {
         ixNet commit
         
         if { [ catch {
-            Tester::start_traffic
+            foreach traffic $all_streams {
+                #ixNet exec startStatelessTraffic $traffic
+                $traffic start
+            }
+            #Tester::start_traffic
             after $duration
-            Tester::stop_traffic
+            foreach traffic $all_streams {
+                #ixNet exec stopStatelessTraffic $traffic
+                $traffic stop
+            }
+            #Tester::stop_traffic
         } err ] } {
             Deputs "Failed to start/stop traffic"
             break
         }
         
-        if { [ Tester::isLossFrames ] } {
+        if { [ Tester::isLossFrames $all_streams] } {
             set iterationResult false
         } else {
             set iterationResult true
@@ -545,7 +558,7 @@ proc SearchMinFrameSizeByLoad { args } {
             # Passed
             set qulified_index $index
             set max_index $index
-            Tester::saveResults -resultfile $resultfile -frame_size $frame_size
+            Tester::saveResults -resultfile $resultfile -frame_size $frame_size -streams $all_streams
             # Reached to maximum frame size
             if { $min_index == $max_index} {
                 Deputs "Iteration #$iteration - Frame Size(Bytes): $frame_size, Min Frame Size: [ lindex $frame_size_list $min_index ], Max Frame Size: [ lindex $frame_size_list $max_index ], Iteration Result: $iterationResult"

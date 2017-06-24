@@ -4,8 +4,8 @@ Login
 IxDebugOff
 #Port @tester_to_dta1 190.2.152.82/5/1
 #Port @tester_to_dta2 190.2.152.82/5/2
-Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
-Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
+Port @tester_to_dta1 NULL NULL NULL
+Port @tester_to_dta2 NULL NULL NULL
 BgpSession @tester_to_dta1.bgp(1) @tester_to_dta1
 @tester_to_dta1.bgp(1) config -type "external" -dut_as "100" -ipv4_addr "15.13.14.2" -ip_version "ipv4" -dut_ip "15.13.14.1" -as "200"
 RouteBlock @tester.route_block(1)

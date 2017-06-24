@@ -2598,6 +2598,9 @@ body Traffic::get_stats { args } {
 			-filter_value {
 				set filter_value $value
 			}
+            -page_size {
+                set page_size $value
+            }
 	    }
     }
 
@@ -2652,6 +2655,10 @@ body Traffic::get_stats { args } {
 	if { $tracking == "precedence" } {
 		set ipv4PrecedenceIndex [ lsearch -exact $captionList {IPv4 :Precedence} ]
 	}
+    if { [ info exists page_size ] } {
+        ixNet getA $view/page -pageSize $page_size
+        ixNet commit
+    }
     set ret [ GetStandardReturnHeader ]
 	
     set stats [ ixNet getA $view/page -rowValues ]

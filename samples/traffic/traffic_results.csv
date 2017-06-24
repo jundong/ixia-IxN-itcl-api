@@ -1,0 +1,4 @@
+Traffic Item, Frame Size, Tx Frames, Rx Frames, Store-Forward Avg Latency (ns), Store-Forward Min Latency (ns), Store-Forward Max Latency (ns), First TimeStamp, Last TimeStamp
+::@tester_to_dta1.traffic(2),128,7679,7679,218229.68,5952.08,610978.28,00:00,00:01
+Total Frame Loss
+0

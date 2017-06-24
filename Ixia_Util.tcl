@@ -574,9 +574,9 @@ proc IncrementIPAddr { IP prefixLen { num 1 } } {
     return [format %u 0x$A].[format %u 0x$B].[format %u 0x$C].[format %u 0x$D]
 }
 proc IncrementIPv6Addr { IP prefixLen { num 1 } } {
-Deputs "pfx len:$prefixLen IP:$IP num:$num"
+      Deputs "pfx len:$prefixLen IP:$IP num:$num"
 	
-	if { [ string first "::" $IP ] >= 0 } {
+      if { [ string first "::" $IP ] >= 0 } {
 		while { [ llength [ split $IP ":" ] ] < 8 } {
 			set colIndex [ string first "::" $IP ]
 			set IP [ string replace $IP \
@@ -590,17 +590,17 @@ Deputs "pfx len:$prefixLen IP:$IP num:$num"
 	}
 	set segList [ split $IP ":" ]
 	set seg [ expr $prefixLen / 16 - 1 ]
-Deputs "set:$seg"
+      Deputs "set:$seg"
 	set offset [ expr fmod($prefixLen,16) ]
-Deputs "offset:$offset"
+   Deputs "offset:$offset"
 	if { $offset  > 0 } {
 		incr seg
 	}
-Deputs "set:$seg"
+   Deputs "set:$seg"
 	set segValue [ lindex $segList $seg ]
-Deputs "segValue:$segValue"
+   Deputs "segValue:$segValue"
 	set segInt 	 [ format %i 0x$segValue ]
-Deputs "segInt:$segInt"
+   Deputs "segInt:$segInt"
 	if { $offset } {
 		incr segInt  [ expr round(pow(2, 16 - $offset)*$num )]
 	} else {

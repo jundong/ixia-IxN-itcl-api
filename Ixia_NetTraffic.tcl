@@ -2683,8 +2683,7 @@ body Traffic::get_stats { args } {
                 continue
             }
             Deputs "stats val:$statsVal"
-            set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-			
+            set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]	
 		}
 
         set statsItem   "tx_frame_count"

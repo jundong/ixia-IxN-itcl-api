@@ -1215,7 +1215,7 @@ body DhcpHost::set_igmp_over_dhcp { args } {
     global errNumber
 	
     set tag "body DhcpHost::set_igmp_over_dhcp [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	if { [ info exists hIgmp ] } {
 		if { [ ixNet exists $hIgmp ] } {

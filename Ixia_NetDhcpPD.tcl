@@ -72,12 +72,12 @@ class DhcpPDHost {
         set rangeName [ ixNet getA $dhcpRange -name ]
 		Deputs "range name:$rangeName"
         foreach afil $availableFilter {
-Deputs "$afil"
+			Deputs "$afil"
             if { [ regexp $rangeName $afil ] } {
                 set stackFilter $afil
             }
         }
-Deputs "stack filter:$stackFilter"
+		Deputs "stack filter:$stackFilter"
         ixNet setM $filter -drilldownType perSession -protocolStackFilterId $stackFilter
         ixNet commit
         set srtStat [lindex [ixNet getF $customView statistic -caption {Session Name}] 0]
@@ -94,45 +94,43 @@ Deputs "stack filter:$stackFilter"
     
     method CreateDhcpPerRangeView {} {
         set tag "body DhcpPDHost::CreateDhcpPerRangeView [info script]"
-Deputs "----- TAG: $tag -----"
+		Deputs "----- TAG: $tag -----"
         set root [ixNet getRoot]
         set customView          [ ixNet add $root/statistics view ]
         ixNet setM  $customView -caption "dhcpPerRangeView" -type layer23ProtocolStack -visible true
         ixNet commit
         set customView          [ ixNet remapIds $customView ]
-Deputs "view:customView"
+		Deputs "view:customView"
         set availableFilter     [ ixNet getList $customView availableProtocolStackFilter ]
-Deputs "available filter:$availableFilter"
+		Deputs "available filter:$availableFilter"
         set filter              [ ixNet getList $customView layer23ProtocolStackFilter ]
-Deputs "filter:$filter"
-Deputs "handle:$handle"
+		Deputs "filter:$filter"
+		Deputs "handle:$handle"
         set dhcpRange [ixNet getList $handle dhcpRange]
-Deputs "dhcpRange:$dhcpRange"
+		Deputs "dhcpRange:$dhcpRange"
         set rangeName [ ixNet getA $dhcpRange -name ]
-Deputs "range name:$rangeName"
+		Deputs "range name:$rangeName"
         foreach afil $availableFilter {
-Deputs "$afil"
+			Deputs "$afil"
             if { [ regexp $rangeName $afil ] } {
                 set stackFilter $afil
             }
         }
-Deputs "stack filter:$stackFilter"
+		Deputs "stack filter:$stackFilter"
         ixNet setM $filter -drilldownType perRange -protocolStackFilterId $stackFilter
         ixNet commit
         set srtStat [lindex [ixNet getF $customView statistic -caption {Range Name}] 0]
-Deputs "sorting stats:$srtStat"
+		Deputs "sorting stats:$srtStat"
         ixNet setA $filter -sortAscending true -sortingStatistic $srtStat
         ixNet commit
-Deputs "enable view..."
+		Deputs "enable view..."
         foreach s [ixNet getL $customView statistic] {
             ixNet setA $s -enabled true
         }
         ixNet setA $customView -enabled true
         ixNet commit
         return $customView
-    }
-    
-    
+    }    
 }
 body DhcpPDHost::config { args } {
 
@@ -360,7 +358,6 @@ body DhcpPDHost::wait_request_complete { args } {
 	}
 	
 	return [GetStandardReturnHeader]
-
 }
 body DhcpPDHost::wait_release_complete { args } {
     set tag "body DhcpPDHost::wait_release_complete [info script]"

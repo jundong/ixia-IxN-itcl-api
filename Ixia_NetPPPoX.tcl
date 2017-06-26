@@ -24,6 +24,7 @@ class PppoeHost {
 	method connect { } { start }
 	method disconnect { } { stop }
 	method get_summary_stats {} {}
+    method igmp_over_pppoe {} {}
 	method wait_connect_complete { args } {}
 	method wait_disconnect_complete {} {}
     method CreatePPPoEPerSessionView {} {
@@ -65,6 +66,14 @@ class PppoeHost {
     }
     
     
+}
+body PppoeHost::igmp_over_pppoe {} {
+    set tag "body PppoeHost::igmp_over_pppoe [info script]"
+    Deputs "----- TAG: $tag -----"
+    set igmp_name igmp_[clock seconds]
+    IgmpOverPppoeHost $igmp_name $this
+    
+    return PppoeHost::$igmp_name
 }
 body PppoeHost::wait_disconnect_complete {} {
     set tag "body PppoeHost::wait_disconnect_complete [info script]"

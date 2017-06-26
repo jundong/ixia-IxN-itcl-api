@@ -17,3 +17,5 @@ MulticastGroup @tester.multicast_group(1)
 
 IgmpOverDhcpHost @tester_to_dta1.igmp_host @p1_dhcp 
 @tester_to_dta1.igmp_host config -group @tester.multicast_group(1)
+
+#@p1_dhcp igmp_over_dhcp

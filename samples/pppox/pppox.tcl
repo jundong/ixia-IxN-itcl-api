@@ -5,7 +5,7 @@ package req IxiaNet
 Login
 
 # generate Port object by reservint chassis 192.168.8.1 card 1 port 1
-Port port1 NULL NULL ::ixNet::OBJ-/vport:1
+Port port1 NULL NULL NULL
 PppoeHost pppoe port1
 
 pppoe config \

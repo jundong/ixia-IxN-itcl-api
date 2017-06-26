@@ -17,3 +17,5 @@ MulticastGroup @tester.multicast_group(1)
 
 IgmpOverPppoeHost @tester_to_dta1.igmp_host pppoe 
 @tester_to_dta1.igmp_host config -group @tester.multicast_group(1)
+
+#pppoe igmp_over_pppoe

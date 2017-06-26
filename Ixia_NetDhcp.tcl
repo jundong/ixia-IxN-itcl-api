@@ -1427,6 +1427,7 @@ class Dhcpv4Host {
     
 	inherit DhcpHost
 	constructor { port { onStack null } } { chain $port $onStack } {}
+    method igmp_over_dhcp {} {}
 	method set_igmp_over_dhcp { args } {}
 	method get_port_summary_stats {} {}
 	method reborn { { onStack null } } {
@@ -1443,7 +1444,14 @@ class Dhcpv4Host {
 		set statsView {::ixNet::OBJ-/statistics/view:"DHCPv4"}
 	}
 }
-
+body Dhcpv4Host::igmp_over_dhcp {} {
+    set tag "body Dhcpv4Host::igmp_over_dhcp [info script]"
+    Deputs "----- TAG: $tag -----"
+    set igmp_name igmp_[clock seconds]
+    IgmpOverDhcpHost $igmp_name $this
+    
+    return Dhcpv4Host::$igmp_name
+}
 body Dhcpv4Host::set_igmp_over_dhcp { args } {
 
     set tag "body Dhcpv4Host::set_igmp_over_dhcp [info script]"

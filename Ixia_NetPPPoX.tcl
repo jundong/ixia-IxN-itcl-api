@@ -89,10 +89,21 @@ body PppoeHost::reborn {} {
 	Deputs "----- TAG: $tag -----"
 		
 	chain 
-      
+    
+    if { [llength [ixNet getL $hPort/protocolStack ethernet]] > 0 } {
+        ixNet remove $stack
+        ixNet commit
+        set stack [lindex [ixNet getL $hPort/protocolStack ethernet] 0]
+    }
+    Deputs "stack: $stack"
 	set sg_ethernet $stack
-    #-- add dhcp endpoint stack
-    set sg_pppoxEndpoint [ixNet add $sg_ethernet pppoxEndpoint]
+    #-- add pppox endpoint stack
+    if { [llength [ixNet getL $stack pppoxEndpoint]] > 0 } {
+        set sg_pppoxEndpoint [lindex [ixNet getL $stack pppoxEndpoint] 0]
+    } else {
+        set sg_pppoxEndpoint [ixNet add $sg_ethernet pppoxEndpoint]
+    }
+    Deputs "sg_pppoxEndpoint: $sg_pppoxEndpoint"
     ixNet setA $sg_pppoxEndpoint -name $this
     ixNet commit
     set sg_pppoxEndpoint [lindex [ixNet remapIds $sg_pppoxEndpoint] 0]
@@ -258,74 +269,70 @@ body PppoeHost::config { args } {
 }
 
 body PppoeHost::get_summary_stats {} {
-
     set tag "body PppoeHost::get_summary_stats [info script]"
-Deputs "----- TAG: $tag -----"
-        
-# 统计项
-# attempted_count
-# avg_success_transaction_count
-# connected_success_count
-# disconnected_success_count
-# failed_connect_count
-# failed_disconnect_count
-# max_setup_time
-# min_setup_time
-# retry_count
-# rx_chap_count
-# rx_ipcp_count
-# rx_ipv6cp_count
-# rx_lcp_config_ack_count
-# rx_lcp_config_nak_count
-# rx_lcp_config_reject_count
-# rx_lcp_config_request_count
-# rx_lcp_echo_reply_count
-# rx_lcp_echo_request_count
-# rx_lcp_term_ack_count
-# rx_lcp_term_request_count
-# rx_pap_count
-# hosts
-# success_setup_rate
-# hosts_up
-# tx_chap_count
-# tx_ipcp_count
-# tx_ipv6cp_count
-# tx_lcp_config_ack_count
-# tx_lcp_config_nak_count
-# tx_lcp_config_reject_count
-# tx_lcp_config_request_count
-# tx_lcp_echo_reply_count
-# tx_lcp_echo_request_count
-# tx_lcp_term_ack_count
-# tx_lcp_term_request_count
-# tx_pap_count
+    Deputs "----- TAG: $tag -----"
+            
+    # 统计项
+    # attempted_count
+    # avg_success_transaction_count
+    # connected_success_count
+    # disconnected_success_count
+    # failed_connect_count
+    # failed_disconnect_count
+    # max_setup_time
+    # min_setup_time
+    # retry_count
+    # rx_chap_count
+    # rx_ipcp_count
+    # rx_ipv6cp_count
+    # rx_lcp_config_ack_count
+    # rx_lcp_config_nak_count
+    # rx_lcp_config_reject_count
+    # rx_lcp_config_request_count
+    # rx_lcp_echo_reply_count
+    # rx_lcp_echo_request_count
+    # rx_lcp_term_ack_count
+    # rx_lcp_term_request_count
+    # rx_pap_count
+    # hosts
+    # success_setup_rate
+    # hosts_up
+    # tx_chap_count
+    # tx_ipcp_count
+    # tx_ipv6cp_count
+    # tx_lcp_config_ack_count
+    # tx_lcp_config_nak_count
+    # tx_lcp_config_reject_count
+    # tx_lcp_config_request_count
+    # tx_lcp_echo_reply_count
+    # tx_lcp_echo_request_count
+    # tx_lcp_term_ack_count
+    # tx_lcp_term_request_count
+    # tx_pap_count
 
     set root [ixNet getRoot]
 	set view {::ixNet::OBJ-/statistics/view:"PPP General Statistics"}
     # set view  [ ixNet getF $root/statistics view -caption "Port Statistics" ]
-Deputs "view:$view"
+    Deputs "view:$view"
     set captionList             [ ixNet getA $view/page -columnCaptions ]
-Deputs "caption list:$captionList"
+    Deputs "caption list:$captionList"
 	set port_name				[ lsearch -exact $captionList {Stat Name} ]
     set attempted_count          [ lsearch -exact $captionList {Sessions Initiated} ]
     set connected_success_count          [ lsearch -exact $captionList {Sessions Succeeded} ]
-
-	
     set ret [ GetStandardReturnHeader ]
 	
     set stats [ ixNet getA $view/page -rowValues ]
-Deputs "stats:$stats"
+    Deputs "stats:$stats"
 
     set connectionInfo [ ixNet getA $hPort -connectionInfo ]
-Deputs "connectionInfo :$connectionInfo"
+    Deputs "connectionInfo :$connectionInfo"
     regexp -nocase {chassis=\"([0-9\.]+)\" card=\"([0-9\.]+)\" port=\"([0-9\.]+)\"} $connectionInfo match chassis card port
-Deputs "chas:$chassis card:$card port$port"
+    Deputs "chas:$chassis card:$card port$port"
 
-    foreach row $stats {
-        
+    foreach row $stats {    
         eval {set row} $row
-Deputs "row:$row"
-Deputs "portname:[ lindex $row $port_name ]"
+        Deputs "row:$row"
+        Deputs "portname:[ lindex $row $port_name ]"
 		if { [ string length $card ] == 1 } {
 			set card "0$card"
 		}
@@ -338,28 +345,26 @@ Deputs "portname:[ lindex $row $port_name ]"
 
         set statsItem   "attempted_count"
         set statsVal    [ lindex $row $attempted_count ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
           
               
         set statsItem   "connected_success_count"
         set statsVal    [ lindex $row $connected_success_count ]
-Deputs "stats val:$statsVal"
+        Deputs "stats val:$statsVal"
         set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
 			  
 
-Deputs "ret:$ret"
+        Deputs "ret:$ret"
 
     }
         
     return $ret
-
-	
 }
 
 body PppoeHost::wait_connect_complete { args } {
     set tag "body PppoeHost::wait_connect_complete [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	set timeout 300
 
@@ -389,7 +394,7 @@ Deputs "----- TAG: $tag -----"
 		set stats [ get_summary_stats ]
 		set initStats [ GetStatsFromReturn $stats attempted_count ]
 		set succStats [ GetStatsFromReturn $stats connected_success_count ]
-Deputs "initStats:$initStats == succStats:$succStats ?"		
+        Deputs "initStats:$initStats == succStats:$succStats ?"		
 		if { $succStats != "" && $succStats >= $initStats && $initStats > 0 } {
 			break	
 		}
@@ -398,7 +403,6 @@ Deputs "initStats:$initStats == succStats:$succStats ?"
 	}
 	
 	return [GetStandardReturnHeader]
-
 }
 # =============
 # ethernet

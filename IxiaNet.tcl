@@ -471,7 +471,8 @@ proc SearchMinFrameSizeByLoad { args } {
     set max_index [ expr [ llength $frame_size_list ] - 1 ]
     set qulified_index ""
 	set iteration 1
-	set iterationResult false    	
+	set iterationResult false
+    set isRunning false	
     while { 1 } {
         if { $qulified_index == $index } {
             # Don't need to run same fram size twice
@@ -545,7 +546,12 @@ proc SearchMinFrameSizeByLoad { args } {
         } else {
             set iterationResult true
         }
-        
+        if { !$isRunning } {
+            Tester::saveResults -resultfile $resultfile -frame_size $frame_size -streams $all_streams
+        } else {
+            Tester::saveResults -resultfile $resultfile -frame_size $frame_size -streams $all_streams -append true
+        }
+        set isRunning true
         if { !$iterationResult } {
             # Failed
             set min_index $index
@@ -559,7 +565,8 @@ proc SearchMinFrameSizeByLoad { args } {
             # Passed
             set qulified_index $index
             set max_index $index
-            Tester::saveResults -resultfile $resultfile -frame_size $frame_size -streams $all_streams
+            Tester::saveResults -resultfile $resultfile -frame_size $frame_size -streams $all_streams -append true
+            #Tester::saveResults -resultfile $resultfile -frame_size $frame_size -streams $all_streams
             # Reached to maximum frame size
             if { $min_index == $max_index} {
                 Deputs "Iteration #$iteration - Frame Size(Bytes): $frame_size, Min Frame Size: [ lindex $frame_size_list $min_index ], Max Frame Size: [ lindex $frame_size_list $max_index ], Iteration Result: $iterationResult"

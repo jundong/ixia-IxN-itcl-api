@@ -108,6 +108,7 @@ class DeviceGroup {
 			ixNet setM $increment2 -count [lindex $value 2]  -value 0
 			ixNet commit
 		} else {
+			Deputs "mv: $mv, value: $value, step: $step"
 			ixNet setM $mv/counter \
 				-start $value \
 				-step $step

@@ -1,12 +1,12 @@
-lappend auto_path [file dirname [file dirname [file dirname [info script]]]]
+lappend auto_path {C:\Ixia\Workspace\ixia-IxN-itcl-api}
 
 package req IxiaNet
 Login
 IxDebugOff
-#Port @tester_to_dta1 172.16.174.128/1/1
-#Port @tester_to_dta2 172.16.174.128/2/1
-Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
-Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
+Port @tester_to_dta1 172.16.174.128/1/1
+Port @tester_to_dta2 172.16.174.128/2/1
+#Port @tester_to_dta1 NULL NULL ::ixNet::OBJ-/vport:1
+#Port @tester_to_dta2 NULL NULL ::ixNet::OBJ-/vport:2
 
 @tester_to_dta1 config -dut_ip "30.30.30.1" -intf_ip "30.30.30.2"
 @tester_to_dta2 config -dut_ip "30.30.30.2" -intf_ip "30.30.30.1"
@@ -33,10 +33,13 @@ Rfc2544 @tester.rfc2544
 	-measure_jitter "false" \
 	-dst_endpoint "@tester.route_block(3) @tester.route_block(4)" \
 	-latency_type "lifo" -traffic_mesh "fullmesh" -duration "30" \
-	-port_load {100 80 100} \
+	-port_load {2 1 3} \
 	-resultdir "C:/Tmp/IxNetwork" \
 	-frame_len_type "imix" \
 	-resultfile "20140607130434mix.csv" \
-	-frame_len {64 20 256 20 576 20 1200 10 1500 10 9600 20} \
+	-frame_len {64 20 256 20} \
 	-traffic_type "ipv4" \
-    -no_run 1
+    -no_run 0
+
+#-frame_len {64 20 256 20 576 20 1200 10 1500 10 9600 20}
+#port_load {100 80 100}

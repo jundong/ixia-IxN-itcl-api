@@ -59,6 +59,9 @@ class DeviceGroup {
 		set tag "body DeviceGroup::SetMultipleValue [info script]"
 		Deputs "----- TAG: $tag -----"
 		Deputs "obj:$obj key:$key val:$value step:$step type: $type"
+		if { [llength $value] >= 3 } {
+			set type "custom"
+		}
 		set mv [ ixNet getA $obj $key ]
 		Deputs "mv:$mv"
 		if { $step != 0 } {

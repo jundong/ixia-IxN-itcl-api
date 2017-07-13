@@ -630,6 +630,7 @@ body Traffic::config { args  } {
 	set trafficType ipv4
 	set bidirection 0
 	set fullMesh 0
+    set backbone 0
 	set selfdst 0
 	set tos_tracking 0
 	set no_src_dst_mesh 0
@@ -926,6 +927,7 @@ body Traffic::config { args  } {
                         set fullMesh 1
                     }
                     backbone {
+                        set backbone 1
                     }
                 }
             }
@@ -1249,6 +1251,14 @@ body Traffic::config { args  } {
                     -trafficItemType l2L3 \
                     -routeMesh oneToOne \
                     -srcDestMesh fullMesh \
+                    -allowSelfDestined $sd \
+                    -trafficType $trafficType ;#can be ipv4 or ipv6 or ethernetVlan
+            } elseif { $backbone } {
+                Deputs "traffic src/dst type: full mesh"		  
+                ixNet setMultiA $handle \
+                    -trafficItemType l2L3 \
+                    -routeMesh oneToOne \
+                    -srcDestMesh manyToMany \
                     -allowSelfDestined $sd \
                     -trafficType $trafficType ;#can be ipv4 or ipv6 or ethernetVlan
             } else {
@@ -2600,6 +2610,9 @@ body Traffic::get_stats { args } {
 			}
             -page_size {
                 set page_size $value
+                if { $value > 256 } {
+                    set page_size 256
+                }
             }
 	    }
     }
@@ -2656,173 +2669,177 @@ body Traffic::get_stats { args } {
 		set ipv4PrecedenceIndex [ lsearch -exact $captionList {IPv4 :Precedence} ]
 	}
     if { [ info exists page_size ] } {
-        ixNet getA $view/page -pageSize $page_size
+        ixNet setA $view/page -pageSize $page_size
         ixNet commit
     }
     set ret [ GetStandardReturnHeader ]
-	
-    set stats [ ixNet getA $view/page -rowValues ]
-    Deputs "stats:$stats"
-
-    foreach row $stats {
-        eval {set row} $row
-        Deputs "row:$row"
-        if { [ lindex $row $traNameIndex ] != $this } {
-            continue
-        }
-		if { [ info exists rx_port ] } {            
-            if { [ lindex $row $rxPortIndex ] != $rx_port && [ lindex $row $rxPortIndex ] != "::$rx_port" } {
-				continue
-			}
-		}
-		
-		if { $tracking == "precedence" } {
-            set statsItem   "precedence"
-            set statsVal    [ lindex $row $ipv4PrecedenceIndex ]
-            if { [info exists filter_value] && [lsearch $filter_value $statsVal] == -1 } {
+	for {set i 1} {$i <= [ixNet getA $view/page -totalPages]} {incr i} {
+        ixNet setA $view/page -currentPageNumber $i
+        ixNet commit
+        set stats [ ixNet getA $view/page -rowValues ]
+        Deputs "stats:$stats"
+    
+        foreach row $stats {
+            eval {set row} $row
+            Deputs "row:$row"
+            if { [ lindex $row $traNameIndex ] != $this } {
                 continue
             }
+            if { [ info exists rx_port ] } {            
+                if { [ lindex $row $rxPortIndex ] != $rx_port && [ lindex $row $rxPortIndex ] != "::$rx_port" } {
+                    continue
+                }
+            }
+            
+            if { $tracking == "precedence" } {
+                set statsItem   "precedence"
+                set statsVal    [ lindex $row $ipv4PrecedenceIndex ]
+                if { [info exists filter_value] && [lsearch $filter_value $statsVal] == -1 } {
+                    continue
+                }
+                Deputs "stats val:$statsVal"
+                set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]	
+            }
+    
+            set statsItem   "tx_frame_count"
+            set statsVal    [ lindex $row $txFramesIndex ]
             Deputs "stats val:$statsVal"
-            set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]	
-		}
-
-        set statsItem   "tx_frame_count"
-        set statsVal    [ lindex $row $txFramesIndex ]
-        Deputs "stats val:$statsVal"
-        set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-		
-        set statsItem   "rx_frame_count"
-        set statsVal    [ lindex $row $rxFramesIndex ]
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-		    
-	   set statsItem   "avg_jitter"
-	   set statsVal    "NA"
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-			  
-	   set statsItem   "avg_latency"
-	   set statsVal    [ lindex $row $aveLatencyIndex ]
-		#-- adjust to us
-		if { $statsVal == "" } {
-			set statsVal	"NA"
-		} else {
-			set statsVal 	[ expr $statsVal / 1000.0 ] 
-		}
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "duplicate_frame_count"
-	   set statsVal    "NA"
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-		
-	   set statsItem   "in_order_frame_count"
-	   set statsVal    "NA"
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-		
-	   set statsItem   "max_jitter"
-	   set statsVal    "NA"
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-		
-	   set statsItem   "max_latency"
-	   set statsVal    [ lindex $row $maxLatencyIndex ]
-		#-- adjust to us
-		if { $statsVal == "" } {
-			set statsVal	"NA"
-		} else {
-			set statsVal 	[ expr $statsVal / 1000.0 ] 
-		}
-Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "min_jitter"
-	   set statsVal    "NA"
-Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-		
-	   set statsItem   "min_latency"
-	   set statsVal    [ lindex $row $minLatencyIndex ]
-		#-- adjust to us
-		if { $statsVal == "" } {
-			set statsVal	"NA"
-		} else {
-			set statsVal 	[ expr $statsVal / 1000.0 ] 
-		}
-Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "out_seq_frame_count"
-	   set statsVal    "NA"
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "first_arrival_time"
-	   set statsVal    [ lindex $row $firstArrivalIndex ]
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "last_arrival_time"
-	   set statsVal    [ lindex $row $lastArrivalIndex ]
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "tx_frame_rate"
-	   set statsVal    [ lindex $row $txFrameRateIndex ]
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "rx_frame_rate"
-	   set statsVal    [ lindex $row $rxFrameRateIndex ]
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "tx_byte_rate"
-	   set statsVal    [ lindex $row $txByteRateIndex ]
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "rx_byte_rate"
-	   set statsVal    [ lindex $row $rxByteRateIndex ]
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "tx_bit_rate"
-	   set statsVal    [ lindex $row $txBitRateIndex ]
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "rx_bit_rate"
-	   set statsVal    [ lindex $row $rxBitRateIndex ]
-        Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	   set statsItem   "tx_l2_bit_rate"
-	   set statsVal    [ lindex $row $txBitRateIndex ]
-Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "rx_l2_bit_rate"
-	   set statsVal    [ lindex $row $rxBitRateIndex ]
-Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-	   set statsItem   "tx_l1_bit_rate"
-	   set statsVal    [ lindex $row $tx_l1_bit_rate ]
-Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-	   
-	   set statsItem   "rx_l1_bit_rate"
-	   set statsVal    [ lindex $row $rx_l1_bit_rate ]
-Deputs "stats val:$statsVal"
-	   set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
-
-Deputs "ret:$ret"
-
+            set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+            
+            set statsItem   "rx_frame_count"
+            set statsVal    [ lindex $row $rxFramesIndex ]
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+                
+           set statsItem   "avg_jitter"
+           set statsVal    "NA"
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+                  
+           set statsItem   "avg_latency"
+           set statsVal    [ lindex $row $aveLatencyIndex ]
+            #-- adjust to us
+            if { $statsVal == "" } {
+                set statsVal	"NA"
+            } else {
+                set statsVal 	[ expr $statsVal / 1000.0 ] 
+            }
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "duplicate_frame_count"
+           set statsVal    "NA"
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+            
+           set statsItem   "in_order_frame_count"
+           set statsVal    "NA"
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+            
+           set statsItem   "max_jitter"
+           set statsVal    "NA"
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+            
+           set statsItem   "max_latency"
+           set statsVal    [ lindex $row $maxLatencyIndex ]
+            #-- adjust to us
+            if { $statsVal == "" } {
+                set statsVal	"NA"
+            } else {
+                set statsVal 	[ expr $statsVal / 1000.0 ] 
+            }
+    Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "min_jitter"
+           set statsVal    "NA"
+    Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+            
+           set statsItem   "min_latency"
+           set statsVal    [ lindex $row $minLatencyIndex ]
+            #-- adjust to us
+            if { $statsVal == "" } {
+                set statsVal	"NA"
+            } else {
+                set statsVal 	[ expr $statsVal / 1000.0 ] 
+            }
+    Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "out_seq_frame_count"
+           set statsVal    "NA"
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "first_arrival_time"
+           set statsVal    [ lindex $row $firstArrivalIndex ]
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "last_arrival_time"
+           set statsVal    [ lindex $row $lastArrivalIndex ]
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "tx_frame_rate"
+           set statsVal    [ lindex $row $txFrameRateIndex ]
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "rx_frame_rate"
+           set statsVal    [ lindex $row $rxFrameRateIndex ]
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "tx_byte_rate"
+           set statsVal    [ lindex $row $txByteRateIndex ]
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "rx_byte_rate"
+           set statsVal    [ lindex $row $rxByteRateIndex ]
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "tx_bit_rate"
+           set statsVal    [ lindex $row $txBitRateIndex ]
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "rx_bit_rate"
+           set statsVal    [ lindex $row $rxBitRateIndex ]
+            Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+    
+           set statsItem   "tx_l2_bit_rate"
+           set statsVal    [ lindex $row $txBitRateIndex ]
+    Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "rx_l2_bit_rate"
+           set statsVal    [ lindex $row $rxBitRateIndex ]
+    Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+    
+           set statsItem   "tx_l1_bit_rate"
+           set statsVal    [ lindex $row $tx_l1_bit_rate ]
+    Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+           
+           set statsItem   "rx_l1_bit_rate"
+           set statsVal    [ lindex $row $rx_l1_bit_rate ]
+    Deputs "stats val:$statsVal"
+           set ret $ret[ GetStandardReturnBody $statsItem $statsVal ]
+    
+    Deputs "ret:$ret"
+    
+        }
+        
     }
-	catch {
+    catch {
 		ixNet remove $view
 		ixNet commit
 	}

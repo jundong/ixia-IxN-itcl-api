@@ -926,11 +926,17 @@ proc PutsFormatCp { args } {
 proc GetStatsFromReturn { stats key } {
 	set regStr "\{$key:(\\d+)\}"
 	set regStr2 "\{$key:(\\d+\.\\d+)\}"
+    set regStr3 "\{$key:(-\\d+\.\\d+)\}"
+    set regStr4 "\{$key:(-\\d+)\}"
 	Deputs "the reg key is: $key"
 	if { [ eval regexp $regStr2 {$stats} match val ] } {
 		return $val
 	} elseif { [ eval regexp $regStr {$stats} match val ] } {
 		return $val
+    } elseif { [ eval regexp $regStr3 {$stats} match val ] } {
+       return $val
+    } elseif { [ eval regexp $regStr4 {$stats} match val ] } {
+       return $val
 	} else {
 		return ""
 	}

@@ -28,7 +28,7 @@ class PppoeHost {
 	method wait_connect_complete { args } {}
 	method wait_disconnect_complete {} {}
     method CreatePPPoEPerSessionView {} {
-        set tag "body DhcpHost::CreateDhcpPerSessionView [info script]"
+        set tag "body PppoeHost::CreateDhcpPerSessionView [info script]"
 		Deputs "----- TAG: $tag -----"
         set root [ixNet getRoot]
         set customView          [ ixNet add $root/statistics view ]
@@ -93,7 +93,14 @@ body PppoeHost::reborn {} {
     if { [llength [ixNet getL $hPort/protocolStack ethernet]] > 0 } {
         ixNet remove $stack
         ixNet commit
-        set stack [lindex [ixNet getL $hPort/protocolStack ethernet] 0]
+        foreach s [ixNet getL $hPort/protocolStack ethernet] {
+            if { [llength [ixNet getL $s pppoxEndpoint]] > 0 } {
+                set stack $s
+            }
+        }
+        if { [lsearch [ixNet getL $hPort/protocolStack ethernet] $stack] == -1 } {
+            set stack [lindex [ixNet getL $hPort/protocolStack ethernet] end]
+        }
     }
     Deputs "stack: $stack"
 	set sg_ethernet $stack

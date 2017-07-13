@@ -607,7 +607,7 @@ proc RunCustomizeSizeByLoad { args } {
     set streams [list]
     set downstreams [list]
     set duration [ expr 60 * 1000 ]
-	set percentage 99.98
+	set percentage 100
     set inflation 0
     set all_streams [list ]
 	foreach { key value } $args {
@@ -651,7 +651,7 @@ proc RunCustomizeSizeByLoad { args } {
     Deputs "Input streams: $all_streams"
     # According to inflation to calculate traffic load
     foreach frame_size $frame_size_list {
-        set frame_load($frame_size) [expr (($frame_size + 20) * 1.0 / ($frame_size + 20 + $inflation)) * 100]
+        set frame_load($frame_size) [expr (($frame_size + 20) * 1.0 / ($frame_size + 20 + $inflation)) * $percentage]
         Deputs "Frame size: $frame_size, traffic load: $frame_load($frame_size)"
     }  
     

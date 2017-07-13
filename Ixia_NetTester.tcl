@@ -709,7 +709,7 @@ Deputs "A2W..."
 
 proc Tester::save_config { { config_file "d:/configfile.ixncfg" } } {
    set tag "proc Tester::save_config [info script]"
-Deputs "----- TAG: $tag -----"
+    Deputs "----- TAG: $tag -----"
 
 	# set config_file "d:/configfile.ixncfg" 
 

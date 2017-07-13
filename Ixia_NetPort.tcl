@@ -130,6 +130,9 @@ class Port {
 		if { [ info exists neighbor_ip ] } {
             Deputs "get neighbor"
 			set neighbor [ ixNet getF $handle discoveredNeighbor -neighborIp $neighbor_ip ]
+            if { $neighbor == "" } {
+                return "00:00:00:00:00:00"
+            }
             Deputs "neighbor:$neighbor"
             Deputs "get neighbor mac"
 			set neighbor_mac [ ixNet getA $neighbor -neighborMac ]
@@ -1753,9 +1756,9 @@ Deputs "Args:$args "
 	foreach obj $allObj {
 		if { [ $obj isa Traffic ] } {
 			if { [ $obj cget -hPort ] == $handle } {
-Deputs "trafficObj: $obj; hport :$handle"
+                Deputs "trafficObj: $obj; hport :$handle"
 			    set objhandle [ $obj cget -handle]
-Deputs "$obj:$objhandle"
+                Deputs "$obj:$objhandle"
                 if {$objhandle != ""} {
 		
 				    lappend trafficObj $obj
@@ -1772,7 +1775,7 @@ Deputs "$obj:$objhandle"
 		set load_unit "PERCENT"
 	}
 	set unitLoad [ expr $stream_load / [ llength $trafficObj ].0 ]
-Deputs "unitLoad : $unitLoad"
+    Deputs "unitLoad : $unitLoad"
 	foreach obj $trafficObj {
 	
 		$obj config -stream_load $unitLoad -load_unit $load_unit 
@@ -1821,11 +1824,10 @@ Deputs "Args:$args "
 	foreach obj $allObj {
 		if { [ $obj isa Traffic ] } {
 			if { [ $obj cget -hPort ] == $handle } {
-Deputs "trafficObj: $obj; hport :$handle"
+                Deputs "trafficObj: $obj; hport :$handle"
 			    set objhandle [ $obj cget -handle]
-Deputs "$obj:$objhandle"
+                Deputs "$obj:$objhandle"
                 if {$objhandle != ""} {
-		
 				    lappend trafficObj $obj
 				}
 			}
